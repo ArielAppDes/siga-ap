@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Actividad | SIGA-AP</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/actividad.css">
+</head>
+
+<body>
+
+<div class="contenedor">
+
+    <!---------------- MENÚ ---------------->
+    <aside class="sidebar">
+        <div class="logo">
+            <h1>SIGA</h1>
+            <p>Empresa S.A</p>
+        </div>
+        <nav>
+            <a href="dashboard.html">🏠 Inicio</a>
+            <a href="actividades.html" class="activo">🎓 Actividades</a>
+            <a href="#">🏆 Certificaciones</a>
+            <a href="#">📅 Planificación</a>
+            <a href="#">👥 Participantes</a>
+            <a href="#">📊 Reportes</a>
+            <a href="#">⚙ Administración</a>
+            <a href="#">❓ Ayuda</a>
+            <a href="index.html">🚪 Salir</a>
+        </nav>
+    </aside>
+
+    <!---------------- CONTENIDO ---------------->
+    <main class="contenido">
+
+        <header>
+            <div>
+                <h2>Registro de Actividad</h2>
+                <p class="subtitulo">
+                    Registrar y administrar actividades de capacitación.
+                </p>
+            </div>
+            <div class="estado">
+                🟡 En edición
+            </div>
+        </header>
+
+        <!---------------- FORMULARIO ---------------->
+        <section class="formulario">
+
+            <!-- ID_CAP -->
+            <div class="grupo">
+                <label>ID_CAP</label>
+                <input 
+                    type="text" 
+                    id="idCap"
+                    placeholder="CAP-2026-001-01"
+                    readonly>
+            </div>
+
+            <!-- PROGRAMA -->
+            <div class="grupo ancho2">
+                <label>Programa</label>
+                <select id="programa">
+                    <option value="">Seleccione...</option>
+                    <option value="Programa Inicial">Programa Inicial</option>
+                    <option value="Programa Técnico">Programa Técnico</option>
+                    <option value="Programa Liderazgo">Programa Liderazgo</option>
+                </select>
+            </div>
+
+            <!-- CURSO -->
+            <div class="grupo">
+                <label>Curso</label>
+                <select id="curso">
+                    <option value="">Seleccione...</option>
+                </select>
+            </div>
+
+            <!-- CLASE Nº -->
+            <div class="grupo">
+                <label>Clase Nº</label>
+                <input 
+                    type="number"
+                    id="clase"
+                    class="numero"
+                    min="1"
+                    max="99"
+                    placeholder="01">
+            </div>
+
+            <!-- ESTADO -->
+            <div class="grupo">
+                <label>Estado</label>
+                <select id="estado" class="estadoSelect">
+                    <option value="Programado">Programado</option>
+                    <option value="En curso">En curso</option>
+                    <option value="Finalizado">Finalizado</option>
+                </select>
+            </div>
+
+            <!-- TEMA -->
+            <div class="grupo largura">
+                <label>Tema desarrollado</label>
+                <textarea 
+                    id="tema"
+                    rows="4"
+                    placeholder="Detalle los temas desarrollados durante la actividad...">
+                </textarea>
+            </div>
+
+            <!-- FECHA -->
+            <div class="grupo">
+                <label>Fecha</label>
+                <input type="date" id="fecha">
+            </div>
+
+            <!-- HORA INICIO -->
+            <div class="grupo">
+                <label>Hora inicio</label>
+                <input type="time" id="horaInicio">
+            </div>
+
+            <!-- HORA FIN -->
+            <div class="grupo">
+                <label>Hora fin</label>
+                <input type="time" id="horaFin">
+            </div>
+
+            <!-- LUGAR -->
+            <div class="grupo">
+                <label>Lugar</label>
+                <input
+                    type="text"
+                    id="lugar"
+                    placeholder="Ingrese el lugar de la capacitación">
+            </div>
+
+            <!-- CENTRO -->
+            <div class="grupo ancho2">
+                <label>Centro</label>
+                <select id="centro">
+                    <option value="">Seleccione...</option>
+                    <option value="CFT - Centro de Formación Técnica">CFT - Centro de Formación Técnica</option>
+                    <option value="CFLyG - Centro de Formación en Gestión y Liderazgo">CFLyG - Centro de Formación en Gestión y Liderazgo</option>
+                    <option value="CFOyST - Centro de Formación Operacional y de Seguridad en el Transporte">CFOyST - Centro de Formación Operacional y de Seguridad en el Transporte</option>
+                </select>
+            </div>
+
+            <!-- INSTRUCTOR 1 -->
+            <div class="grupo ancho2">
+                <label>Instructor 1</label>
+                <select id="instructor1">
+                    <option value="">Seleccione...</option>
+                </select>
+            </div>
+
+            <!-- INSTRUCTOR 2 -->
+            <div class="grupo ancho2">
+                <label>Instructor 2</label>
+                <select id="instructor2">
+                    <option value="">Seleccione...</option>
+                </select>
+            </div>
+
+            <!-- OBSERVACIONES -->
+            <div class="grupo largura">
+                <label>Observaciones</label>
+                <textarea
+                    id="observaciones"
+                    rows="4"
+                    placeholder="Ingrese observaciones...">
+                </textarea>
+            </div>
+
+        </section>
+
+        <!---------------- BOTONES ---------------->
+        <section class="acciones">
+            <button class="guardar" id="btnGuardar">
+                Guardar
+            </button>
+
+            <button class="buscar" id="btnAsistentes">
+                Registrar asistentes
+            </button>
+
+            <button class="cancelar" id="btnVolver">
+                Volver
+            </button>
+        </section>
+
+    </main>
+
+</div>
+
+<!-- 1. Librería Supabase (Obligatorio si usas supabaseClient.js abajo) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- 2. Tu cliente de conexión -->
+<script src="jss/supabaseClient.js"></script>
+
+<!-- 3. Tus bases de datos locales (si las sigues usando) -->
+<script src="data/cursos.js"></script>
+<script src="data/instructores.js"></script>
+
+<!-- 4. La lógica de la pantalla -->
+<script src="jss/capacitaciones.js"></script>
+
+</body>
+</html>

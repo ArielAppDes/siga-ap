@@ -1,0 +1,4 @@
+SIGA
+Versión: 1.0.0-beta
+Fecha: 06/08/2026
+Estado: Integración con SharePoint

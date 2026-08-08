@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda | SIGA-AP</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    
+    <style>
+        .calendario-contenedor {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .calendario-grid-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            width: 100%;
+        }
+
+        .calendario-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            width: 100%;
+        }
+
+        .agenda-control-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .agenda-control-centro {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .agenda-nav-btn {
+            background: #1a252f;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .agenda-nav-btn:hover { background: #2c3e50; }
+
+        .leyenda-estados {
+            display: flex;
+            gap: 12px;
+            font-size: 12px;
+        }
+
+        .item-leyenda { display: flex; align-items: center; gap: 5px; font-weight: 500; }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .dot-programado { background-color: #d97706; }
+        .dot-encurso { background-color: #0284c7; }
+        .dot-finalizado { background-color: #16a34a; }
+
+        .dia-semana-header {
+            background: #1a252f;
+            color: #fff;
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .dia-celda {
+            background: #fff;
+            min-height: 110px;
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+
+        .dia-celda:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+
+        .dia-celda.vacio { background: #f1f5f9; cursor: default; }
+        .dia-celda.vacio:hover { transform: none; }
+
+        .numero-dia {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 6px;
+            color: #334155;
+        }
+
+        .evento-tag {
+            font-size: 11px;
+            padding: 3px 6px;
+            border-radius: 4px;
+            color: #fff;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+        }
+
+        .tag-programado { background-color: #d97706; }
+        .tag-encurso { background-color: #0284c7; }
+        .tag-finalizado { background-color: #16a34a; }
+    </style>
+</head>
+
+<body>
+
+<div class="contenedor">
+
+    <!-- Menú lateral -->
+    <aside class="sidebar">
+        <div class="logo">
+            <h1>SIGA</h1>
+            <p>Empresa S.A</p>
+        </div>
+        <nav>
+            <a href="dashboard.html">🏠 Inicio</a>
+            <a href="actividades.html">🎓 Actividades</a>
+            <a href="agenda.html" class="activo">📅 Agenda</a>
+            <a href="#">🏆 Certificaciones</a>
+            <a href="#">📊 Reportes</a>
+            <a href="administracion.html">⚙ Administración</a>
+            <a href="#">❓ Ayuda</a>
+            <a href="index.html">🚪 Salir</a>
+        </nav>
+    </aside>
+
+    <!-- Contenido -->
+    <main class="contenido">
+        <header>
+            <div>
+                <h2>Agenda de Capacitaciones</h2>
+                <p class="subtitulo">Planificación y cronograma mensual de actividades.</p>
+            </div>
+            <div class="usuario">
+                👤 Ariel Pizzutto
+            </div>
+        </header>
+
+        <!-- Banner equivalente al de Actividad de la semana -->
+        <section class="actividad" style="margin-bottom: 15px;">
+            <div class="actividad-card">
+                <p id="resumenAnualAgenda">
+                    Cargando panorama de actividades...
+                </p>
+            </div>
+        </section>
+
+        <!-- Barra de Control Centralizada -->
+        <div class="agenda-control-bar">
+            <button class="agenda-nav-btn" id="btnMesAnterior">← Mes Anterior</button>
+            
+            <div class="agenda-control-centro">
+                <h3 id="txtMesAno" style="margin:0; font-size: 20px; color:#1a252f;">Cargando...</h3>
+                <div class="leyenda-estados">
+                    <div class="item-leyenda"><span class="dot dot-programado"></span> Programada</div>
+                    <div class="item-leyenda"><span class="dot dot-encurso"></span> En curso</div>
+                    <div class="item-leyenda"><span class="dot dot-finalizado"></span> Finalizada</div>
+                </div>
+            </div>
+
+            <button class="agenda-nav-btn" id="btnMesSiguiente">Mes Siguiente →</button>
+        </div>
+
+        <!-- Grilla Calendario Unificada -->
+        <div class="calendario-contenedor">
+            <div class="calendario-grid-header">
+                <div class="dia-semana-header">Dom</div>
+                <div class="dia-semana-header">Lun</div>
+                <div class="dia-semana-header">Mar</div>
+                <div class="dia-semana-header">Mié</div>
+                <div class="dia-semana-header">Jue</div>
+                <div class="dia-semana-header">Vie</div>
+                <div class="dia-semana-header">Sáb</div>
+            </div>
+
+            <div class="calendario-grid" id="gridDias"></div>
+        </div>
+    </main>
+
+</div>
+
+<!-- Modal -->
+<div id="modalDia" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#fff; width:90%; max-width:800px; padding:25px; border-radius:12px; max-height:85vh; overflow-y:auto; box-shadow:0 10px 25px rgba(0,0,0,0.3);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #eee; padding-bottom:10px;">
+            <h3 id="tituloModalDia" style="margin:0; color:#1a252f;">Capacitaciones del Día</h3>
+            <button id="btnCerrarModalDia" style="background:none; border:none; font-size:24px; cursor:pointer; color:#888;">&times;</button>
+        </div>
+        
+        <div id="tablaContenedorDia">
+            <table style="width:100%; border-collapse:collapse; text-align:left;">
+                <thead>
+                    <tr style="background:#f4f6f7; border-bottom:2px solid #ddd;">
+                        <th style="padding:10px;">ID CAP</th>
+                        <th style="padding:10px;">Curso</th>
+                        <th style="padding:10px;">Horario</th>
+                        <th style="padding:10px;">Estado</th>
+                        <th style="padding:10px; text-align:center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyDia"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="jss/supabaseClient.js"></script>
+<script src="jss/agenda.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actividades | SIGA-AP</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/actividades.css">
+</head>
+
+<body>
+
+<div class="contenedor">
+
+    <!-- Menú lateral -->
+    <aside class="sidebar">
+        <div class="logo">
+            <h1>SIGA</h1>
+            <p>Empresa S.A</p>
+        </div>
+        <nav>
+            <a href="dashboard.html">🏠 Inicio</a>
+            <a href="actividades.html" class="activo">🎓 Actividades</a>
+            <a href="agenda.html">📅 Agenda</a>
+            <a href="#">🏆 Certificaciones</a>
+            <a href="#">📊 Reportes</a>
+            <a href="administracion.html">⚙ Administración</a>
+            <a href="#">❓ Ayuda</a>
+            <a href="index.html">🚪 Salir</a>
+        </nav>
+    </aside>
+
+    <!-- Contenido -->
+    <main class="contenido">
+        <header>
+            <div>
+                <h2>Actividades</h2>
+                <p class="subtitulo">Centro de gestión de capacitaciones.</p>
+            </div>
+        </header>
+
+        <section class="tarjetas">
+            <a href="capacitaciones.html" id="cardNueva" class="tarjeta">
+                <div class="icono">➕</div>
+                <h3>Nueva capacitación</h3>
+                <p>Crear una nueva capacitación.</p>
+            </a>
+
+            <a href="#" id="cardProgramadas" class="tarjeta">
+                <div class="icono">📅</div>
+                <h3>Programadas</h3>
+                <p>Consultar y editar capacitaciones programadas.</p>
+            </a>
+
+            <a href="#" id="cardEnCurso" class="tarjeta">
+                <div class="icono">▶</div>
+                <h3>En curso</h3>
+                <p>Continuar capacitaciones en ejecución.</p>
+            </a>
+
+            <a href="#" id="cardFinalizadas" class="tarjeta">
+                <div class="icono">✔</div>
+                <h3>Finalizadas</h3>
+                <p>Consultar historial de capacitaciones.</p>
+            </a>
+        </section>
+    </main>
+
+</div>
+
+<!-- Modal -->
+<div id="modalCapacitaciones" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#fff; width:90%; max-width:900px; padding:25px; border-radius:12px; max-height:85vh; overflow-y:auto; box-shadow:0 10px 25px rgba(0,0,0,0.3);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #eee; padding-bottom:10px;">
+            <h3 id="tituloModal" style="margin:0; color:#1a252f;">Capacitaciones</h3>
+            <button id="btnCerrarModal" style="background:none; border:none; font-size:24px; cursor:pointer; color:#888;">&times;</button>
+        </div>
+        
+        <div id="tablaContenedor">
+            <table style="width:100%; border-collapse:collapse; text-align:left;">
+                <thead>
+                    <tr style="background:#f4f6f7; border-bottom:2px solid #ddd;">
+                        <th style="padding:10px;">ID CAP</th>
+                        <th style="padding:10px;">Curso</th>
+                        <th style="padding:10px;">Clase</th>
+                        <th style="padding:10px;">Fecha</th>
+                        <th style="padding:10px;">Instructor</th>
+                        <th style="padding:10px; text-align:center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyCapacitaciones"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="jss/supabaseClient.js"></script>
+<script src="jss/actividades.js"></script>
+
+</body>
+</html>

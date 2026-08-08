@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Administración | SIGA-APP</title>
+
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/administracion.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+
+</head>
+
+<body>
+
+<div class="contenedor">
+
+    <!-- MENÚ -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+            <h1>SIGA</h1>
+            <p>Empresa S.A</p>
+        </div>
+
+        <nav>
+
+            <a href="dashboard.html">🏠 Inicio</a>
+
+            <a href="actividades.html">🎓 Actividades</a>
+
+            <a href="#">🏆 Certificaciones</a>
+
+            <a href="#">📅 Calendario</a>
+
+            <a href="#">📊 Reportes</a>
+
+            <a href="administracion.html" class="activo">⚙ Administración</a>
+
+            <a href="#">❓ Ayuda</a>
+
+            <a href="index.html">🚪 Salir</a>
+
+        </nav>
+
+    </aside>
+
+    <!-- CONTENIDO -->
+
+    <main class="contenido">
+
+        <header>
+
+            <h2>Sistema de Gestión Académica</h2>
+
+            <p class="subtitulo">
+
+                Administración de catálogos y parámetros del sistema
+
+            </p>
+
+        </header>
+
+
+        <section class="panel-admin">
+
+            <!-- MENÚ CATÁLOGOS -->
+
+            <aside class="menu-admin">
+
+                <h3>Catálogos</h3>
+
+                <ul>
+
+<li class="activo">
+    <span class="material-symbols-outlined">folder_open</span>
+    Programas
+</li>
+
+<li>
+    <span class="material-symbols-outlined">menu_book</span>
+    Cursos
+</li>
+
+<li>
+    <span class="material-symbols-outlined">school</span>
+    Instructores
+</li>
+
+<li>
+    <span class="material-symbols-outlined">badge</span>
+    Dotación
+</li>
+
+<li>
+    <span class="material-symbols-outlined">database</span>
+    Bases
+</li>
+<!--
+<>
+<span class="material-symbols-outned">apartment</span>
+Centros
+</>
+
+<>
+<span class="material-symbols-outned">location_on</span>
+Lugares
+</>
+
+<>
+<span class="material-symbols-outned">group</span>
+Usuarios
+</>
+
+
+<>
+<span class="material-symbols-outned">workspace_premium</span>
+Certificaciones
+</>
+
+<>
+<span class="material-symbols-outned">settings</span>
+Parámetros
+</>
+-->
+</ul>
+
+            </aside>
+
+
+            <!--PANEL DERECHO -->
+
+            <section class="contenido-admin">
+              
+             
+
+             <div class="cabecera-admin">
+
+    <h2 id="tituloCatalogo">
+        Programas
+    </h2>
+
+    
+         <div class="acciones">
+
+                        <button class="btn nuevo">Agregar</button>
+
+                        <button class="btn guardar">Guardar</button>
+
+                        <button class="btn editar">Editar</button>
+
+                        <button class="btn eliminar">Eminar</button>
+
+                        <button class="btn cancelar">Cancelar</button>
+
+                    </div>
+
+                </div>
+
+
+                <div class="grilla-admin">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Código</th>
+
+                                  <th id="colNombre">Programa</th>
+
+                                <th>Estado</th>
+
+                            </tr>
+
+                        </thead>
+
+                        
+<tbody id="tablaCatalogo">
+      
+      
+</tbody>
+
+</table>
+
+</div>
+
+<div class="formulario-admin">
+
+    <h3 id="tituloFormulario">Datos del Programa</h3>
+
+    <div class="grupo">
+
+        <label>Código</label>
+
+        <input type="text" id="codigo" readonly>
+
+    </div>
+    
+        <div class="grupo">
+
+        <label id="lblNombre">Programa</label>
+
+        <input type="text" id="nombre">
+
+    </div>
+
+    <div class="grupo">
+
+        <label>Descripción</label>
+
+        <textarea id="descripcion"></textarea>
+
+    </div>
+
+    <div class="grupo">
+
+        <label>Estado</label>
+
+        <select id="estado">
+
+            <option value="Activo">Activo</option>
+
+            <option value="Inactivo">Inactivo</option>
+
+        </select>
+
+    </div>
+
+</div>
+
+<!--=====================================
+    PANEL DOTACIÓN
+======================================-->
+
+<div id="panelDotacion" style="display:none;">
+
+    <div class="dotacion-header">
+
+    <h2>Dotación</h2>
+
+    <div class="fecha-dotacion">
+        Última actualización:
+        <span id="fechaDotacion">--/--/----</span>
+    </div>
+
+</div>
+
+    <div class="dotacion-card">
+
+        <h3>Buscar Empleado</h3>
+
+        <div class="grupo">
+            <label>Legajo</label>
+            <input type="text" id="legajo">
+        </div>
+
+        <div class="acciones-busqueda">
+            <button id="btnNuevoEmpleado" class="btn cancelar">
+                Nueva búsqueda
+            </button>
+        </div>
+
+        <div class="grupo">
+            <label>Apellido</label>
+            <input type="text" id="apellido" readonly>
+        </div>
+
+        <div class="grupo">
+            <label>Nombre</label>
+            <input type="text" id="nombreEmpleado" readonly>
+        </div>
+
+        <div class="grupo">
+            <label>Puesto</label>
+            <input type="text" id="puesto" readonly>
+        </div>
+
+        <div class="grupo">
+            <label>Categoría</label>
+            <input type="text" id="categoria" readonly>
+        </div>
+
+        <div class="grupo">
+            <label>Dirección</label>
+            <input type="text" id="direccion" readonly>
+        </div>
+
+        <div class="grupo">
+            <label>Gerencia</label>
+            <input type="text" id="gerencia" readonly>
+        </div>
+
+        <div class="grupo">
+            <label>Jefatura</label>
+            <input type="text" id="jefatura" readonly>
+        </div>
+        
+        <div class="grupo">
+        <label>Manager</label>
+        <input type="text" id="manager" readonly>
+        </div>
+
+        <div class="grupo">
+        <label>Email</label>
+        <input type="text" id="email" readonly>
+        </div>
+
+    </div>
+
+</div>
+<!--=====================================
+    PANEL BASES
+======================================-->
+
+<div id="panelBases" style="display:none;">
+
+    <h3>Administrador de Bases de Datos</h3>
+
+    <div class="grupo">
+        <label>Base de datos</label>
+        <select id="baseDatos">
+            <option value="empleados">Empleados</option>
+        </select>
+    </div>
+
+    <div class="grupo">
+        <label>Archivo Excel</label>
+        <input type="file"
+               id="archivoBase"
+               accept=".xlsx,.xls">
+    </div>
+
+    <div class="grupo">
+        <label>Estado</label>
+        <input type="text"
+               id="estadoBase"
+               value="Esperando archivo..."
+               readonly>
+    </div>
+
+    <div class="acciones">
+        <button class="btn guardar"
+                id="btnGenerarBase">
+            Generar Base
+        </button>
+    </div>
+
+</div>
+    
+      
+</section>
+
+
+            </section>
+
+        </section>
+ 
+    </main>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<script src="data/programas.js"></script>
+<script src="data/cursos.js"></script>
+<script src="data/instructores.js"></script>
+<script src="data/empleados.js"></script>
+
+<script src="jss/administracion.js"></script>
+<script src="jss/dotacion.js"></script>
+<script src="jss/bases.js"></script>
+
+</body>
+</html>

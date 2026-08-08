@@ -1,0 +1,23 @@
+:root{
+
+--azul:#1F2A44;
+--verde:#18C48F;
+--blanco:#FFFFFF;
+--gris:#EDEDED;
+
+}
+
+*{
+
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Segoe UI',sans-serif;
+
+}
+
+body{
+
+background:var(--gris);
+
+}

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistentes | Empresa S.A</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/asistentes.css">
+</head>
+
+<body>
+
+<div class="contenedor">
+
+    <!---------------- MENÚ ---------------->
+    <aside class="sidebar">
+        <div class="logo">
+            <h1>SIGA</h1>
+            <p>Empresa S.A</p>
+        </div>
+
+        <nav>
+            <a href="dashboard.html">🏠 Inicio</a>
+            <a href="actividades.html" class="activo">🎓 Actividades</a>
+            <a href="#">📅 Agenda</a>
+            <a href="#">👥 Asistentes</a>
+            <a href="#">🏆 Certificaciones</a>
+            <a href="#">📊 Reportes</a>
+            <a href="#">⚙ Administración</a>
+            <a href="#">❓ Ayuda</a>
+            <a href="index.html">🚪 Salir</a>
+        </nav>
+    </aside>
+
+    <!---------------- CONTENIDO ---------------->
+    <main class="contenido">
+
+        <header>
+            <div>
+                <h2>Registro de Asistentes</h2>
+                <p class="subtitulo">
+                    Registro de participantes de la capacitación.
+                </p>
+            </div>
+        </header>
+
+        <!---------------- DATOS CAPACITACIÓN ---------------->
+        <section class="cabecera">
+            <div class="dato">
+                <label>ID_CAP</label>
+                <input type="text" id="idcap" readonly>
+            </div>
+
+            <div class="dato">
+                <label>Curso</label>
+                <input type="text" id="curso" readonly>
+            </div>
+
+            <div class="dato">
+                <label>Clase Nº</label>
+                <input type="text" id="clase" readonly>
+            </div>
+
+            <div class="dato">
+                <label>Fecha</label>
+                <input type="text" id="fecha" readonly>
+            </div>
+
+            <div class="dato ancho2">
+                <label>Instructor</label>
+                <input type="text" id="instructor" readonly>
+            </div>
+        </section>
+
+        <!---------------- CARGA ---------------->
+        <section class="carga">
+            <div class="grupo">
+                <label>Legajo</label>
+                <input type="text" id="legajo" placeholder="Ej: 01001">
+            </div>
+
+            <div class="grupo">
+                <label>Calificación</label>
+                <input type="number" id="calificacion" min="1" max="10" placeholder="1-10">
+            </div>
+
+            <div class="grupo ancho2">
+                <label>Observaciones</label>
+                <input type="text" id="observaciones" placeholder="Ingrese observaciones...">
+            </div>
+        </section>
+
+        <div class="acciones">
+            <button class="guardar" id="btnAgregar">
+                Agregar participante
+            </button>
+        </div>
+
+        <!---------------- TABLA ---------------->
+        <section class="tabla">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Legajo</th>
+                        <th>Apellido</th>
+                        <th>Nombre</th>
+                        <th>Calificación</th>
+                        <th>Observaciones</th>
+                        <th>Firma</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaAsistentes">
+                    <!-- Filas dinámicas -->
+                </tbody>
+            </table>
+        </section>
+
+        <!---------------- BOTONES ---------------->
+        <section class="acciones">
+            <button class="buscar" id="btnImprimir">
+                Imprimir
+            </button>
+
+            <button class="guardar" id="btnCerrarRegistro">
+                Cerrar registro
+            </button>
+
+            <button class="cancelar" id="btnCancelar">
+                Cancelar
+            </button>
+        </section>
+
+    </main>
+
+</div>
+
+<!---------------- MODAL DE CONFIRMACIÓN ---------------->
+<div id="confirmacion" class="modal" style="display: none;">
+    <div class="modal-contenido">
+        <h3>✅ Registro confirmado</h3>
+        <p id="mensajeConfirmacion"></p>
+        <button id="btnCerrarConfirmacion">Cerrar</button>
+    </div>
+</div>
+
+<!-- 1. Librería CDN de Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- 2. Cliente centralizado -->
+<script src="jss/supabaseClient.js"></script>
+
+<!-- 3. Bases de datos locales -->
+<script src="data/empleados.js"></script>
+
+<!-- 4. Lógica específica de la pantalla -->
+<script src="jss/asistentes.js"></script>
+
+</body>
+</html>

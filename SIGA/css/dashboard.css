@@ -1,0 +1,196 @@
+body{
+    margin:0;
+    background:#EDEDED;
+    font-family:'Segoe UI',sans-serif;
+}
+
+.contenedor{
+    display:flex;
+    height:100vh;
+}
+
+/* ===== MENU ===== */
+
+.sidebar{
+    width:220px;
+    background:#1F2A44;
+    color:white;
+    display:flex;
+    flex-direction:column;
+}
+
+.logo{
+    text-align:center;
+    padding:30px 20px;
+    border-bottom:1px solid rgba(255,255,255,.15);
+}
+
+.logo h1{
+    font-size:56px;
+    margin:0;
+    color:#18C48F;
+}
+
+.logo p{
+    margin-top:10px;
+    font-size:18px;
+}
+
+nav{
+    display:flex;
+    flex-direction:column;
+    margin-top:20px;
+}
+
+nav a{
+
+    color:white;
+    text-decoration:none;
+
+    padding:16px 20px;
+
+    transition:.3s;
+
+    font-size:16px;
+
+    border-left:4px solid transparent;
+
+}
+
+nav a:hover,
+nav a.activo{
+
+    background:rgba(24,196,143,.18);
+
+    border-left:4px solid #18C48F;
+
+    color:white;
+
+    font-weight:bold;
+
+}
+
+/* ===== CONTENIDO ===== */
+
+.contenido{
+    flex:1;
+    padding:35px;
+}
+
+header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:40px;
+}
+
+header h2{
+    margin:0;
+    color:#1F2A44;
+}
+
+#fecha{
+    color:#666;
+}
+
+.usuario{
+    background:white;
+    padding:12px 20px;
+    border-radius:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+
+/* ===== TARJETAS ===== */
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:25px;
+}
+
+.card{
+    background:white;
+    border-top:6px solid #18C48F;
+    border-radius:18px;
+    padding:30px;
+    cursor:pointer;
+    transition:.25s;
+    box-shadow:0 4px 10px rgba(0,0,0,.10);
+}
+
+.card:hover{
+    transform:translateY(-6px);
+    box-shadow:0 10px 20px rgba(0,0,0,.18);
+}
+
+.icono{
+    font-size:48px;
+}
+
+.card h3{
+    margin-top:18px;
+    color:#1F2A44;
+}
+
+.card p{
+
+    color:#777;
+
+    font-size:15px;
+
+    line-height:22px;
+
+    margin-top:12px;
+
+}
+
+/* ===== TABLET ===== */
+
+@media(max-width:900px){
+
+.sidebar{
+    width:210px;
+}
+
+.cards{
+
+grid-template-columns:1fr;
+
+}
+
+}
+
+/* ==========================
+   ACTIVIDAD DE LA SEMANA
+========================== */
+
+.actividad{
+
+margin-bottom:30px;
+
+}
+
+.actividad h3{
+
+color:#24314f;
+margin-bottom:12px;
+
+}
+
+.actividad-card{
+
+background:white;
+
+border-left:6px solid #27c59a;
+
+border-radius:12px;
+
+padding:18px;
+
+box-shadow:0 5px 15px rgba(0,0,0,.10);
+
+font-size:17px;
+
+color:#555;
+
+}

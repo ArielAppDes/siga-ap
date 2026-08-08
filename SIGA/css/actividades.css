@@ -1,0 +1,169 @@
+/* ===================================================
+   ACTIVIDADES - ACADEMIA EMOVA
+   Release 1.0.0
+===================================================*/
+
+body{
+
+    background:#ECECEC;
+
+}
+
+/*-----------------------------
+ENCABEZADO
+------------------------------*/
+
+.subtitulo{
+
+    margin-top:6px;
+
+    color:#666;
+
+    font-size:15px;
+
+}
+
+/*-----------------------------
+CONTENEDOR DE TARJETAS
+------------------------------*/
+.tarjetas{
+
+    display:grid;
+
+    grid-template-columns:repeat(2,1fr);
+
+    gap:25px;
+
+    margin-top:30px;
+
+}
+
+/*-----------------------------
+TARJETAS
+------------------------------*/
+
+.tarjeta{
+
+    background:white;
+
+    border-radius:18px;
+
+    padding:30px;
+
+    text-decoration:none;
+
+    color:#1F2A44;
+
+    box-shadow:0 8px 18px rgba(0,0,0,.08);
+
+    transition:.25s;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    min-height:180px;
+
+    border:2px solid transparent;
+
+}
+
+.tarjeta:hover{
+
+    transform:translateY(-5px);
+
+    border-color:#18C48F;
+
+    box-shadow:0 12px 25px rgba(0,0,0,.15);
+
+}
+
+/*-----------------------------
+ICONO
+------------------------------*/
+
+.icono{
+
+    font-size:42px;
+
+    margin-bottom:20px;
+
+}
+
+/*-----------------------------
+TÍTULO
+------------------------------*/
+
+.tarjeta h3{
+
+    margin:0;
+
+    font-size:22px;
+
+    color:#1F2A44;
+
+}
+
+/*-----------------------------
+DESCRIPCIÓN
+------------------------------*/
+
+.tarjeta p{
+
+    margin-top:12px;
+
+    color:#666;
+
+    line-height:1.5;
+
+    font-size:15px;
+
+}
+
+/*-----------------------------
+TARJETA ANCHA
+------------------------------*/
+
+.tarjeta-ancha{
+
+    grid-column:span 2;
+
+}
+
+/*-----------------------------
+RESPONSIVE
+------------------------------*/
+
+@media(max-width:900px){
+
+.tarjeta-ancha{
+
+    grid-column:span 1;
+
+}
+
+}
+
+@media(max-width:700px){
+
+.tarjetas{
+
+    grid-template-columns:1fr;
+
+}
+
+.tarjeta{
+
+    min-height:150px;
+
+}
+
+}
+
+.oculta{
+
+    display:none;
+
+}

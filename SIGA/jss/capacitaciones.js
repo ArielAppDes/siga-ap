@@ -1,15 +1,15 @@
 // ===================================================
-// SIGA_APP - LÓGICA DE CAPACITACIONES (SUPABASE)
+// SIGA_APP - LÓGICA DE CAPACITACIONES (SINCRONIZADO)
 // ===================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Cargar select desplegables desde Supabase
+    // 1. Cargar desplegables desde Supabase
     await cargarDesplegablesDesdeSupabase();
 
-    // 2. Cargar datos de la capacitación activa (o nuevo ID)
+    // 2. Cargar datos de la capacitación activa o generar ID nuevo
     await cargarCapacitacionActiva();
 
-    // 3. Vincular botones de acción
+    // 3. Conectar eventos a los botones del HTML
     configurarBotonesAccion();
 });
 
@@ -18,15 +18,12 @@ function obtenerDB() {
 }
 
 // ===================================================
-// 1. CARGAR SELECTS DESDE SUPABASE
+// 1. CARGAR DESPLEGABLES DESDE SUPABASE
 // ===================================================
 
 async function cargarDesplegablesDesdeSupabase() {
     const db = obtenerDB();
-    if (!db) {
-        console.error('El cliente de Supabase no está disponible.');
-        return;
-    }
+    if (!db) return;
 
     await Promise.all([
         cargarSelectProgramas(db),
@@ -44,17 +41,13 @@ async function cargarSelectProgramas(db) {
         .select('id, codigo, nombre, estado')
         .order('nombre', { ascending: true });
 
-    if (error) {
-        console.error('Error al obtener programas:', error.message);
-        return;
-    }
+    if (error) return;
 
     select.innerHTML = '<option value="">Seleccione...</option>';
     if (data && data.length > 0) {
         data.forEach(p => {
             if (!p.estado || p.estado === 'Activo') {
                 const codigoTexto = p.codigo ? `${p.codigo} - ` : '';
-                // Usamos el nombre como value para guardarlo limpio en la tabla capacitaciones
                 select.innerHTML += `<option value="${p.nombre}">${codigoTexto}${p.nombre}</option>`;
             }
         });
@@ -70,10 +63,7 @@ async function cargarSelectCursos(db) {
         .select('id, codigo_curso, nombre, estado')
         .order('nombre', { ascending: true });
 
-    if (error) {
-        console.error('Error al obtener cursos:', error.message);
-        return;
-    }
+    if (error) return;
 
     select.innerHTML = '<option value="">Seleccione...</option>';
     if (data && data.length > 0) {
@@ -97,10 +87,7 @@ async function cargarSelectInstructores(db) {
         .select('id, codigo, nombre, apellido, estado')
         .order('apellido', { ascending: true });
 
-    if (error) {
-        console.error('Error al obtener instructores:', error.message);
-        return;
-    }
+    if (error) return;
 
     let opcionesHtml = '<option value="">Seleccione...</option>';
     if (data && data.length > 0) {
@@ -118,11 +105,11 @@ async function cargarSelectInstructores(db) {
 }
 
 // ===================================================
-// 2. CARGAR CAPACITACIÓN ACTIVA Y LLENAR CAMPOS
+// 2. CARGAR Y ASIGNAR ID_CAP REAL DE SUPABASE
 // ===================================================
 
 async function cargarCapacitacionActiva() {
-    const inputIdCap = document.getElementById('id_cap') || document.querySelector("input[placeholder*='CAP-']");
+    const inputIdCap = document.getElementById('idCap');
     const rawData = localStorage.getItem("capacitacion_activa");
 
     if (rawData) {
@@ -131,14 +118,13 @@ async function cargarCapacitacionActiva() {
 
             if (inputIdCap && cap.id_cap) inputIdCap.value = cap.id_cap;
             
-            // Llenar rest de campos si existen en el formulario
             setValorCampo('programa', cap.programa);
             setValorCampo('curso', cap.nombre_curso || cap.curso);
-            setValorCampo('clase_nro', cap.clase_nro || "1");
+            setValorCampo('clase', cap.clase_nro || cap.clase || "1");
             setValorCampo('estado', cap.estado || "Programado");
             setValorCampo('fecha', cap.fecha);
-            setValorCampo('hs_inicio', cap.hs_inicio);
-            setValorCampo('hs_fin', cap.hs_fin);
+            setValorCampo('horaInicio', cap.hs_inicio || cap.horaInicio);
+            setValorCampo('horaFin', cap.hs_fin || cap.horaFin);
             setValorCampo('instructor1', cap.instructor_1 || cap.instructor1);
             setValorCampo('instructor2', cap.instructor_2 || cap.instructor2);
             setValorCampo('lugar', cap.lugar);
@@ -148,11 +134,11 @@ async function cargarCapacitacionActiva() {
 
             return;
         } catch (e) {
-            console.error("Error al parsear capacitacion_activa:", e);
+            console.error("Error al leer capacitacion_activa:", e);
         }
     }
 
-    // Si no hay capacitación activa, obtener de Supabase el próximo ID libre
+    // Si no hay datos activos, generar el siguiente ID según Supabase
     if (inputIdCap) {
         const nuevoId = await generarNuevoIdCapSupabase();
         inputIdCap.value = nuevoId;
@@ -196,26 +182,28 @@ async function generarNuevoIdCapSupabase() {
         return `CAP-${anioActual}-${sig}-01`;
 
     } catch (e) {
-        console.error("Error consultando IDs en Supabase:", e);
+        console.error("Error al obtener ID de Supabase:", e);
         return `CAP-${anioActual}-001-01`;
     }
 }
 
 // ===================================================
-// 3. EVENTOS DE BOTONES (GUARDAR Y ASISTENTES)
+// 3. VINCULACIÓN Y ACCIONES DE BOTONES
 // ===================================================
 
 function configurarBotonesAccion() {
-    // Buscar botón Guardar por ID o por clase
-    const btnGuardar = document.getElementById('btnGuardar') || document.querySelector('.btn.guardar');
-    if (btnGuardar) {
-        btnGuardar.onclick = guardarCapacitacion;
-    }
+    const btnGuardar = document.getElementById('btnGuardar');
+    if (btnGuardar) btnGuardar.onclick = guardarCapacitacion;
 
-    // Buscar botón Registrar Asistentes
-    const btnAsistentes = document.getElementById('btnAsistentes') || document.getElementById('btnRegistrarAsistentes') || document.querySelector('.btn.asistentes');
-    if (btnAsistentes) {
-        btnAsistentes.onclick = irARegistrarAsistentes;
+    const btnAsistentes = document.getElementById('btnAsistentes');
+    if (btnAsistentes) btnAsistentes.onclick = irARegistrarAsistentes;
+
+    const btnVolver = document.getElementById('btnVolver');
+    if (btnVolver) {
+        btnVolver.onclick = (e) => {
+            e.preventDefault();
+            window.location.href = "actividades.html";
+        };
     }
 }
 
@@ -228,27 +216,28 @@ async function guardarCapacitacion(e) {
         return;
     }
 
-    const id_cap = document.getElementById('id_cap')?.value || document.querySelector("input[placeholder*='CAP-']")?.value;
-    const programa = document.getElementById('programa')?.value || '';
-    const selectCurso = document.getElementById('curso');
-    const nombre_curso = selectCurso?.value || '';
-    const codigo_curso = selectCurso?.options[selectCurso.selectedIndex]?.dataset?.codigo || '';
-
+    const idCapInput = document.getElementById('idCap');
+    const id_cap = idCapInput ? idCapInput.value : '';
+    
     if (!id_cap) {
-        alert("El código ID_CAP es obligatorio.");
+        alert("El código ID_CAP no es válido.");
         return;
     }
 
+    const selectCurso = document.getElementById('curso');
+    const nombre_curso = selectCurso ? selectCurso.value : '';
+    const codigo_curso = selectCurso?.options[selectCurso.selectedIndex]?.dataset?.codigo || '';
+
     const payload = {
         id_cap: id_cap,
-        programa: programa,
+        programa: document.getElementById('programa')?.value || '',
         codigo_curso: codigo_curso,
         nombre_curso: nombre_curso,
-        clase_nro: document.getElementById('clase_nro')?.value || '1',
+        clase_nro: document.getElementById('clase')?.value || '1',
         estado: document.getElementById('estado')?.value || 'Programado',
         fecha: document.getElementById('fecha')?.value || null,
-        hs_inicio: document.getElementById('hs_inicio')?.value || null,
-        hs_fin: document.getElementById('hs_fin')?.value || null,
+        hs_inicio: document.getElementById('horaInicio')?.value || null,
+        hs_fin: document.getElementById('horaFin')?.value || null,
         instructor_1: document.getElementById('instructor1')?.value || '',
         instructor_2: document.getElementById('instructor2')?.value || '',
         lugar: document.getElementById('lugar')?.value || '',
@@ -258,39 +247,31 @@ async function guardarCapacitacion(e) {
     };
 
     try {
-        const { data, error } = await db
+        const { error } = await db
             .from('capacitaciones')
             .upsert([payload], { onConflict: 'id_cap' });
 
         if (error) throw error;
 
-        // Actualizar en localStorage la versión guardada
         localStorage.setItem("capacitacion_activa", JSON.stringify(payload));
-        alert(`Capacitación ${id_cap} guardada con éxito en Supabase.`);
+        alert(`Capacitación ${id_cap} guardada exitosamente.`);
 
     } catch (err) {
-        console.error("Error al guardar capacitación:", err);
-        alert("Ocurrió un error al intentar guardar en Supabase: " + err.message);
+        console.error("Error guardando en Supabase:", err);
+        alert("Error al guardar: " + err.message);
     }
 }
 
 function irARegistrarAsistentes(e) {
     if (e) e.preventDefault();
 
-    const id_cap = document.getElementById('id_cap')?.value || document.querySelector("input[placeholder*='CAP-']")?.value;
+    const id_cap = document.getElementById('idCap')?.value;
 
     if (!id_cap) {
-        alert("Primero debe generar o guardar la capacitación.");
+        alert("Debe existir un ID_CAP válido para continuar.");
         return;
     }
 
-    // Redireccionar al panel o abrir modal de asistencia guardando el ID de referencia
     localStorage.setItem("id_cap_asistencia", id_cap);
-    
-    // Si tenés una pantalla dedicada para la toma de asistencia:
-    if (typeof abrirModalAsistentes === 'function') {
-        abrirModalAsistentes(id_cap);
-    } else {
-        window.location.href = `dotacion.html?id_cap=${encodeURIComponent(id_cap)}`;
-    }
+    window.location.href = `dotacion.html?id_cap=${encodeURIComponent(id_cap)}`;
 }

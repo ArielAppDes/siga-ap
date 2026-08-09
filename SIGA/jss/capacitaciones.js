@@ -45,11 +45,23 @@ function getValor(id) {
 }
 
 function obtenerObjetoFormulario() {
+    const idCapVal = getValor("idCap");
+    
+    // Extraer id_cap_padre (ejemplo: 'CAP-2026-001' a partir de 'CAP-2026-001-2')
+    let idCapPadreVal = idCapVal;
+    if (idCapVal) {
+        const partes = idCapVal.split("-");
+        if (partes.length >= 3) {
+            idCapPadreVal = `${partes[0]}-${partes[1]}-${partes[2]}`;
+        }
+    }
+
     return {
-        id_cap: getValor("idCap"),
+        id_cap: idCapVal,
+        id_cap_padre: idCapPadreVal,
         programa: getValor("programa"),
         nombre_curso: getValor("curso"),
-        clase_nro: getValor("clase") || "1",
+        clase_nro: parseInt(getValor("clase") || "1", 10),
         estado: getValor("estado") || "Programado",
         tema: getValor("tema"),
         fecha: document.getElementById("fecha")?.value || null,
@@ -170,16 +182,29 @@ document.getElementById("btnGuardar")?.addEventListener("click", async (e) => {
 
     const db = window.supabaseClient;
     if (db) {
+        // 1. Guardar o actualizar la clase actual
         const { error } = await db.from("capacitaciones").upsert([datos]);
         if (error) {
             alert("Error de Supabase: " + error.message);
             return;
         }
+
+        // 2. Si el estado es Finalizada, actualizar todas las clases asociadas al mismo id_cap_padre
+        if (datos.estado === "Finalizada" && datos.id_cap_padre) {
+            const { error: errCascade } = await db
+                .from("capacitaciones")
+                .update({ estado: "Finalizada" })
+                .eq("id_cap_padre", datos.id_cap_padre);
+
+            if (errCascade) {
+                console.warn("No se pudieron actualizar las clases anteriores:", errCascade.message);
+            }
+        }
     }
 
     alert(`Capacitación ${datos.id_cap} guardada en estado '${datos.estado}'.`);
     limpiarFormulario();
-    await generarProximoIdCap();
+    window.location.href = "actividades.html";
 });
 
 // Botón Registrar Asistentes
@@ -203,6 +228,13 @@ document.getElementById("btnAsistentes")?.addEventListener("click", async (e) =>
     if (db) {
         try {
             await db.from("capacitaciones").upsert([datos]);
+            
+            // Sincronizar estado en cascada si pasa a Finalizada
+            if (datos.estado === "Finalizada" && datos.id_cap_padre) {
+                await db.from("capacitaciones")
+                    .update({ estado: "Finalizada" })
+                    .eq("id_cap_padre", datos.id_cap_padre);
+            }
         } catch (err) {
             console.warn("Aviso Supabase:", err);
         }

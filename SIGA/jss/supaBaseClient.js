@@ -3,8 +3,7 @@
 // ===================================================
 
 const SUPABASE_URL = "https://ktpogfjwfusdizebatiz.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0cG9nZmp3ZnVzZGl6ZWJhdGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxNjU3ODEsImV4cCI6MjEwMTc0MTc4MX0.ztqlcViTRilORg6Lg0cXwO8sM5tdFkptx_xA0UdSrNU";
-
+const SUPABASE_KEY = "sb_publishable_DlMGRz8M7fu5a6brDZ5J7A__9DG2hdW";
 if (typeof supabase !== "undefined") {
     // Solo guardamos el cliente en supabaseClient para no romper la librería original
     window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);

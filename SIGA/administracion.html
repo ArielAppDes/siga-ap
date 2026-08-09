@@ -74,12 +74,12 @@
                     <div class="cabecera-admin">
                         <h2 id="tituloCatalogo">Programas</h2>
                         <div class="acciones">
-    <button class="btn nuevo" onclick="nuevoRegistro()">Agregar</button>
-    <button class="btn guardar" onclick="guardarRegistro()">Guardar</button>
-    <button class="btn editar" onclick="guardarRegistro()">Editar</button>
-    <button class="btn eliminar" onclick="eliminarRegistro()">Eliminar</button>
-    <button class="btn cancelar" onclick="cancelarEdicion()">Cancelar</button>
-</div>
+                            <button class="btn nuevo" onclick="nuevoRegistro()">Agregar</button>
+                            <button class="btn guardar" onclick="guardarRegistro()">Guardar</button>
+                            <button class="btn editar" onclick="guardarRegistro()">Editar</button>
+                            <button class="btn eliminar" onclick="eliminarRegistro()">Eliminar</button>
+                            <button class="btn cancelar" onclick="cancelarEdicion()">Cancelar</button>
+                        </div>
                     </div>
 
                     <div class="grilla-admin">
@@ -92,7 +92,7 @@
                                 </tr>
                             </thead>
                             <tbody id="tablaCatalogo">
-                                <!-- Se llena dinámicamente -->
+                                <!-- Se llena dinámicamente desde JS -->
                             </tbody>
                         </table>
                     </div>
@@ -100,34 +100,35 @@
                     <div class="formulario-admin">
                         <h3 id="tituloFormulario">Datos del Registro</h3>
                         
-                        <!-- Formulario Genérico (Programas e Instructores) -->
-                        <div id="form-generico">
+                        <!-- 1. FORMULARIO PROGRAMAS -->
+                        <div id="form-programas">
                             <div class="grupo">
-                                <label>Código</label>
-                                <input type="text" id="codigo" readonly placeholder="Autogenerado">
+                                <label>Código Programa</label>
+                                <input type="text" id="pro_codigo" readonly placeholder="Autogenerado (ej: PRO-2026-001)" style="background-color: #e9ecef;">
                             </div>
                             <div class="grupo">
-                                <label id="lblNombre">Nombre</label>
-                                <input type="text" id="nombre">
+                                <label>Nombre del Programa</label>
+                                <input type="text" id="pro_nombre" required>
                             </div>
                             <div class="grupo">
                                 <label>Descripción</label>
-                                <textarea id="descripcion"></textarea>
+                                <textarea id="pro_descripcion" rows="3"></textarea>
                             </div>
                             <div class="grupo">
                                 <label>Estado</label>
-                                <select id="estado">
+                                <select id="pro_estado">
                                     <option value="Activo">Activo</option>
                                     <option value="Inactivo">Inactivo</option>
+                                    <option value="Baja">Baja</option>
                                 </select>
                             </div>
                         </div>
 
-                        <!-- Formulario Específico (Cursos) -->
+                        <!-- 2. FORMULARIO CURSOS -->
                         <div id="form-cursos" style="display: none;">
                             <div class="grupo">
                                 <label>Código Curso</label>
-                                <input type="text" id="curso_codigo" readonly placeholder="Autogenerado al guardar (ej: CUR-001)" style="background-color: #e9ecef;">
+                                <input type="text" id="curso_codigo" readonly placeholder="Autogenerado (ej: CUR-001)" style="background-color: #e9ecef;">
                             </div>
                             <div class="grupo">
                                 <label>Nombre del Curso</label>
@@ -167,6 +168,55 @@
                                     <option value="Inactivo">Inactivo</option>
                                     <option value="Baja">Baja</option>
                                 </select>
+                            </div>
+                        </div>
+
+                        <!-- 3. FORMULARIO INSTRUCTORES -->
+                        <div id="form-instructores" style="display: none;">
+                            <div class="grupo">
+                                <label>Código Instructor</label>
+                                <input type="text" id="ins_codigo" readonly placeholder="Autogenerado (ej: INS-2026-001)" style="background-color: #e9ecef;">
+                            </div>
+                            <div style="display: flex; gap: 15px;">
+                                <div class="grupo" style="flex: 1;">
+                                    <label>Nombre</label>
+                                    <input type="text" id="ins_nombre" required>
+                                </div>
+                                <div class="grupo" style="flex: 1;">
+                                    <label>Apellido</label>
+                                    <input type="text" id="ins_apellido" required>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 15px;">
+                                <div class="grupo" style="flex: 1;">
+                                    <label>DNI / Identificación</label>
+                                    <input type="text" id="ins_dni">
+                                </div>
+                                <div class="grupo" style="flex: 1;">
+                                    <label>Email</label>
+                                    <input type="email" id="ins_email">
+                                </div>
+                            </div>
+                            <div class="grupo">
+                                <label>Especialidad / Temática</label>
+                                <input type="text" id="ins_especialidad" placeholder="Ej: Seguridad, Liderazgo, Sistemas">
+                            </div>
+                            <div style="display: flex; gap: 15px;">
+                                <div class="grupo" style="flex: 1;">
+                                    <label>Tipo de Instructor</label>
+                                    <select id="ins_tipo">
+                                        <option value="Interno">Interno</option>
+                                        <option value="Externo">Externo</option>
+                                    </select>
+                                </div>
+                                <div class="grupo" style="flex: 1;">
+                                    <label>Estado</label>
+                                    <select id="ins_estado">
+                                        <option value="Activo">Activo</option>
+                                        <option value="Inactivo">Inactivo</option>
+                                        <option value="Baja">Baja</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 

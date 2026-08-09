@@ -1,10 +1,10 @@
 // ===================================================
-// SIGA_APP - CAPACITACIONES (Versión con Diagnóstico y Errores)
+// SIGA_APP - CAPACITACIONES (Versión Supabase Integrada)
 // ===================================================
 
 document.addEventListener("DOMContentLoaded", async () => {
     await generarProximoIdCap();
-    cargarSelectoresDesdeJS();
+    await cargarSelectoresDesdeSupabase();
 });
 
 // 1. Generar ID_CAP automático desde Supabase (CAP-2026-001-1)
@@ -13,14 +13,14 @@ async function generarProximoIdCap() {
     const inputClase = document.getElementById("clase");
 
     try {
-        if (typeof supabase === "undefined") {
-            console.warn("Supabase no está inicializado en supabaseClient.js");
+        if (typeof window.supabaseClient === "undefined") {
+            console.warn("Supabase no está inicializado en supaBaseClient.js");
             if (inputIdCap) inputIdCap.value = "CAP-2026-001-1";
             if (inputClase) inputClase.value = "1";
             return;
         }
 
-        const { data, error } = await supabase
+        const { data, error } = await window.supabaseClient
             .from("capacitaciones")
             .select("id_cap, estado, clase_nro")
             .order("created_at", { ascending: false })
@@ -56,18 +56,40 @@ async function generarProximoIdCap() {
     }
 }
 
-// 2. Cargar listas desplegables desde data/*.js
-function cargarSelectoresDesdeJS() {
-    if (typeof cursosData !== "undefined") {
+// 2. Cargar desplegables dinámicamente desde Supabase (con fallback a data/*.js)
+async function cargarSelectoresDesdeSupabase() {
+    if (typeof window.supabaseClient === "undefined") {
+        cargarSelectoresDesdeJSFallback();
+        return;
+    }
+
+    // Cargar Cursos desde la tabla 'cursos' en Supabase
+    const { data: cursos } = await window.supabaseClient.from("cursos").select("nombre").eq("estado", "Activo");
+    if (cursos && cursos.length > 0) {
+        poblarSelect("curso", cursos.map(c => c.nombre));
+    } else if (typeof cursosData !== "undefined") {
         poblarSelect("curso", cursosData);
     }
+
+    // Cargar Instructores (Fallback a data/*.js si no existe la tabla aún)
     if (typeof instructoresData !== "undefined") {
         poblarSelect("instructor1", instructoresData);
         poblarSelect("instructor2", instructoresData);
     }
+
+    // Cargar Centros
     if (typeof centrosData !== "undefined") {
         poblarSelect("centro", centrosData);
     }
+}
+
+function cargarSelectoresDesdeJSFallback() {
+    if (typeof cursosData !== "undefined") poblarSelect("curso", cursosData);
+    if (typeof instructoresData !== "undefined") {
+        poblarSelect("instructor1", instructoresData);
+        poblarSelect("instructor2", instructoresData);
+    }
+    if (typeof centrosData !== "undefined") poblarSelect("centro", centrosData);
 }
 
 function poblarSelect(idElemento, listaDatos) {
@@ -114,7 +136,7 @@ function limpiarFormulario() {
     if (document.getElementById("estado")) document.getElementById("estado").value = "Programado";
 }
 
-// 5. BOTÓN GUARDAR (Programado / En curso)
+// 5. BOTÓN GUARDAR
 document.getElementById("btnGuardar")?.addEventListener("click", async (e) => {
     e.preventDefault();
 
@@ -131,12 +153,12 @@ document.getElementById("btnGuardar")?.addEventListener("click", async (e) => {
             return;
         }
 
-        if (typeof supabase === "undefined") {
-            alert("Atención: Supabase no está conectado correctamente. Revisa supabaseClient.js");
+        if (typeof window.supabaseClient === "undefined") {
+            alert("Atención: Supabase no está conectado correctamente. Revisá supaBaseClient.js");
             return;
         }
 
-        const { error } = await supabase.from("capacitaciones").insert([datos]);
+        const { error } = await window.supabaseClient.from("capacitaciones").insert([datos]);
 
         if (error) {
             alert("Error de Supabase al guardar: " + error.message);
@@ -151,7 +173,7 @@ document.getElementById("btnGuardar")?.addEventListener("click", async (e) => {
     }
 });
 
-// 6. BOTÓN REGISTRAR ASISTENTES (Pasa a asistentes.html)
+// 6. BOTÓN REGISTRAR ASISTENTES
 document.getElementById("btnAsistentes")?.addEventListener("click", async (e) => {
     e.preventDefault();
 
@@ -163,18 +185,15 @@ document.getElementById("btnAsistentes")?.addEventListener("click", async (e) =>
             return;
         }
 
-        // Guardar respaldo en navegador para asegurar el traspaso de pantalla
         localStorage.setItem("capacitacion_activa", JSON.stringify(datos));
 
-        // Intento de guardado en la base de datos Supabase
-        if (typeof supabase !== "undefined") {
-            const { error } = await supabase.from("capacitaciones").upsert([datos]);
+        if (typeof window.supabaseClient !== "undefined") {
+            const { error } = await window.supabaseClient.from("capacitaciones").upsert([datos]);
             if (error) {
                 console.warn("Aviso de Supabase:", error.message);
             }
         }
 
-        // Navegar a la pantalla de asistentes
         window.location.href = "asistentes.html";
     } catch (err) {
         alert("Ocurrió un error al intentar navegar: " + err.message);

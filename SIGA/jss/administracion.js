@@ -1,209 +1,221 @@
 // ===================================================
-// SIGA_APP - CAPACITACIONES (Versión Supabase Integrada)
+// SIGA_APP - LÓGICA DE ADMINISTRACIÓN Y CATÁLOGOS
 // ===================================================
 
-document.addEventListener("DOMContentLoaded", async () => {
-    await generarProximoIdCap();
-    await cargarSelectoresDesdeSupabase();
+let catalogoActual = 'programas';
+
+document.addEventListener('DOMContentLoaded', () => {
+    conectarEventosMenu();
+    cambiarCatalogo('programas');
 });
 
-// 1. Generar ID_CAP automático desde Supabase (CAP-2026-001-1)
-async function generarProximoIdCap() {
-    const inputIdCap = document.getElementById("idCap");
-    const inputClase = document.getElementById("clase");
+// 1. ASIGNAR EVENTOS CLIC DIRECTO POR ID
+function conectarEventosMenu() {
+    const mapaBotones = {
+        'btn-cat-programas': 'programas',
+        'btn-cat-cursos': 'cursos',
+        'btn-cat-instructores': 'instructores',
+        'btn-cat-dotacion': 'dotacion',
+        'btn-cat-bases': 'bases'
+    };
 
-    try {
-        if (typeof window.supabaseClient === "undefined") {
-            console.warn("Supabase no está inicializado en supaBaseClient.js");
-            if (inputIdCap) inputIdCap.value = "CAP-2026-001-1";
-            if (inputClase) inputClase.value = "1";
-            return;
+    Object.keys(mapaBotones).forEach(id => {
+        const elem = document.getElementById(id);
+        if (elem) {
+            elem.addEventListener('click', (e) => {
+                e.preventDefault();
+                cambiarCatalogo(mapaBotones[id]);
+            });
         }
-
-        const { data, error } = await window.supabaseClient
-            .from("capacitaciones")
-            .select("id_cap, estado, clase_nro")
-            .order("created_at", { ascending: false })
-            .limit(1);
-
-        if (error || !data || data.length === 0) {
-            if (inputIdCap) inputIdCap.value = "CAP-2026-001-1";
-            if (inputClase) inputClase.value = "1";
-            return;
-        }
-
-        const ultimaCap = data[0];
-        const partes = ultimaCap.id_cap ? ultimaCap.id_cap.split("-") : [];
-        let numCurso = parseInt(partes[2], 10) || 1;
-        let numClase = parseInt(partes[3] || ultimaCap.clase_nro || "1", 10);
-
-        if (ultimaCap.estado === "Finalizado") {
-            numCurso += 1;
-            numClase = 1;
-        } else {
-            numClase += 1;
-        }
-
-        const cursoPadded = String(numCurso).padStart(3, "0");
-        const nuevoId = `CAP-2026-${cursoPadded}-${numClase}`;
-
-        if (inputIdCap) inputIdCap.value = nuevoId;
-        if (inputClase) inputClase.value = numClase;
-    } catch (err) {
-        console.error("Error al calcular próximo ID_CAP:", err);
-        if (inputIdCap) inputIdCap.value = "CAP-2026-001-1";
-        if (inputClase) inputClase.value = "1";
-    }
+    });
 }
 
-// 2. Cargar desplegables dinámicamente desde Supabase (con fallback a data/*.js)
-async function cargarSelectoresDesdeSupabase() {
-    if (typeof window.supabaseClient === "undefined") {
-        cargarSelectoresDesdeJSFallback();
+// 2. CONMUTADOR DE PANELES Y FORMULARIOS
+async function cambiarCatalogo(catalogo) {
+    catalogoActual = catalogo;
+
+    // Resaltar opción en menú
+    document.querySelectorAll('.menu-admin ul li').forEach(li => li.classList.remove('activo'));
+    const btnActivo = document.getElementById(`btn-cat-${catalogo}`);
+    if (btnActivo) btnActivo.classList.add('activo');
+
+    // Elementos principales
+    const panelGenerico = document.getElementById('panelGenerico');
+    const panelDotacion = document.getElementById('panelDotacion');
+    const panelBases = document.getElementById('panelBases');
+
+    // Ocultar todos los paneles
+    if (panelGenerico) panelGenerico.style.display = 'none';
+    if (panelDotacion) panelDotacion.style.display = 'none';
+    if (panelBases) panelBases.style.display = 'none';
+
+    // Mostrar panel específico si es Dotación o Bases
+    if (catalogo === 'dotacion') {
+        if (panelDotacion) panelDotacion.style.display = 'block';
+        return;
+    }
+    if (catalogo === 'bases') {
+        if (panelBases) panelBases.style.display = 'block';
         return;
     }
 
-    // Cargar Cursos desde la tabla 'cursos' en Supabase
-    const { data: cursos } = await window.supabaseClient.from("cursos").select("nombre").eq("estado", "Activo");
-    if (cursos && cursos.length > 0) {
-        poblarSelect("curso", cursos.map(c => c.nombre));
-    } else if (typeof cursosData !== "undefined") {
-        poblarSelect("curso", cursosData);
+    // Si es Programas, Cursos o Instructores -> Mostrar Panel Genérico
+    if (panelGenerico) panelGenerico.style.display = 'block';
+
+    const tituloCatalogo = document.getElementById('tituloCatalogo');
+    const colNombre = document.getElementById('colNombre');
+    const lblNombre = document.getElementById('lblNombre');
+    const formGenerico = document.getElementById('form-generico');
+    const formCursos = document.getElementById('form-cursos');
+
+    if (catalogo === 'cursos') {
+        if (tituloCatalogo) tituloCatalogo.textContent = 'Cursos';
+        if (colNombre) colNombre.textContent = 'Curso';
+        if (formGenerico) formGenerico.style.display = 'none';
+        if (formCursos) formCursos.style.display = 'block';
+        await cargarCursos();
+    } else if (catalogo === 'programas') {
+        if (tituloCatalogo) tituloCatalogo.textContent = 'Programas';
+        if (colNombre) colNombre.textContent = 'Programa';
+        if (lblNombre) lblNombre.textContent = 'Programa';
+        if (formGenerico) formGenerico.style.display = 'block';
+        if (formCursos) formCursos.style.display = 'none';
+        await cargarProgramas();
+    } else if (catalogo === 'instructores') {
+        if (tituloCatalogo) tituloCatalogo.textContent = 'Instructores';
+        if (colNombre) colNombre.textContent = 'Instructor';
+        if (lblNombre) lblNombre.textContent = 'Instructor';
+        if (formGenerico) formGenerico.style.display = 'block';
+        if (formCursos) formCursos.style.display = 'none';
+        await cargarInstructores();
+    }
+}
+
+// 3. SUMA AUTOMÁTICA DE HORAS PARA CURSOS
+function sumarHorasCurso() {
+    const teoria = parseFloat(document.getElementById('curso_teoria')?.value) || 0;
+    const practica = parseFloat(document.getElementById('curso_practica')?.value) || 0;
+    const inputCarga = document.getElementById('curso_carga');
+    if (inputCarga) inputCarga.value = teoria + practica;
+}
+
+// 4. CONSULTAS Y CARGA DE DATOS DESDE SUPABASE
+async function cargarCursos() {
+    const tbody = document.getElementById('tablaCatalogo');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="3">Cargando cursos...</td></tr>';
+
+    if (typeof window.supabaseClient === 'undefined') {
+        tbody.innerHTML = '<tr><td colspan="3">Sin conexión a Supabase</td></tr>';
+        return;
     }
 
-    // Cargar Instructores (Fallback a data/*.js si no existe la tabla aún)
-    if (typeof instructoresData !== "undefined") {
-        poblarSelect("instructor1", instructoresData);
-        poblarSelect("instructor2", instructoresData);
+    const { data, error } = await window.supabaseClient
+        .from('cursos')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+    if (error) {
+        tbody.innerHTML = `<tr><td colspan="3">Error: ${error.message}</td></tr>`;
+        return;
     }
 
-    // Cargar Centros
-    if (typeof centrosData !== "undefined") {
-        poblarSelect("centro", centrosData);
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3">No hay cursos registrados.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = data.map(c => `
+        <tr>
+            <td><strong>${c.codigo_curso || '-'}</strong></td>
+            <td>${c.nombre}</td>
+            <td>${c.estado || 'Activo'}</td>
+        </tr>
+    `).join('');
+}
+
+async function cargarProgramas() {
+    const tbody = document.getElementById('tablaCatalogo');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="3">Cargando programas...</td></tr>';
+
+    if (typeof window.supabaseClient === 'undefined') return;
+
+    const { data, error } = await window.supabaseClient
+        .from('programas')
+        .select('*');
+
+    if (error || !data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3">No hay programas registrados.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = data.map(p => `
+        <tr>
+            <td><strong>${p.codigo || '-'}</strong></td>
+            <td>${p.nombre}</td>
+            <td>${p.estado || 'Activo'}</td>
+        </tr>
+    `).join('');
+}
+
+async function cargarInstructores() {
+    const tbody = document.getElementById('tablaCatalogo');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="3">No hay instructores registrados.</td></tr>';
+}
+
+// 5. LIMPIAR FORMULARIOS
+function nuevoRegistro() {
+    if (catalogoActual === 'cursos') {
+        document.getElementById('curso_codigo').value = '';
+        document.getElementById('curso_nombre').value = '';
+        document.getElementById('curso_teoria').value = 0;
+        document.getElementById('curso_practica').value = 0;
+        document.getElementById('curso_carga').value = 0;
+        document.getElementById('curso_contenido').value = '';
+        document.getElementById('curso_estado').value = 'Activo';
+    } else {
+        document.getElementById('codigo').value = '';
+        document.getElementById('nombre').value = '';
+        document.getElementById('descripcion').value = '';
+        document.getElementById('estado').value = 'Activo';
     }
 }
 
-function cargarSelectoresDesdeJSFallback() {
-    if (typeof cursosData !== "undefined") poblarSelect("curso", cursosData);
-    if (typeof instructoresData !== "undefined") {
-        poblarSelect("instructor1", instructoresData);
-        poblarSelect("instructor2", instructoresData);
-    }
-    if (typeof centrosData !== "undefined") poblarSelect("centro", centrosData);
-}
-
-function poblarSelect(idElemento, listaDatos) {
-    const select = document.getElementById(idElemento);
-    if (!select) return;
-
-    select.innerHTML = '<option value="">Seleccione...</option>';
-    listaDatos.forEach(item => {
-        const option = document.createElement("option");
-        const valor = typeof item === "object" ? (item.nombre || item.titulo || item.id) : item;
-        option.value = valor;
-        option.textContent = valor;
-        select.appendChild(option);
-    });
-}
-
-// 3. Capturar todos los datos del formulario
-function obtenerObjetoFormulario() {
-    return {
-        id_cap: document.getElementById("idCap")?.value || "",
-        programa: document.getElementById("programa")?.value || "",
-        nombre_curso: document.getElementById("curso")?.value || "",
-        clase_nro: document.getElementById("clase")?.value || "1",
-        estado: document.getElementById("estado")?.value || "Programado",
-        tema: document.getElementById("tema")?.value || "",
-        fecha: document.getElementById("fecha")?.value || null,
-        hs_inicio: document.getElementById("horaInicio")?.value || null,
-        hs_fin: document.getElementById("horaFin")?.value || null,
-        lugar: document.getElementById("lugar")?.value || "",
-        centro: document.getElementById("centro")?.value || "",
-        instructor_1: document.getElementById("instructor1")?.value || "",
-        instructor_2: document.getElementById("instructor2")?.value || "",
-        observaciones: document.getElementById("observaciones")?.value || ""
-    };
-}
-
-// 4. Limpiar formulario
-function limpiarFormulario() {
-    ["programa", "curso", "tema", "fecha", "horaInicio", "horaFin", "lugar", "centro", "instructor1", "instructor2", "observaciones"].forEach(id => {
-        const elem = document.getElementById(id);
-        if (elem) elem.value = "";
-    });
-    if (document.getElementById("clase")) document.getElementById("clase").value = "1";
-    if (document.getElementById("estado")) document.getElementById("estado").value = "Programado";
-}
-
-// 5. BOTÓN GUARDAR
-document.getElementById("btnGuardar")?.addEventListener("click", async (e) => {
-    e.preventDefault();
-
-    try {
-        const datos = obtenerObjetoFormulario();
-
-        if (datos.estado === "Finalizado") {
-            alert("No se puede guardar una capacitación finalizada sin asistentes. Utilizá el botón 'Registrar asistentes'.");
+// 6. GUARDAR CURSO EN SUPABASE
+async function guardarRegistro() {
+    if (catalogoActual === 'cursos') {
+        const nombre = document.getElementById('curso_nombre').value.trim();
+        if (!nombre) {
+            alert('Ingresá el nombre del curso antes de guardar.');
             return;
         }
 
-        if (!datos.nombre_curso || !datos.fecha) {
-            alert("Por favor completá al menos el Curso y la Fecha antes de guardar.");
-            return;
-        }
+        const nuevoCurso = {
+            nombre: nombre,
+            modalidad: document.getElementById('curso_modalidad').value,
+            hs_teoria: parseFloat(document.getElementById('curso_teoria').value) || 0,
+            hs_practica: parseFloat(document.getElementById('curso_practica').value) || 0,
+            carga_horaria: parseFloat(document.getElementById('curso_carga').value) || 0,
+            contenido: document.getElementById('curso_contenido').value,
+            estado: document.getElementById('curso_estado').value
+        };
 
-        if (typeof window.supabaseClient === "undefined") {
-            alert("Atención: Supabase no está conectado correctamente. Revisá supaBaseClient.js");
-            return;
-        }
-
-        const { error } = await window.supabaseClient.from("capacitaciones").insert([datos]);
+        const { data, error } = await window.supabaseClient
+            .from('cursos')
+            .insert([nuevoCurso])
+            .select();
 
         if (error) {
-            alert("Error de Supabase al guardar: " + error.message);
+            alert('Error al guardar el curso: ' + error.message);
         } else {
-            alert("Capacitación guardada con éxito en la nube. ID: " + datos.id_cap);
-            limpiarFormulario();
-            await generarProximoIdCap();
+            alert(`Curso guardado exitosamente. Código asignado: ${data[0].codigo_curso}`);
+            nuevoRegistro();
+            await cargarCursos();
         }
-    } catch (err) {
-        alert("Ocurrió un error al procesar el guardado: " + err.message);
-        console.error(err);
     }
-});
+}
 
-// 6. BOTÓN REGISTRAR ASISTENTES
-document.getElementById("btnAsistentes")?.addEventListener("click", async (e) => {
-    e.preventDefault();
-
-    try {
-        const datos = obtenerObjetoFormulario();
-
-        if (!datos.nombre_curso || !datos.fecha) {
-            alert("Por favor completá los datos básicos (Curso y Fecha) antes de continuar.");
-            return;
-        }
-
-        localStorage.setItem("capacitacion_activa", JSON.stringify(datos));
-
-        if (typeof window.supabaseClient !== "undefined") {
-            const { error } = await window.supabaseClient.from("capacitaciones").upsert([datos]);
-            if (error) {
-                console.warn("Aviso de Supabase:", error.message);
-            }
-        }
-
-        window.location.href = "asistentes.html";
-    } catch (err) {
-        alert("Ocurrió un error al intentar navegar: " + err.message);
-        console.error(err);
-    }
-});
-
-// 7. BOTÓN CANCELAR / VOLVER
-document.getElementById("btnVolver")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    limpiarFormulario();
-    window.location.href = "actividades.html";
-});
+function cancelarEdicion() {
+    nuevoRegistro();
+}

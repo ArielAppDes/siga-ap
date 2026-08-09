@@ -272,6 +272,35 @@
                     <div class="acciones">
                         <button class="btn guardar" id="btnGenerarBase">Generar Base</button>
                     </div>
+
+                    <!-- EXPORTAR BASES DE DATOS -->
+<div class="card-admin" style="margin-top: 20px;">
+    <h3>Exportar Bases de Datos (Backup)</h3>
+    <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">
+        Descargá la información almacenada en Supabase a un archivo Excel (.xlsx) en tu computadora.
+    </p>
+
+    <div class="grupo-input">
+        <label for="selectTablaExportar">Seleccionar Base a Exportar</label>
+        <select id="selectTablaExportar">
+            <option value="TODAS">📦 Backup Completo (Todas las tablas en un solo Excel)</option>
+            <option value="asistentes">👥 Dotación de Empleados / Asistentes</option>
+            <option value="capacitaciones">📚 Capacitaciones</option>
+            <option value="cursos">🎓 Cursos</option>
+            <option value="instructores">👨‍🏫 Instructores</option>
+            <option value="programas">📋 Programas</option>
+        </select>
+    </div>
+
+    <div class="grupo-input">
+        <label for="estadoExportacion">Estado de Exportación</label>
+        <input type="text" id="estadoExportacion" value="Listo para exportar..." readonly>
+    </div>
+
+    <button type="button" id="btnExportarBase" class="btn-importar" style="background-color: #2b7a78;" onclick="exportarBaseExcel()">
+        📥 Exportar a Excel (.xlsx)
+    </button>
+</div>
                 </div>
 
             </section>
@@ -282,7 +311,7 @@
 </div>
 
 <!-- CDN / LIBRERÍAS EXTERNAS -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <!-- BASES DE DATOS LOCALES / FALLBACK -->
@@ -295,15 +324,9 @@
 <script src="jss/supaBaseClient.js"></script>
 
 <!-- LÓGICA DE ADMINISTRACIÓN Y PANELES -->
-<script src="jss/administracion.js"></script>
+<script src="jss/administracion.js?v=2"></script>
 <script src="jss/dotacion.js"></script>
 <script src="jss/bases.js"></script>
-
-<!-- Librería para generar archivos Excel -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
-<!-- Tu script de administración -->
-<script src="jss/administracion.js?v=2"></script>
 
 </body>
 </html>

@@ -3,13 +3,14 @@
 // ===================================================
 
 let catalogoActual = 'programas';
+let idSeleccionado = null; // Guarda el ID del registro seleccionado
 
 document.addEventListener('DOMContentLoaded', () => {
     conectarEventosMenu();
     cambiarCatalogo('programas');
 });
 
-// 1. ASIGNAR EVENTOS CLIC DIRECTO POR ID
+// 1. ASIGNAR EVENTOS CLIC EN EL MENÚ
 function conectarEventosMenu() {
     const mapaBotones = {
         'btn-cat-programas': 'programas',
@@ -33,23 +34,20 @@ function conectarEventosMenu() {
 // 2. CONMUTADOR DE PANELES Y FORMULARIOS
 async function cambiarCatalogo(catalogo) {
     catalogoActual = catalogo;
+    idSeleccionado = null;
 
-    // Resaltar opción en menú
     document.querySelectorAll('.menu-admin ul li').forEach(li => li.classList.remove('activo'));
     const btnActivo = document.getElementById(`btn-cat-${catalogo}`);
     if (btnActivo) btnActivo.classList.add('activo');
 
-    // Elementos principales
     const panelGenerico = document.getElementById('panelGenerico');
     const panelDotacion = document.getElementById('panelDotacion');
     const panelBases = document.getElementById('panelBases');
 
-    // Ocultar todos los paneles
     if (panelGenerico) panelGenerico.style.display = 'none';
     if (panelDotacion) panelDotacion.style.display = 'none';
     if (panelBases) panelBases.style.display = 'none';
 
-    // Mostrar panel específico si es Dotación o Bases
     if (catalogo === 'dotacion') {
         if (panelDotacion) panelDotacion.style.display = 'block';
         return;
@@ -59,7 +57,6 @@ async function cambiarCatalogo(catalogo) {
         return;
     }
 
-    // Si es Programas, Cursos o Instructores -> Mostrar Panel Genérico
     if (panelGenerico) panelGenerico.style.display = 'block';
 
     const tituloCatalogo = document.getElementById('tituloCatalogo');
@@ -74,6 +71,7 @@ async function cambiarCatalogo(catalogo) {
         if (formGenerico) formGenerico.style.display = 'none';
         if (formCursos) formCursos.style.display = 'block';
         await cargarCursos();
+        await nuevoRegistro();
     } else if (catalogo === 'programas') {
         if (tituloCatalogo) tituloCatalogo.textContent = 'Programas';
         if (colNombre) colNombre.textContent = 'Programa';
@@ -99,34 +97,26 @@ function sumarHorasCurso() {
     if (inputCarga) inputCarga.value = teoria + practica;
 }
 
-// 4. CONSULTAS Y CARGA DE DATOS DESDE SUPABASE
+// 4. CONSULTA Y CARGA DE DATOS DESDE SUPABASE
 async function cargarCursos() {
     const tbody = document.getElementById('tablaCatalogo');
     if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="3">Cargando cursos...</td></tr>';
 
-    if (typeof window.supabaseClient === 'undefined') {
-        tbody.innerHTML = '<tr><td colspan="3">Sin conexión a Supabase</td></tr>';
-        return;
-    }
+    if (typeof window.supabaseClient === 'undefined') return;
 
     const { data, error } = await window.supabaseClient
         .from('cursos')
         .select('*')
         .order('created_at', { ascending: true });
 
-    if (error) {
-        tbody.innerHTML = `<tr><td colspan="3">Error: ${error.message}</td></tr>`;
-        return;
-    }
-
-    if (!data || data.length === 0) {
+    if (error || !data || data.length === 0) {
         tbody.innerHTML = '<tr><td colspan="3">No hay cursos registrados.</td></tr>';
         return;
     }
 
     tbody.innerHTML = data.map(c => `
-        <tr>
+        <tr onclick="seleccionarCurso('${c.id}')" style="cursor: pointer;" id="fila-${c.id}">
             <td><strong>${c.codigo_curso || '-'}</strong></td>
             <td>${c.nombre}</td>
             <td>${c.estado || 'Activo'}</td>
@@ -164,10 +154,65 @@ async function cargarInstructores() {
     if (tbody) tbody.innerHTML = '<tr><td colspan="3">No hay instructores registrados.</td></tr>';
 }
 
-// 5. LIMPIAR FORMULARIOS
-function nuevoRegistro() {
+// 5. PREDECIR PRÓXIMO CÓDIGO
+async function obtenerProximoCodigoCurso() {
+    if (typeof window.supabaseClient === 'undefined') return 'CUR-001';
+
+    const { data, error } = await window.supabaseClient
+        .from('cursos')
+        .select('codigo_curso')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+    if (error || !data || data.length === 0 || !data[0].codigo_curso) {
+        return 'CUR-001';
+    }
+
+    const ultimoCodigo = data[0].codigo_curso; // Ej: CUR-001
+    const partes = ultimoCodigo.split('-');
+    const num = parseInt(partes[1], 10) || 0;
+    const proximoNum = String(num + 1).padStart(3, '0');
+
+    return `CUR-${proximoNum}`;
+}
+
+// 6. SELECCIONAR FILA DE LA TABLA
+async function seleccionarCurso(id) {
+    idSeleccionado = id;
+
+    // Resaltar fila seleccionada en CSS
+    document.querySelectorAll('#tablaCatalogo tr').forEach(tr => tr.style.backgroundColor = '');
+    const fila = document.getElementById(`fila-${id}`);
+    if (fila) fila.style.backgroundColor = '#d1e7dd';
+
+    // Obtener datos del curso
+    const { data, error } = await window.supabaseClient
+        .from('cursos')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (error || !data) return;
+
+    // Cargar en el formulario
+    document.getElementById('curso_codigo').value = data.codigo_curso;
+    document.getElementById('curso_nombre').value = data.nombre;
+    document.getElementById('curso_modalidad').value = data.modalidad || 'Presencial';
+    document.getElementById('curso_teoria').value = data.hs_teoria || 0;
+    document.getElementById('curso_practica').value = data.hs_practica || 0;
+    document.getElementById('curso_carga').value = data.carga_horaria || 0;
+    document.getElementById('curso_contenido').value = data.contenido || '';
+    document.getElementById('curso_estado').value = data.estado || 'Activo';
+}
+
+// 7. BOTÓN AGREGAR (NUEVO REGISTRO)
+async function nuevoRegistro() {
+    idSeleccionado = null;
+    document.querySelectorAll('#tablaCatalogo tr').forEach(tr => tr.style.backgroundColor = '');
+
     if (catalogoActual === 'cursos') {
-        document.getElementById('curso_codigo').value = '';
+        const proximoCodigo = await obtenerProximoCodigoCurso();
+        document.getElementById('curso_codigo').value = proximoCodigo;
         document.getElementById('curso_nombre').value = '';
         document.getElementById('curso_teoria').value = 0;
         document.getElementById('curso_practica').value = 0;
@@ -182,7 +227,7 @@ function nuevoRegistro() {
     }
 }
 
-// 6. GUARDAR CURSO EN SUPABASE
+// 8. BOTÓN GUARDAR (CREAR O EDITAR)
 async function guardarRegistro() {
     if (catalogoActual === 'cursos') {
         const nombre = document.getElementById('curso_nombre').value.trim();
@@ -191,7 +236,7 @@ async function guardarRegistro() {
             return;
         }
 
-        const nuevoCurso = {
+        const cursoPayload = {
             nombre: nombre,
             modalidad: document.getElementById('curso_modalidad').value,
             hs_teoria: parseFloat(document.getElementById('curso_teoria').value) || 0,
@@ -201,18 +246,59 @@ async function guardarRegistro() {
             estado: document.getElementById('curso_estado').value
         };
 
-        const { data, error } = await window.supabaseClient
-            .from('cursos')
-            .insert([nuevoCurso])
-            .select();
+        if (idSeleccionado) {
+            // EDITAR REGISTRO EXISTENTE
+            const { error } = await window.supabaseClient
+                .from('cursos')
+                .update(cursoPayload)
+                .eq('id', idSeleccionado);
 
-        if (error) {
-            alert('Error al guardar el curso: ' + error.message);
+            if (error) {
+                alert('Error al actualizar el curso: ' + error.message);
+            } else {
+                alert('Curso actualizado correctamente.');
+                await cargarCursos();
+                await nuevoRegistro();
+            }
         } else {
-            alert(`Curso guardado exitosamente. Código asignado: ${data[0].codigo_curso}`);
-            nuevoRegistro();
-            await cargarCursos();
+            // CREAR NUEVO REGISTRO
+            const { data, error } = await window.supabaseClient
+                .from('cursos')
+                .insert([cursoPayload])
+                .select();
+
+            if (error) {
+                alert('Error al guardar el curso: ' + error.message);
+            } else {
+                alert(`Curso guardado exitosamente con código: ${data[0].codigo_curso}`);
+                await cargarCursos();
+                await nuevoRegistro();
+            }
         }
+    }
+}
+
+// 9. BOTÓN ELIMINAR
+async function eliminarRegistro() {
+    if (!idSeleccionado) {
+        alert('Por favor, seleccioná un curso de la lista para eliminar.');
+        return;
+    }
+
+    const confirmar = confirm('¿Estás seguro de que querés eliminar este curso?');
+    if (!confirmar) return;
+
+    const { error } = await window.supabaseClient
+        .from('cursos')
+        .delete()
+        .eq('id', idSeleccionado);
+
+    if (error) {
+        alert('Error al eliminar: ' + error.message);
+    } else {
+        alert('Curso eliminado correctamente.');
+        await cargarCursos();
+        await nuevoRegistro();
     }
 }
 

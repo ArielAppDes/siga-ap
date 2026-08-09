@@ -4,18 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dotación | SIGA-AP</title>
+    <title>Registro de Asistentes | SIGA-AP</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/administracion.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+    <link rel="stylesheet" href="css/actividad.css">
 </head>
 
 <body>
 
 <div class="contenedor">
 
-    <!---------------- MENÚ ---------------->
+    <!---------------- MENÚ LATERAL ---------------->
     <aside class="sidebar">
         <div class="logo">
             <h1>SIGA</h1>
@@ -23,11 +22,12 @@
         </div>
         <nav>
             <a href="dashboard.html">🏠 Inicio</a>
-            <a href="actividades.html">🎓 Actividades</a>
+            <a href="actividades.html" class="activo">🎓 Actividades</a>
+            <a href="#">📅 Agenda</a>
+            <a href="#">👥 Asistentes</a>
             <a href="#">🏆 Certificaciones</a>
-            <a href="#">📅 Calendario</a>
             <a href="#">📊 Reportes</a>
-            <a href="administracion.html" class="activo">⚙ Administración</a>
+            <a href="administracion.html">⚙ Administración</a>
             <a href="#">❓ Ayuda</a>
             <a href="index.html">🚪 Salir</a>
         </nav>
@@ -36,103 +36,98 @@
     <!---------------- CONTENIDO ---------------->
     <main class="contenido">
 
-        <header>
-            <div>
-                <h2>Sistema de Gestión Académica</h2>
-                <p class="subtitulo">Dotación de personal</p>
+        <!---------------- TARJETA 1: RESUMEN CAPACITACIÓN ---------------->
+        <section class="formulario" style="margin-bottom: 20px;">
+            <div class="grupo">
+                <label>ID_CAP</label>
+                <input type="text" id="resumenIdCap" readonly placeholder="CAP-2026-102-1">
             </div>
-            <div id="badgeCapacitacion"></div>
-        </header>
 
-        <section class="panel-admin">
-            <section class="contenido-admin">
+            <div class="grupo ancho2">
+                <label>Curso</label>
+                <input type="text" id="resumenCurso" readonly placeholder="Curso seleccionado">
+            </div>
 
-                <div class="cabecera-admin">
-                    <h2>Dotación de Personal</h2>
-                </div>
+            <div class="grupo">
+                <label>Clase Nº</label>
+                <input type="text" id="resumenClase" readonly placeholder="1">
+            </div>
 
-                <div class="formulario-admin">
+            <div class="grupo">
+                <label>Fecha</label>
+                <input type="text" id="resumenFecha" readonly placeholder="AAAA-MM-DD">
+            </div>
 
-                    <h3>Importar Nómina</h3>
-                    <div class="grupo">
-                        <label>Archivo Excel</label>
-                        <input type="file" id="archivoExcel" accept=".xlsx,.xls">
-                    </div>
-
-                    <hr>
-
-                    <h3>Buscar Empleado</h3>
-
-                    <div class="grupo">
-                        <label>Legajo</label>
-                        <input type="text" id="legajo" placeholder="Ingrese legajo (ej: 01001)...">
-                    </div>
-
-                    <div class="grupo">
-                        <label>Apellido</label>
-                        <input type="text" id="apellido" readonly>
-                    </div>
-
-                    <div class="grupo">
-                        <label>Nombre</label>
-                        <input type="text" id="nombre" readonly>
-                    </div>
-
-                    <div class="grupo">
-                        <label>Puesto</label>
-                        <input type="text" id="puesto" readonly>
-                    </div>
-
-                    <div class="grupo">
-                        <label>Categoría</label>
-                        <input type="text" id="categoria" readonly>
-                    </div>
-
-                    <div class="grupo">
-                        <label>Dirección</label>
-                        <input type="text" id="direccion" readonly>
-                    </div>
-
-                    <div class="grupo">
-                        <label>Gerencia</label>
-                        <input type="text" id="gerencia" readonly>
-                    </div>
-
-                    <div class="grupo">
-                        <label>Jefatura</label>
-                        <input type="text" id="jefatura" readonly>
-                    </div>
-
-                    <div class="grupo">
-                        <label>Manager</label>
-                        <input type="text" id="manager" readonly>
-                    </div>
-
-                    <div class="grupo">
-                        <label>Email</label>
-                        <input type="text" id="email" readonly>
-                    </div>
-
-                </div>
-
-                <div class="acciones" style="margin-top:20px; display:flex; gap:10px;">
-                    <button id="btnAgregarAsistente" class="guardar" style="background:#27ae60; color:#fff; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-weight:bold;">
-                        + Agregar a Capacitación
-                    </button>
-                    <button id="btnVolver" class="cancelar" style="background:#7f8c8d; color:#fff; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">
-                        Volver
-                    </button>
-                </div>
-
-            </section>
+            <div class="grupo largura">
+                <label>Instructor</label>
+                <input type="text" id="resumenInstructor" readonly placeholder="Instructor asignado">
+            </div>
         </section>
+
+        <!---------------- TARJETA 2: AGREGAR PARTICIPANTE ---------------->
+        <section class="formulario" style="margin-bottom: 20px; display: flex; flex-direction: column; align-items: center;">
+            <div style="display: flex; gap: 15px; width: 100%;">
+                <div class="grupo">
+                    <label>Legajo</label>
+                    <input type="text" id="inputLegajo" placeholder="Ej: 01001">
+                </div>
+
+                <div class="grupo">
+                    <label>Calificación</label>
+                    <input type="text" id="inputCalificacion" placeholder="1-10">
+                </div>
+
+                <div class="grupo largura">
+                    <label>Observaciones</label>
+                    <input type="text" id="inputObservaciones" placeholder="Ingrese observaciones...">
+                </div>
+            </div>
+
+            <button id="btnAgregarParticipante" style="margin-top: 15px; background: #10b981; color: white; border: none; padding: 10px 25px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                Agregar participante
+            </button>
+        </section>
+
+        <!---------------- TARJETA 3: GRILLA DE ASISTENTES ---------------->
+        <section class="formulario" style="margin-bottom: 25px; padding: 0; overflow: hidden;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="background: #1e293b; color: white;">
+                        <th style="padding: 12px 15px;">Legajo</th>
+                        <th style="padding: 12px 15px;">Apellido</th>
+                        <th style="padding: 12px 15px;">Nombre</th>
+                        <th style="padding: 12px 15px;">Calificación</th>
+                        <th style="padding: 12px 15px;">Observaciones</th>
+                        <th style="padding: 12px 15px;">Firma</th>
+                        <th style="padding: 12px 15px; text-align: center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyAsistentes">
+                    <!-- Filas dinámicas -->
+                </tbody>
+            </table>
+        </section>
+
+        <!---------------- BOTONES INFERIORES ---------------->
+        <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 30px;">
+            <button id="btnImprimir" style="background: #2563eb; color: white; border: none; padding: 10px 25px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                Imprimir
+            </button>
+            <button id="btnCerrarRegistro" style="background: #10b981; color: white; border: none; padding: 10px 25px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                Cerrar registro
+            </button>
+            <button id="btnCancelar" style="background: #e2e8f0; color: #334155; border: none; padding: 10px 25px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                Cancelar
+            </button>
+        </div>
 
     </main>
 
 </div>
 
-<!-- LIBRERÍAS Y BASES LOCALES -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<!-- LIBRERÍAS Y DATOS LOCALES -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="jss/supaBaseClient.js"></script>
 <script src="data/empleados.js"></script>
 <script src="jss/dotacion.js"></script>
 

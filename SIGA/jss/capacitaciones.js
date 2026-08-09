@@ -138,7 +138,7 @@ async function cargarCapacitacionActiva() {
         }
     }
 
-    // Si no hay datos activos, generar el siguiente ID según Supabase
+    // Si no hay datos activos en memoria local, generar un nuevo ID correlativo
     if (inputIdCap) {
         const nuevoId = await generarNuevoIdCapSupabase();
         inputIdCap.value = nuevoId;
@@ -156,15 +156,15 @@ async function generarNuevoIdCapSupabase() {
     const db = obtenerDB();
     const anioActual = new Date().getFullYear();
 
-    if (!db) return `CAP-${anioActual}-001-01`;
+    if (!db) return `CAP-${anioActual}-001-1`;
 
     try {
         const { data, error } = await db
             .from("capacitaciones")
-            .select("id_cap");
+            .select("id_cap, id_cap_padre");
 
         if (error || !data || data.length === 0) {
-            return `CAP-${anioActual}-001-01`;
+            return `CAP-${anioActual}-001-1`;
         }
 
         let maxNum = 0;
@@ -179,11 +179,11 @@ async function generarNuevoIdCapSupabase() {
         });
 
         const sig = String(maxNum + 1).padStart(3, "0");
-        return `CAP-${anioActual}-${sig}-01`;
+        return `CAP-${anioActual}-${sig}-1`;
 
     } catch (e) {
         console.error("Error al obtener ID de Supabase:", e);
-        return `CAP-${anioActual}-001-01`;
+        return `CAP-${anioActual}-001-1`;
     }
 }
 
@@ -202,6 +202,7 @@ function configurarBotonesAccion() {
     if (btnVolver) {
         btnVolver.onclick = (e) => {
             e.preventDefault();
+            localStorage.removeItem("capacitacion_activa");
             window.location.href = "actividades.html";
         };
     }
@@ -217,7 +218,7 @@ async function guardarCapacitacion(e) {
     }
 
     const idCapInput = document.getElementById('idCap');
-    const id_cap = idCapInput ? idCapInput.value : '';
+    const id_cap = idCapInput ? idCapInput.value.trim() : '';
     
     if (!id_cap) {
         alert("El código ID_CAP no es válido.");
@@ -227,13 +228,20 @@ async function guardarCapacitacion(e) {
     const selectCurso = document.getElementById('curso');
     const nombre_curso = selectCurso ? selectCurso.value : '';
     const codigo_curso = selectCurso?.options[selectCurso.selectedIndex]?.dataset?.codigo || '';
+    const claseVal = document.getElementById('clase')?.value || '1';
+
+    // Descomponer id_cap para id_cap_padre
+    const partesId = id_cap.split('-');
+    const id_cap_padre = partesId.length >= 3 ? `${partesId[0]}-${partesId[1]}-${partesId[2]}` : id_cap;
+    const clase_nro = parseInt(claseVal, 10) || 1;
 
     const payload = {
         id_cap: id_cap,
+        id_cap_padre: id_cap_padre,
+        clase_nro: clase_nro,
         programa: document.getElementById('programa')?.value || '',
         codigo_curso: codigo_curso,
         nombre_curso: nombre_curso,
-        clase_nro: document.getElementById('clase')?.value || '1',
         estado: document.getElementById('estado')?.value || 'Programado',
         fecha: document.getElementById('fecha')?.value || null,
         hs_inicio: document.getElementById('horaInicio')?.value || null,
@@ -253,12 +261,15 @@ async function guardarCapacitacion(e) {
 
         if (error) throw error;
 
-        localStorage.setItem("capacitacion_activa", JSON.stringify(payload));
+        // Limpiar la referencia activa de la sesión
+        localStorage.removeItem("capacitacion_activa");
+        
         alert(`Capacitación ${id_cap} guardada exitosamente.`);
+        window.location.href = "actividades.html";
 
     } catch (err) {
         console.error("Error guardando en Supabase:", err);
-        alert("Error al guardar: " + err.message);
+        alert("Error al guardar en Supabase: " + err.message);
     }
 }
 

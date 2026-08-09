@@ -1,5 +1,5 @@
 // ===================================================
-// SIGA_APP - CAPACITACIONES (Edición y Clases Activas)
+// SIGA_APP - CAPACITACIONES (Sincronizado con Supabase)
 // ===================================================
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -8,11 +8,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     const dataGuardada = localStorage.getItem("capacitacion_activa");
 
     if (dataGuardada) {
-        // Cargar datos existentes si venimos de Actividades
+        // Cargar datos existentes si venimos de Actividades o Asistentes
         const cap = JSON.parse(dataGuardada);
         poblarFormulario(cap);
     } else {
-        // Generar nuevo ID solo si es una capacitación desde cero
+        // Generar nuevo ID solo si es una capacitación creada desde cero
         await generarProximoIdCap();
     }
 
@@ -44,21 +44,10 @@ function getValor(id) {
     return (val === "Seleccione...") ? "" : val;
 }
 
+// Extrae los datos limpios alineados exactamente con la tabla public.capacitaciones
 function obtenerObjetoFormulario() {
-    const idCapVal = getValor("idCap");
-    
-    // Extraer id_cap_padre (ejemplo: 'CAP-2026-001' a partir de 'CAP-2026-001-2')
-    let idCapPadreVal = idCapVal;
-    if (idCapVal) {
-        const partes = idCapVal.split("-");
-        if (partes.length >= 3) {
-            idCapPadreVal = `${partes[0]}-${partes[1]}-${partes[2]}`;
-        }
-    }
-
     return {
-        id_cap: idCapVal,
-        id_cap_padre: idCapPadreVal,
+        id_cap: getValor("idCap"),
         programa: getValor("programa"),
         nombre_curso: getValor("curso"),
         clase_nro: parseInt(getValor("clase") || "1", 10),
@@ -75,23 +64,42 @@ function obtenerObjetoFormulario() {
     };
 }
 
+// Evalúa el estado para habilitar o bloquear el botón de Asistentes
 function evaluarEstadoFormulario() {
     const estado = getValor("estado");
     const btnAsistentes = document.getElementById("btnAsistentes");
 
     if (btnAsistentes) {
         if (estado === "Programado") {
-            btnAsistentes.style.opacity = "0.5";
+            btnAsistentes.style.opacity = "0.4";
+            btnAsistentes.style.cursor = "not-allowed";
             btnAsistentes.title = "Las capacitaciones programadas no permiten registrar asistentes.";
         } else {
             btnAsistentes.style.opacity = "1";
+            btnAsistentes.style.cursor = "pointer";
             btnAsistentes.title = "";
         }
     }
 }
 
+// Evento cambio de estado
 document.getElementById("estado")?.addEventListener("change", evaluarEstadoFormulario);
 
+// Actualizar idCap cuando el usuario cambia manualmente el campo 'Clase Nº'
+document.getElementById("clase")?.addEventListener("input", () => {
+    const inputIdCap = document.getElementById("idCap");
+    const numClase = getValor("clase") || "1";
+    
+    if (inputIdCap && inputIdCap.value) {
+        const partes = inputIdCap.value.split("-");
+        // Reemplazar o añadir la clase al final (CAP-2026-001 -> CAP-2026-001-2)
+        if (partes.length >= 3) {
+            inputIdCap.value = `${partes[0]}-${partes[1]}-${partes[2]}-${numClase}`;
+        }
+    }
+});
+
+// Generación automática del ID secuencial correlativo
 async function generarProximoIdCap() {
     const inputIdCap = document.getElementById("idCap");
     const inputClase = document.getElementById("clase");
@@ -182,27 +190,15 @@ document.getElementById("btnGuardar")?.addEventListener("click", async (e) => {
 
     const db = window.supabaseClient;
     if (db) {
-        // 1. Guardar o actualizar la clase actual
+        // Guardar o actualizar la capacitación en la base de datos
         const { error } = await db.from("capacitaciones").upsert([datos]);
         if (error) {
-            alert("Error de Supabase: " + error.message);
+            alert("Error al guardar en Supabase: " + error.message);
             return;
-        }
-
-        // 2. Si el estado es Finalizada, actualizar todas las clases asociadas al mismo id_cap_padre
-        if (datos.estado === "Finalizada" && datos.id_cap_padre) {
-            const { error: errCascade } = await db
-                .from("capacitaciones")
-                .update({ estado: "Finalizada" })
-                .eq("id_cap_padre", datos.id_cap_padre);
-
-            if (errCascade) {
-                console.warn("No se pudieron actualizar las clases anteriores:", errCascade.message);
-            }
         }
     }
 
-    alert(`Capacitación ${datos.id_cap} guardada en estado '${datos.estado}'.`);
+    alert(`Capacitación ${datos.id_cap} guardada con exito en estado '${datos.estado}'.`);
     limpiarFormulario();
     window.location.href = "actividades.html";
 });
@@ -222,19 +218,13 @@ document.getElementById("btnAsistentes")?.addEventListener("click", async (e) =>
         return;
     }
 
+    // Guardar borrador en el almacenamiento local para sincronizar con la pantalla de asistentes
     localStorage.setItem("capacitacion_activa", JSON.stringify(datos));
 
     const db = window.supabaseClient;
     if (db) {
         try {
             await db.from("capacitaciones").upsert([datos]);
-            
-            // Sincronizar estado en cascada si pasa a Finalizada
-            if (datos.estado === "Finalizada" && datos.id_cap_padre) {
-                await db.from("capacitaciones")
-                    .update({ estado: "Finalizada" })
-                    .eq("id_cap_padre", datos.id_cap_padre);
-            }
         } catch (err) {
             console.warn("Aviso Supabase:", err);
         }
@@ -243,6 +233,7 @@ document.getElementById("btnAsistentes")?.addEventListener("click", async (e) =>
     window.location.href = "asistentes.html";
 });
 
+// Botón Volver
 document.getElementById("btnVolver")?.addEventListener("click", (e) => {
     e.preventDefault();
     limpiarFormulario();

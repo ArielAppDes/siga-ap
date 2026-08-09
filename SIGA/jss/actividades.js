@@ -5,6 +5,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     inicializarTarjetas();
     configurarEventosModal();
+    verificarCampoIdCapLocal();
 });
 
 function obtenerDB() {
@@ -13,8 +14,20 @@ function obtenerDB() {
 
 function inicializarTarjetas() {
     // Tarjeta Nueva Capacitación
-    document.getElementById("cardNueva")?.addEventListener("click", () => {
+    document.getElementById("cardNueva")?.addEventListener("click", async () => {
         localStorage.removeItem("capacitacion_activa");
+
+        // Obtener el siguiente correlativo directamente desde Supabase
+        const nuevoIdCap = await obtenerSiguienteIdCap();
+
+        // Guardar plantilla activa con el nuevo ID_CAP asignado
+        const nuevaCap = {
+            id_cap: nuevoIdCap,
+            clase_nro: "1",
+            estado: "Programado"
+        };
+
+        localStorage.setItem("capacitacion_activa", JSON.stringify(nuevaCap));
         window.location.href = "capacitaciones.html";
     });
 
@@ -32,6 +45,57 @@ function inicializarTarjetas() {
     document.getElementById("cardFinalizadas")?.addEventListener("click", () => {
         abrirModalPorEstado("Finalizado", "Historial de Capacitaciones Finalizadas");
     });
+}
+
+// Consulta Supabase para obtener el mayor ID_CAP e incrementar el correlativo
+async function obtenerSiguienteIdCap() {
+    const db = obtenerDB();
+    const anioActual = new Date().getFullYear();
+
+    if (!db) return `CAP-${anioActual}-001-01`;
+
+    try {
+        const { data, error } = await db
+            .from("capacitaciones")
+            .select("id_cap");
+
+        if (error || !data || data.length === 0) {
+            return `CAP-${anioActual}-001-01`;
+        }
+
+        let maxNumero = 0;
+
+        data.forEach(item => {
+            if (item.id_cap) {
+                const partes = item.id_cap.split("-");
+                if (partes.length >= 3) {
+                    const num = parseInt(partes[2], 10);
+                    if (!isNaN(num) && num > maxNumero) {
+                        maxNumero = num;
+                    }
+                }
+            }
+        });
+
+        const siguienteNumero = String(maxNumero + 1).padStart(3, "0");
+        return `CAP-${anioActual}-${siguienteNumero}-01`;
+
+    } catch (err) {
+        console.error("Error al consultar último ID_CAP en Supabase:", err);
+        return `CAP-${anioActual}-001-01`;
+    }
+}
+
+// Asigna el ID_CAP directamente si se encuentra presente en la vista actual
+async function verificarCampoIdCapLocal() {
+    const inputIdCap = document.getElementById("id_cap") || document.querySelector("input[placeholder*='CAP-']");
+    if (inputIdCap && (!inputIdCap.value || inputIdCap.value.endsWith("-001-01"))) {
+        const capActiva = localStorage.getItem("capacitacion_activa");
+        if (!capActiva) {
+            const nuevoId = await obtenerSiguienteIdCap();
+            inputIdCap.value = nuevoId;
+        }
+    }
 }
 
 function configurarEventosModal() {
@@ -128,7 +192,7 @@ window.editarProgramada = function(idCap) {
     window.location.href = "capacitaciones.html";
 };
 
-// 2. Continuar Clase "En curso" (CAP-2026-002-1 -> CAP-2026-002-2)
+// 2. Continuar Clase "En curso" (CAP-2026-002-01 -> CAP-2026-002-02)
 window.cargarSiguienteClase = function(idCap) {
     const cap = window.listaCapacitacionesTemp?.find(c => c.id_cap === idCap);
     if (!cap) return;
@@ -136,12 +200,13 @@ window.cargarSiguienteClase = function(idCap) {
     let claseActual = parseInt(cap.clase_nro || "1", 10);
     let siguienteClase = claseActual + 1;
 
-    // Construir nuevo ID manteniendo la raíz del curso (CAP-2026-002)
     const partes = idCap.split("-");
+    const numClaseFormateado = String(siguienteClase).padStart(2, "0");
+
     if (partes.length >= 4) {
-        partes[3] = siguienteClase;
+        partes[3] = numClaseFormateado;
     } else if (partes.length === 3) {
-        partes.push(siguienteClase);
+        partes.push(numClaseFormateado);
     }
     const nuevoIdCap = partes.join("-");
 
@@ -149,7 +214,7 @@ window.cargarSiguienteClase = function(idCap) {
         ...cap,
         id_cap: nuevoIdCap,
         clase_nro: String(siguienteClase),
-        fecha: new Date().toISOString().split("T")[0] // Fecha por defecto para la nueva clase
+        fecha: new Date().toISOString().split("T")[0]
     };
 
     localStorage.setItem("capacitacion_activa", JSON.stringify(nuevaClaseCap));

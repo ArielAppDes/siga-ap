@@ -2,57 +2,31 @@
 <html lang="es">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGA-AP</title>
 
-<title>SIGA-AP</title>
-
-<link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/login.css">
-
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/login.css">
 </head>
-
-
-
-<script>
-
-leerCursos();
-
-</script>
 
 <body>
 
-<div class="login-container">
+    <div class="login-container">
+        <div class="login-card">
+            <div class="logo">SIGA</div>
+            <h1>Empresa.S.A</h1>
+            <p>Carga de Registros</p>
 
-<div class="login-card">
+            <input type="text" placeholder="Ingrese usuario" id="usuario">
+            <input type="password" placeholder="Ingrese clave" id="clave">
 
-<div class="logo">SIGA</div>
+            <button id="btnIngresar">Ingresar</button>
+        </div>
+    </div>
 
-<h1>Empresa.S.A</h1>
-
-<p>Carga de Registros</p>
-
-<input
-type="text"
-placeholder="Ingrese usuario"
-id="usuario">
-
-<input
-type="password"
-placeholder="Ingrese clave"
-id="clave">
-
-<button id="btnIngresar">
-Ingresar
-</button>
-
-</div>
-
-</div>
-
-
-<script src="jss/login.js"></script>
+    <script src="jss/login.js"></script>
 
 </body>
 

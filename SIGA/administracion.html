@@ -16,7 +16,7 @@
 
 <div class="contenedor">
 
-    <!-- MENÚ -->
+    <!-- MENÚ LATERAL -->
     <aside class="sidebar">
         <div class="logo">
             <h1>SIGA</h1>
@@ -35,7 +35,7 @@
         </nav>
     </aside>
 
-    <!-- CONTENIDO -->
+    <!-- CONTENIDO PRINCIPAL -->
     <main class="contenido">
 
         <header>
@@ -49,19 +49,19 @@
             <aside class="menu-admin">
                 <h3>Catálogos</h3>
                 <ul>
-                    <li id="btn-cat-programas" class="activo" onclick="cambiarCatalogo('programas')">
+                    <li id="btn-cat-programas" class="activo">
                         <span class="material-symbols-outlined">folder_open</span> Programas
                     </li>
-                    <li id="btn-cat-cursos" onclick="cambiarCatalogo('cursos')">
+                    <li id="btn-cat-cursos">
                         <span class="material-symbols-outlined">menu_book</span> Cursos
                     </li>
-                    <li id="btn-cat-instructores" onclick="cambiarCatalogo('instructores')">
+                    <li id="btn-cat-instructores">
                         <span class="material-symbols-outlined">school</span> Instructores
                     </li>
-                    <li id="btn-cat-dotacion" onclick="cambiarCatalogo('dotacion')">
+                    <li id="btn-cat-dotacion">
                         <span class="material-symbols-outlined">badge</span> Dotación
                     </li>
-                    <li id="btn-cat-bases" onclick="cambiarCatalogo('bases')">
+                    <li id="btn-cat-bases">
                         <span class="material-symbols-outlined">database</span> Bases
                     </li>
                 </ul>
@@ -92,7 +92,7 @@
                                 </tr>
                             </thead>
                             <tbody id="tablaCatalogo">
-                                <!-- Contenido dinámico desde Supabase -->
+                                <!-- Se llena dinámicamente -->
                             </tbody>
                         </table>
                     </div>
@@ -100,7 +100,7 @@
                     <div class="formulario-admin">
                         <h3 id="tituloFormulario">Datos del Registro</h3>
                         
-                        <!-- Formulario para Programas e Instructores -->
+                        <!-- Formulario Genérico (Programas e Instructores) -->
                         <div id="form-generico">
                             <div class="grupo">
                                 <label>Código</label>
@@ -123,7 +123,7 @@
                             </div>
                         </div>
 
-                        <!-- Formulario Específico de Cursos -->
+                        <!-- Formulario Específico (Cursos) -->
                         <div id="form-cursos" style="display: none;">
                             <div class="grupo">
                                 <label>Código Curso</label>
@@ -235,10 +235,16 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<!-- BASES DE DATOS LOCALES / FALLBACK -->
+<script src="data/programas.js"></script>
+<script src="data/cursos.js"></script>
+<script src="data/instructores.js"></script>
+<script src="data/empleados.js"></script>
+
 <!-- CONEXIÓN SUPABASE -->
 <script src="jss/supaBaseClient.js"></script>
 
-<!-- LÓGICA DE ADMINISTRACIÓN -->
+<!-- LÓGICA DE ADMINISTRACIÓN Y PANELES -->
 <script src="jss/administracion.js"></script>
 <script src="jss/dotacion.js"></script>
 <script src="jss/bases.js"></script>

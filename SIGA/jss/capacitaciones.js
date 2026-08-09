@@ -3,7 +3,7 @@
 // ===================================================
 
 document.addEventListener("DOMContentLoaded", async () => {
-    cargarSelectoresDesdeJS();
+    await cargarSelectoresDesdeJS();
 
     const dataGuardada = localStorage.getItem("capacitacion_activa");
 
@@ -144,13 +144,27 @@ async function generarProximoIdCap() {
     }
 }
 
-function cargarSelectoresDesdeJS() {
-    if (typeof cursosData !== "undefined") poblarSelect("curso", cursosData);
-    if (typeof instructoresData !== "undefined") {
-        poblarSelect("instructor1", instructoresData);
-        poblarSelect("instructor2", instructoresData);
+// Carga de selectores consultando directamente a Supabase (columnas existentes)
+async function cargarSelectoresDesdeJS() {
+    const db = window.supabaseClient;
+    if (!db) return;
+
+    try {
+        const { data: progs } = await db.from("programas").select("nombre");
+        if (progs) poblarSelect("programa", progs.map(p => p.nombre));
+
+        const { data: cursos } = await db.from("cursos").select("nombre");
+        if (cursos) poblarSelect("curso", cursos.map(c => c.nombre));
+
+        const { data: insts } = await db.from("instructores").select("nombre, apellido");
+        if (insts) {
+            const listaNombres = insts.map(i => `${i.nombre} ${i.apellido}`);
+            poblarSelect("instructor1", listaNombres);
+            poblarSelect("instructor2", listaNombres);
+        }
+    } catch (err) {
+        console.warn("Aviso al cargar selectores:", err);
     }
-    if (typeof centrosData !== "undefined") poblarSelect("centro", centrosData);
 }
 
 function poblarSelect(idElemento, listaDatos) {
@@ -190,7 +204,6 @@ document.getElementById("btnGuardar")?.addEventListener("click", async (e) => {
 
     const db = window.supabaseClient;
     if (db) {
-        // Guardar o actualizar la capacitación en la base de datos
         const { error } = await db.from("capacitaciones").upsert([datos]);
         if (error) {
             alert("Error al guardar en Supabase: " + error.message);
@@ -198,7 +211,7 @@ document.getElementById("btnGuardar")?.addEventListener("click", async (e) => {
         }
     }
 
-    alert(`Capacitación ${datos.id_cap} guardada con exito en estado '${datos.estado}'.`);
+    alert(`Capacitación ${datos.id_cap} guardada con éxito en estado '${datos.estado}'.`);
     limpiarFormulario();
     window.location.href = "actividades.html";
 });
@@ -218,7 +231,6 @@ document.getElementById("btnAsistentes")?.addEventListener("click", async (e) =>
         return;
     }
 
-    // Guardar borrador en el almacenamiento local para sincronizar con la pantalla de asistentes
     localStorage.setItem("capacitacion_activa", JSON.stringify(datos));
 
     const db = window.supabaseClient;

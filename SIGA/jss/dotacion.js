@@ -1,15 +1,10 @@
 // ===================================================
-// SIGA_APP - LÓGICA DE DOTACIÓN Y ASISTENTES
+// SIGA_APP - LÓGICA DE DOTACIÓN DE PERSONAL
 // ===================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Detectar si venimos con una capacitación asignada
     verificarCapacitacionOrigen();
-
-    // 2. Cargar el listado de personal inmediatamente
     await cargarListadoPersonal();
-
-    // 3. Vincular el buscador en tiempo real
     configurarBuscador();
 });
 
@@ -17,44 +12,40 @@ function obtenerDB() {
     return window.supabaseClient || window.supabase || null;
 }
 
-// Muestra qué capacitación se está editando si venimos desde Actividades
+// Muestra el badge de la capacitación activa arriba
 function verificarCapacitacionOrigen() {
     const urlParams = new URLSearchParams(window.location.search);
     const idCap = urlParams.get('id_cap') || localStorage.getItem("id_cap_asistencia");
+    const container = document.getElementById('capInfoBox');
 
-    if (idCap) {
-        const header = document.querySelector('.subtitulo') || document.querySelector('header div');
-        if (header) {
-            const aviso = document.createElement('div');
-            aviso.style.cssText = "background: #e8f8f5; color: #117a65; padding: 10px 15px; border-radius: 6px; font-weight: bold; margin-top: 10px; border: 1px solid #a3e4d7;";
-            aviso.innerHTML = `📋 Registrando asistentes para la capacitación: <strong>${idCap}</strong>`;
-            header.appendChild(aviso);
-        }
+    if (idCap && container) {
+        container.innerHTML = `
+            <div style="background: #e8f8f5; color: #117a65; padding: 10px 18px; border-radius: 8px; font-weight: 600; border: 1px solid #a3e4d7; display: flex; align-items: center; gap: 8px;">
+                <span>📋</span> Registrando asistentes para: <strong>${idCap}</strong>
+            </div>
+        `;
     }
 }
 
-// Carga la lista completa desde la tabla de Supabase
+// Carga los empleados almacenados en Supabase
 async function cargarListadoPersonal() {
     const db = obtenerDB();
-    if (!db) return;
+    const contenedor = document.getElementById('contenedorTablaPersonal');
+    if (!contenedor) return;
 
-    // Buscar o crear el contenedor para la tabla si no existe en la vista
-    let contenedorTabla = document.getElementById('contenedorTablaPersonal');
-    if (!contenedorTabla) {
-        contenedorTabla = document.createElement('div');
-        contenedorTabla.id = 'contenedorTablaPersonal';
-        contenedorTabla.style.marginTop = '30px';
-        document.querySelector('.formulario')?.appendChild(contenedorTabla);
+    if (!db) {
+        contenedor.innerHTML = '<p style="color:red; text-align:center; padding:20px;">Sin conexión a Supabase.</p>';
+        return;
     }
 
-    contenedorTabla.innerHTML = '<p style="text-align:center; padding:20px;">Cargando personal...</p>';
+    contenedor.innerHTML = '<p style="text-align:center; padding:20px; color:#666;">Cargando nómina de personal...</p>';
 
     try {
         const { data, error } = await db
             .from('asistentes')
             .select('*')
             .order('apellido', { ascending: true })
-            .limit(100);
+            .limit(150);
 
         if (error) throw error;
 
@@ -62,8 +53,8 @@ async function cargarListadoPersonal() {
         renderizarTablaPersonal(window.listaPersonalCompleta);
 
     } catch (err) {
-        console.error("Error cargando personal:", err);
-        contenedorTabla.innerHTML = '<p style="color:red; text-align:center;">Error al conectar con la base de personal.</p>';
+        console.error("Error al obtener la nómina:", err);
+        contenedor.innerHTML = '<p style="color:red; text-align:center; padding:20px;">Error al consultar la base de datos de personal.</p>';
     }
 }
 
@@ -72,35 +63,38 @@ function renderizarTablaPersonal(lista) {
     if (!contenedor) return;
 
     if (!lista || lista.length === 0) {
-        contenedor.innerHTML = '<p style="text-align:center; padding:20px;">No se encontraron registros de personal.</p>';
+        contenedor.innerHTML = '<p style="text-align:center; padding:20px; color:#777;">No se encontraron empleados con los filtros ingresados.</p>';
         return;
     }
 
     let html = `
-        <h3 style="margin-bottom:15px; color:#2c3e50;">Listado de Personal (${lista.length})</h3>
-        <div style="overflow-x:auto;">
-            <table style="width:100%; border-collapse:collapse; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="color:#2c3e50; margin:0;">Nómina de Empleados (${lista.length})</h3>
+        </div>
+        <div style="overflow-x:auto; border-radius:8px; border:1px solid #eee;">
+            <table style="width:100%; border-collapse:collapse; background:#fff; text-align:left;">
                 <thead>
-                    <tr style="background:#2c3e50; color:#fff; text-align:left;">
-                        <th style="padding:12px;">Legajo</th>
-                        <th style="padding:12px;">Apellido y Nombre</th>
-                        <th style="padding:12px;">Puesto</th>
-                        <th style="padding:12px;">Gerencia</th>
-                        <th style="padding:12px; text-align:center;">Acción</th>
+                    <tr style="background:#2c3e50; color:#fff;">
+                        <th style="padding:12px 15px;">Legajo</th>
+                        <th style="padding:12px 15px;">Apellido y Nombre</th>
+                        <th style="padding:12px 15px;">Puesto</th>
+                        <th style="padding:12px 15px;">Gerencia</th>
+                        <th style="padding:12px 15px; text-align:center;">Acción</th>
                     </tr>
                 </thead>
                 <tbody>
     `;
 
-    lista.forEach(emp => {
+    lista.forEach((emp, index) => {
+        const bg = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
         html += `
-            <tr style="border-bottom:1px solid #eee;">
-                <td style="padding:10px; font-weight:bold;">${emp.legajo || '-'}</td>
-                <td style="padding:10px;">${emp.apellido || ''}, ${emp.nombre || ''}</td>
-                <td style="padding:10px;">${emp.puesto || '-'}</td>
-                <td style="padding:10px;">${emp.gerencia || '-'}</td>
-                <td style="padding:10px; text-align:center;">
-                    <button onclick="asignarAsistente('${emp.legajo}')" style="background:#27ae60; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">
+            <tr style="border-bottom:1px solid #eee; background:${bg};">
+                <td style="padding:12px 15px; font-weight:bold; color:#34495e;">${emp.legajo || '-'}</td>
+                <td style="padding:12px 15px;">${emp.apellido || ''}, ${emp.nombre || ''}</td>
+                <td style="padding:12px 15px; color:#555;">${emp.puesto || '-'}</td>
+                <td style="padding:12px 15px; color:#555;">${emp.gerencia || '-'}</td>
+                <td style="padding:12px 15px; text-align:center;">
+                    <button onclick="asignarAsistente('${emp.legajo}')" style="background:#27ae60; color:white; border:none; padding:7px 14px; border-radius:5px; cursor:pointer; font-weight:bold;">
                         + Añadir
                     </button>
                 </td>
@@ -117,7 +111,6 @@ function renderizarTablaPersonal(lista) {
     contenedor.innerHTML = html;
 }
 
-// Filtrado rápido al escribir en Legajo, Apellido o Nombre
 function configurarBuscador() {
     const inputLegajo = document.getElementById('legajo');
     const inputApellido = document.getElementById('apellido');
@@ -146,6 +139,7 @@ function configurarBuscador() {
 }
 
 window.asignarAsistente = function(legajo) {
-    const idCap = new URLSearchParams(window.location.search).get('id_cap') || localStorage.getItem("id_cap_asistencia");
-    alert(`Asistente con legajo ${legajo} asignado a la capacitación ${idCap || 'seleccionada'}.`);
+    const urlParams = new URLSearchParams(window.location.search);
+    const idCap = urlParams.get('id_cap') || localStorage.getItem("id_cap_asistencia");
+    alert(`Asistente con legajo ${legajo} asignado a la capacitación ${idCap || 'activa'}.`);
 };

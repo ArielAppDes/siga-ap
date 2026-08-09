@@ -1,15 +1,10 @@
 // ===================================================
-// SIGA_APP - LÓGICA DE CAPACITACIONES (SINCRONIZADO)
+// SIGA_APP - LÓGICA DE CAPACITACIONES (CORREGIDO)
 // ===================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Cargar desplegables desde Supabase
     await cargarDesplegablesDesdeSupabase();
-
-    // 2. Cargar datos de la capacitación activa o generar ID nuevo
     await cargarCapacitacionActiva();
-
-    // 3. Conectar eventos a los botones del HTML
     configurarBotonesAccion();
 });
 
@@ -17,10 +12,7 @@ function obtenerDB() {
     return window.supabaseClient || window.supabase || null;
 }
 
-// ===================================================
-// 1. CARGAR DESPLEGABLES DESDE SUPABASE
-// ===================================================
-
+// 1. CARGA DE DESPLEGABLES
 async function cargarDesplegablesDesdeSupabase() {
     const db = obtenerDB();
     if (!db) return;
@@ -104,10 +96,7 @@ async function cargarSelectInstructores(db) {
     if (select2) select2.innerHTML = opcionesHtml;
 }
 
-// ===================================================
-// 2. CARGAR Y ASIGNAR ID_CAP REAL DE SUPABASE
-// ===================================================
-
+// 2. CARGAR O GENERAR NUEVO ID_CAP
 async function cargarCapacitacionActiva() {
     const inputIdCap = document.getElementById('idCap');
     const rawData = localStorage.getItem("capacitacion_activa");
@@ -115,7 +104,6 @@ async function cargarCapacitacionActiva() {
     if (rawData) {
         try {
             const cap = JSON.parse(rawData);
-
             if (inputIdCap && cap.id_cap) inputIdCap.value = cap.id_cap;
             
             setValorCampo('programa', cap.programa);
@@ -131,14 +119,12 @@ async function cargarCapacitacionActiva() {
             setValorCampo('centro', cap.centro);
             setValorCampo('tema', cap.tema);
             setValorCampo('observaciones', cap.observaciones);
-
             return;
         } catch (e) {
             console.error("Error al leer capacitacion_activa:", e);
         }
     }
 
-    // Si no hay datos activos en memoria local, generar un nuevo ID correlativo
     if (inputIdCap) {
         const nuevoId = await generarNuevoIdCapSupabase();
         inputIdCap.value = nuevoId;
@@ -161,7 +147,7 @@ async function generarNuevoIdCapSupabase() {
     try {
         const { data, error } = await db
             .from("capacitaciones")
-            .select("id_cap, id_cap_padre");
+            .select("id_cap");
 
         if (error || !data || data.length === 0) {
             return `CAP-${anioActual}-001-1`;
@@ -187,10 +173,45 @@ async function generarNuevoIdCapSupabase() {
     }
 }
 
-// ===================================================
-// 3. VINCULACIÓN Y ACCIONES DE BOTONES
-// ===================================================
+// 3. CAPTURAR Y CONVERTIR PAYLOAD LIMPIO
+function armarPayloadFormulario() {
+    const id_cap = document.getElementById('idCap')?.value.trim() || '';
+    const selectCurso = document.getElementById('curso');
+    const nombre_curso = selectCurso ? selectCurso.value : '';
+    const codigo_curso = selectCurso?.options[selectCurso.selectedIndex]?.dataset?.codigo || '';
+    const claseVal = document.getElementById('clase')?.value || '1';
 
+    const partesId = id_cap.split('-');
+    const id_cap_padre = partesId.length >= 3 ? `${partesId[0]}-${partesId[1]}-${partesId[2]}` : id_cap;
+    const clase_nro = parseInt(claseVal, 10) || 1;
+
+    // Convertidor de campos vacíos a null (Evita error en columnas DATE/TIME de Supabase)
+    const getCleanVal = (id) => {
+        const v = document.getElementById(id)?.value?.trim();
+        return (v && v !== "") ? v : null;
+    };
+
+    return {
+        id_cap: id_cap,
+        id_cap_padre: id_cap_padre,
+        clase_nro: clase_nro,
+        programa: getCleanVal('programa') || '',
+        codigo_curso: codigo_curso,
+        nombre_curso: nombre_curso,
+        estado: getCleanVal('estado') || 'Programado',
+        fecha: getCleanVal('fecha'),
+        hs_inicio: getCleanVal('horaInicio'),
+        hs_fin: getCleanVal('horaFin'),
+        instructor_1: getCleanVal('instructor1') || '',
+        instructor_2: getCleanVal('instructor2') || '',
+        lugar: getCleanVal('lugar') || '',
+        centro: getCleanVal('centro') || '',
+        tema: getCleanVal('tema') || '',
+        observaciones: getCleanVal('observaciones') || ''
+    };
+}
+
+// 4. ACCIONES DE BOTONES
 function configurarBotonesAccion() {
     const btnGuardar = document.getElementById('btnGuardar');
     if (btnGuardar) btnGuardar.onclick = guardarCapacitacion;
@@ -217,42 +238,12 @@ async function guardarCapacitacion(e) {
         return;
     }
 
-    const idCapInput = document.getElementById('idCap');
-    const id_cap = idCapInput ? idCapInput.value.trim() : '';
-    
-    if (!id_cap) {
+    const payload = armarPayloadFormulario();
+
+    if (!payload.id_cap) {
         alert("El código ID_CAP no es válido.");
         return;
     }
-
-    const selectCurso = document.getElementById('curso');
-    const nombre_curso = selectCurso ? selectCurso.value : '';
-    const codigo_curso = selectCurso?.options[selectCurso.selectedIndex]?.dataset?.codigo || '';
-    const claseVal = document.getElementById('clase')?.value || '1';
-
-    // Descomponer id_cap para id_cap_padre
-    const partesId = id_cap.split('-');
-    const id_cap_padre = partesId.length >= 3 ? `${partesId[0]}-${partesId[1]}-${partesId[2]}` : id_cap;
-    const clase_nro = parseInt(claseVal, 10) || 1;
-
-    const payload = {
-        id_cap: id_cap,
-        id_cap_padre: id_cap_padre,
-        clase_nro: clase_nro,
-        programa: document.getElementById('programa')?.value || '',
-        codigo_curso: codigo_curso,
-        nombre_curso: nombre_curso,
-        estado: document.getElementById('estado')?.value || 'Programado',
-        fecha: document.getElementById('fecha')?.value || null,
-        hs_inicio: document.getElementById('horaInicio')?.value || null,
-        hs_fin: document.getElementById('horaFin')?.value || null,
-        instructor_1: document.getElementById('instructor1')?.value || '',
-        instructor_2: document.getElementById('instructor2')?.value || '',
-        lugar: document.getElementById('lugar')?.value || '',
-        centro: document.getElementById('centro')?.value || '',
-        tema: document.getElementById('tema')?.value || '',
-        observaciones: document.getElementById('observaciones')?.value || ''
-    };
 
     try {
         const { error } = await db
@@ -261,10 +252,8 @@ async function guardarCapacitacion(e) {
 
         if (error) throw error;
 
-        // Limpiar la referencia activa de la sesión
         localStorage.removeItem("capacitacion_activa");
-        
-        alert(`Capacitación ${id_cap} guardada exitosamente.`);
+        alert(`Capacitación ${payload.id_cap} guardada exitosamente.`);
         window.location.href = "actividades.html";
 
     } catch (err) {
@@ -276,13 +265,16 @@ async function guardarCapacitacion(e) {
 function irARegistrarAsistentes(e) {
     if (e) e.preventDefault();
 
-    const id_cap = document.getElementById('idCap')?.value;
+    const payload = armarPayloadFormulario();
 
-    if (!id_cap) {
+    if (!payload.id_cap) {
         alert("Debe existir un ID_CAP válido para continuar.");
         return;
     }
 
-    localStorage.setItem("id_cap_asistencia", id_cap);
-    window.location.href = `dotacion.html?id_cap=${encodeURIComponent(id_cap)}`;
+    // Guardar copia local activa para que dotacion.html pueble los campos superiores al instante
+    localStorage.setItem("capacitacion_activa", JSON.stringify(payload));
+    localStorage.setItem("id_cap_asistencia", payload.id_cap);
+
+    window.location.href = `dotacion.html?id_cap=${encodeURIComponent(payload.id_cap)}`;
 }

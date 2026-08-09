@@ -12,7 +12,7 @@ function obtenerDB() {
     return window.supabaseClient || window.supabase || null;
 }
 
-// 1. CARGA DE DESPLEGABLES
+// 1. CARGA DE DESPLEGABLES DESDE SUPABASE
 async function cargarDesplegablesDesdeSupabase() {
     const db = obtenerDB();
     if (!db) return;
@@ -96,7 +96,7 @@ async function cargarSelectInstructores(db) {
     if (select2) select2.innerHTML = opcionesHtml;
 }
 
-// 2. CARGAR O GENERAR NUEVO ID_CAP
+// 2. CARGAR O GENERAR NUEVO ID_CAP CORRELATIVO
 async function cargarCapacitacionActiva() {
     const inputIdCap = document.getElementById('idCap');
     const rawData = localStorage.getItem("capacitacion_activa");
@@ -173,7 +173,7 @@ async function generarNuevoIdCapSupabase() {
     }
 }
 
-// 3. CAPTURAR Y CONVERTIR PAYLOAD LIMPIO
+// 3. CAPTURAR Y CONVERTIR DATOS LIMPIOS
 function armarPayloadFormulario() {
     const id_cap = document.getElementById('idCap')?.value.trim() || '';
     const selectCurso = document.getElementById('curso');
@@ -185,7 +185,7 @@ function armarPayloadFormulario() {
     const id_cap_padre = partesId.length >= 3 ? `${partesId[0]}-${partesId[1]}-${partesId[2]}` : id_cap;
     const clase_nro = parseInt(claseVal, 10) || 1;
 
-    // Convertidor de campos vacíos a null (Evita error en columnas DATE/TIME de Supabase)
+    // Convertidor para campos vacíos: los transforma a null para evitar rechazos en Supabase
     const getCleanVal = (id) => {
         const v = document.getElementById(id)?.value?.trim();
         return (v && v !== "") ? v : null;
@@ -211,7 +211,7 @@ function armarPayloadFormulario() {
     };
 }
 
-// 4. ACCIONES DE BOTONES
+// 4. CONFIGURAR ACCIONES DE BOTONES
 function configurarBotonesAccion() {
     const btnGuardar = document.getElementById('btnGuardar');
     if (btnGuardar) btnGuardar.onclick = guardarCapacitacion;
@@ -272,7 +272,6 @@ function irARegistrarAsistentes(e) {
         return;
     }
 
-    // Guardar copia local activa para que dotacion.html pueble los campos superiores al instante
     localStorage.setItem("capacitacion_activa", JSON.stringify(payload));
     localStorage.setItem("id_cap_asistencia", payload.id_cap);
 

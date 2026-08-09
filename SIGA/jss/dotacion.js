@@ -1,186 +1,151 @@
-//======================================
-// SGA - Dotación
-//======================================
+// ===================================================
+// SIGA_APP - LÓGICA DE DOTACIÓN Y ASISTENTES
+// ===================================================
 
-// La variable empleados ahora proviene de data/empleados.js
-//let empleados = [];
+document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Detectar si venimos con una capacitación asignada
+    verificarCapacitacionOrigen();
 
-//======================================
-// ELEMENTOS
-//======================================
+    // 2. Cargar el listado de personal inmediatamente
+    await cargarListadoPersonal();
 
-const archivoExcel = document.getElementById("archivoExcel");
-
-const txtLegajoEmp = document.getElementById("legajo");
-const txtApellidoEmp = document.getElementById("apellido");
-const txtNombreEmp = document.getElementById("nombreEmpleado");
-
-
-console.log("Módulo Dotación iniciado");
-
-//======================================
-// EVENTOS
-//======================================
-
-if (archivoExcel) {
-    archivoExcel.addEventListener("change", cargarExcel);
-}
-
-if (txtLegajoEmp) {
-    txtLegajoEmp.addEventListener("keyup", function(e){
-
-    if(e.key === "Enter"){
-        buscarEmpleado();
-    }
-
-    if(this.value.trim().length === 5){
-        buscarEmpleado();
-    }
-
+    // 3. Vincular el buscador en tiempo real
+    configurarBuscador();
 });
+
+function obtenerDB() {
+    return window.supabaseClient || window.supabase || null;
 }
 
-//======================================
-// IMPORTAR EXCEL
-//======================================
+// Muestra qué capacitación se está editando si venimos desde Actividades
+function verificarCapacitacionOrigen() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const idCap = urlParams.get('id_cap') || localStorage.getItem("id_cap_asistencia");
 
-function cargarExcel(e){
+    if (idCap) {
+        const header = document.querySelector('.subtitulo') || document.querySelector('header div');
+        if (header) {
+            const aviso = document.createElement('div');
+            aviso.style.cssText = "background: #e8f8f5; color: #117a65; padding: 10px 15px; border-radius: 6px; font-weight: bold; margin-top: 10px; border: 1px solid #a3e4d7;";
+            aviso.innerHTML = `📋 Registrando asistentes para la capacitación: <strong>${idCap}</strong>`;
+            header.appendChild(aviso);
+        }
+    }
+}
 
-    console.log("Entró a cargarExcel");
+// Carga la lista completa desde la tabla de Supabase
+async function cargarListadoPersonal() {
+    const db = obtenerDB();
+    if (!db) return;
 
-    const archivo = e.target.files[0];
+    // Buscar o crear el contenedor para la tabla si no existe en la vista
+    let contenedorTabla = document.getElementById('contenedorTablaPersonal');
+    if (!contenedorTabla) {
+        contenedorTabla = document.createElement('div');
+        contenedorTabla.id = 'contenedorTablaPersonal';
+        contenedorTabla.style.marginTop = '30px';
+        document.querySelector('.formulario')?.appendChild(contenedorTabla);
+    }
 
-    if(!archivo){
-        alert("No se seleccionó ningún archivo.");
+    contenedorTabla.innerHTML = '<p style="text-align:center; padding:20px;">Cargando personal...</p>';
+
+    try {
+        const { data, error } = await db
+            .from('asistentes')
+            .select('*')
+            .order('apellido', { ascending: true })
+            .limit(100);
+
+        if (error) throw error;
+
+        window.listaPersonalCompleta = data || [];
+        renderizarTablaPersonal(window.listaPersonalCompleta);
+
+    } catch (err) {
+        console.error("Error cargando personal:", err);
+        contenedorTabla.innerHTML = '<p style="color:red; text-align:center;">Error al conectar con la base de personal.</p>';
+    }
+}
+
+function renderizarTablaPersonal(lista) {
+    const contenedor = document.getElementById('contenedorTablaPersonal');
+    if (!contenedor) return;
+
+    if (!lista || lista.length === 0) {
+        contenedor.innerHTML = '<p style="text-align:center; padding:20px;">No se encontraron registros de personal.</p>';
         return;
     }
 
-    const lector = new FileReader();
+    let html = `
+        <h3 style="margin-bottom:15px; color:#2c3e50;">Listado de Personal (${lista.length})</h3>
+        <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
+                <thead>
+                    <tr style="background:#2c3e50; color:#fff; text-align:left;">
+                        <th style="padding:12px;">Legajo</th>
+                        <th style="padding:12px;">Apellido y Nombre</th>
+                        <th style="padding:12px;">Puesto</th>
+                        <th style="padding:12px;">Gerencia</th>
+                        <th style="padding:12px; text-align:center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
 
-    lector.onload = function(evento){
-
-        try{
-
-            const datos = new Uint8Array(evento.target.result);
-
-            const libro = XLSX.read(datos,{type:"array"});
-
-            const hoja = libro.Sheets[libro.SheetNames[0]];
-
-           // empleados = XLSX.utils.sheet_to_json(hoja,{header:1});
-           empleados.length = 0;
-
-          const filas = XLSX.utils.sheet_to_json(hoja, { header: 1 });
-
-          for (let i = 1; i < filas.length; i++) {
-
-          const fila = filas[i];
-
-          empleados.push({
-
-        legajo: String(fila[0] || "").padStart(5,"0"),
-        apellido: fila[1] || "",
-        nombre: fila[2] || "",
-        puesto: fila[4] || "",
-        categoria: fila[8] || "",
-        direccion: fila[13] || "",
-        gerencia: fila[14] || "",
-        jefatura: fila[16] || "",
-        manager: fila[19] || "",
-        email: fila[37] || ""
-
+    lista.forEach(emp => {
+        html += `
+            <tr style="border-bottom:1px solid #eee;">
+                <td style="padding:10px; font-weight:bold;">${emp.legajo || '-'}</td>
+                <td style="padding:10px;">${emp.apellido || ''}, ${emp.nombre || ''}</td>
+                <td style="padding:10px;">${emp.puesto || '-'}</td>
+                <td style="padding:10px;">${emp.gerencia || '-'}</td>
+                <td style="padding:10px; text-align:center;">
+                    <button onclick="asignarAsistente('${emp.legajo}')" style="background:#27ae60; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">
+                        + Añadir
+                    </button>
+                </td>
+            </tr>
+        `;
     });
 
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    contenedor.innerHTML = html;
 }
-           
 
-            console.log(empleados);
+// Filtrado rápido al escribir en Legajo, Apellido o Nombre
+function configurarBuscador() {
+    const inputLegajo = document.getElementById('legajo');
+    const inputApellido = document.getElementById('apellido');
+    const inputNombre = document.getElementById('nombre');
 
-            alert("Se importaron " + empleados.length + " empleados.");
+    const filtrar = () => {
+        if (!window.listaPersonalCompleta) return;
 
-        }
-        catch(error){
+        const leg = inputLegajo?.value.toLowerCase().trim() || '';
+        const ape = inputApellido?.value.toLowerCase().trim() || '';
+        const nom = inputNombre?.value.toLowerCase().trim() || '';
 
-            console.error(error);
+        const resultado = window.listaPersonalCompleta.filter(item => {
+            const matchLeg = !leg || (item.legajo && item.legajo.toLowerCase().includes(leg));
+            const matchApe = !ape || (item.apellido && item.apellido.toLowerCase().includes(ape));
+            const matchNom = !nom || (item.nombre && item.nombre.toLowerCase().includes(nom));
+            return matchLeg && matchApe && matchNom;
+        });
 
-            alert("Error al leer el archivo Excel.");
-
-        }
-
+        renderizarTablaPersonal(resultado);
     };
 
-    lector.readAsArrayBuffer(archivo);
-
+    inputLegajo?.addEventListener('input', filtrar);
+    inputApellido?.addEventListener('input', filtrar);
+    inputNombre?.addEventListener('input', filtrar);
 }
 
-//======================================
-// BUSCAR EMPLEADO
-//======================================
-
-function buscarEmpleado(){
-
-    const legajo = txtLegajoEmp.value.trim().padStart(5,"0");
-
-    if(legajo.length < 5){
-        limpiarCampos();
-        return;
-    }
-
-    const empleado = buscarEmpleadoPorLegajo(legajo);
-
-    if(!empleado){
-        limpiarCampos();
-        return;
-    }
-
-    txtApellidoEmp.value  = empleado.apellido;
-    txtNombreEmp.value    = empleado.nombre;
-
-    document.getElementById("puesto").value     = empleado.puesto;
-    document.getElementById("categoria").value  = empleado.categoria;
-    document.getElementById("direccion").value  = empleado.direccion;
-    document.getElementById("gerencia").value   = empleado.gerencia;
-    document.getElementById("jefatura").value   = empleado.jefatura;
-    document.getElementById("manager").value    = empleado.manager;
-    document.getElementById("email").value      = empleado.email;
-
-}
-
-//======================================
-// LIMPIAR CAMPOS
-//======================================
-
-function limpiarCampos(){
-
-    txtApellidoEmp.value = "";
-    txtNombreEmp.value = "";
-
-    document.getElementById("puesto").value = "";
-    document.getElementById("categoria").value = "";
-    document.getElementById("direccion").value = "";
-    document.getElementById("gerencia").value = "";
-    document.getElementById("jefatura").value = "";
-    document.getElementById("manager").value = "";
-    document.getElementById("email").value = "";
-
-}
-
-//======================================
-// BOTÓN NUEVA BÚSQUEDA
-//======================================
-
-const btnNuevoEmpleado = document.getElementById("btnNuevoEmpleado");
-
-if(btnNuevoEmpleado){
-
-    btnNuevoEmpleado.addEventListener("click", function(){
-
-        txtLegajoEmp.value = "";
-
-        limpiarCampos();
-
-        txtLegajoEmp.focus();
-
-    });
-
-}
+window.asignarAsistente = function(legajo) {
+    const idCap = new URLSearchParams(window.location.search).get('id_cap') || localStorage.getItem("id_cap_asistencia");
+    alert(`Asistente con legajo ${legajo} asignado a la capacitación ${idCap || 'seleccionada'}.`);
+};

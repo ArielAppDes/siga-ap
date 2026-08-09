@@ -384,3 +384,40 @@ async function eliminarRegistro() {
 function cancelarEdicion() {
     nuevoRegistro();
 }
+
+// Función para descargar un Backup Completo en Excel
+async function descargarBackupExcel() {
+    if (typeof XLSX === 'undefined') {
+        alert('La librería de Excel no se ha cargado correctamente.');
+        return;
+    }
+
+    try {
+        // 1. Obtener datos de Supabase
+        const [prog, inst, cur, cap, asis] = await Promise.all([
+            window.supabaseClient.from('programas').select('*'),
+            window.supabaseClient.from('instructores').select('*'),
+            window.supabaseClient.from('cursos').select('*'),
+            window.supabaseClient.from('capacitaciones').select('*'),
+            window.supabaseClient.from('asistentes').select('*')
+        ]);
+
+        // 2. Crear libro de trabajo
+        const wb = XLSX.utils.book_new();
+
+        // 3. Convertir y agregar cada tabla como pestaña
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cap.data || []), 'Capacitaciones');
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(asis.data || []), 'Asistentes');
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cur.data || []), 'Cursos');
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(inst.data || []), 'Instructores');
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(prog.data || []), 'Programas');
+
+        // 4. Descargar archivo
+        const fecha = new Date().toISOString().split('T')[0];
+        XLSX.writeFile(wb, `SIGA_Backup_Bases_${fecha}.xlsx`);
+
+    } catch (error) {
+        console.error('Error al generar backup:', error);
+        alert('Ocurrió un error al exportar la base de datos.');
+    }
+}

@@ -1,5 +1,5 @@
 // ===================================================
-// 10/08/2026 - V0.1 - SIGA_APP - CAPACITACIONES (Integración con Supabase)
+// 10/08/2026 - V0.2 - SIGA_APP - CAPACITACIONES (Integración con Supabase)
 // ===================================================
 
 document.addEventListener("DOMContentLoaded", async () => {

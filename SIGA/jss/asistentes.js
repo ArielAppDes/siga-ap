@@ -1,5 +1,5 @@
 // ===================================================
-// 10/08/2026 - V0.1 - SIGA_APP - LÓGICA DE REGISTRO DE ASISTENTES
+// 10/08/2026 - V0.2 - SIGA_APP - REGISTRO DE ASISTENTES
 // ===================================================
 
 let listaAsistentes = [];
@@ -13,21 +13,19 @@ function obtenerDB() {
     return window.supabaseClient || window.supabase || null;
 }
 
-// 1. CARGA DE CABECERA Y ASISTENTES DESDE SUPABASE
+// 1. POBLAR CABECERA VISIBLE (ID_CAP, Curso, Clase Nº, Fecha, Instructor)
 async function inicializarPantallaAsistentes() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const idCapUrl = urlParams.get('id_cap');
-    const idCapLocal = localStorage.getItem("id_cap_asistencia");
     const capActivaRaw = localStorage.getItem("capacitacion_activa");
-
     let capData = null;
+
     if (capActivaRaw) {
         try { capData = JSON.parse(capActivaRaw); } catch (e) { console.error(e); }
     }
 
-    const idCapTarget = capData?.id_cap || idCapUrl || idCapLocal;
+    const urlParams = new URLSearchParams(window.location.search);
+    const idCapTarget = capData?.id_cap || urlParams.get('id_cap') || localStorage.getItem("id_cap_asistencia");
 
-    // Consultar capacitación en Supabase si no está completa en localStorage
+    // Consultar a Supabase si falta información del curso
     const db = obtenerDB();
     if (db && idCapTarget && (!capData || !capData.nombre_curso)) {
         try {
@@ -39,24 +37,59 @@ async function inicializarPantallaAsistentes() {
 
             if (data) capData = data;
         } catch (err) {
-            console.error("Error consultando capacitación en Supabase:", err);
+            console.error("Error consultando capacitación:", err);
         }
     }
 
-    // Poblar los campos de la cabecera superior
-    if (capData) {
-        setVal('resumenIdCap', capData.id_cap || idCapTarget || '');
-        setVal('resumenCurso', capData.nombre_curso || capData.curso || '');
-        setVal('resumenClase', capData.clase_nro || capData.clase || '1');
-        setVal('resumenFecha', capData.fecha || '');
-        setVal('resumenInstructor', capData.instructor_1 || capData.instructor1 || '');
-    } else if (idCapTarget) {
-        setVal('resumenIdCap', idCapTarget);
+    if (capData || idCapTarget) {
+        poblarCabeceraVisible(capData || { id_cap: idCapTarget });
     }
 
-    // Cargar asistentes ya registrados en la tabla 'asistentes'
     if (idCapTarget) {
         await cargarAsistentesSupabase(idCapTarget);
+    }
+}
+
+function poblarCabeceraVisible(cap) {
+    const datos = {
+        id: cap.id_cap || '',
+        curso: cap.nombre_curso || cap.curso || '',
+        clase: cap.clase_nro || cap.clase || '1',
+        fecha: cap.fecha || '',
+        instructor: cap.instructor_1 || cap.instructor1 || cap.instructor || ''
+    };
+
+    // Intento 1: Asignación por IDs probables
+    let asignados = 0;
+    const mapaIDs = [
+        { ids: ['resumenIdCap', 'idCap', 'id_cap'], val: datos.id },
+        { ids: ['resumenCurso', 'curso', 'nombre_curso'], val: datos.curso },
+        { ids: ['resumenClase', 'clase', 'clase_nro'], val: datos.clase },
+        { ids: ['resumenFecha', 'fecha'], val: datos.fecha },
+        { ids: ['resumenInstructor', 'instructor', 'instructor_1', 'instructor1'], val: datos.instructor }
+    ];
+
+    mapaIDs.forEach(item => {
+        for (const id of item.ids) {
+            const elem = document.getElementById(id);
+            if (elem) {
+                elem.value = item.val;
+                asignados++;
+                break;
+            }
+        }
+    });
+
+    // Intento 2 (Respaldo por orden de inputs en la tarjeta superior si fallan los IDs)
+    if (asignados < 3) {
+        const inputsTarjeta = document.querySelectorAll('main input, .card input, .container input');
+        if (inputsTarjeta.length >= 5) {
+            inputsTarjeta[0].value = datos.id;
+            inputsTarjeta[1].value = datos.curso;
+            inputsTarjeta[2].value = datos.clase;
+            inputsTarjeta[3].value = datos.fecha;
+            inputsTarjeta[4].value = datos.instructor;
+        }
     }
 }
 
@@ -70,31 +103,29 @@ async function cargarAsistentesSupabase(idCap) {
             .select('*')
             .eq('id_cap', idCap);
 
-        if (!error && data) {
-            listaAsistentes = data;
-        } else {
-            listaAsistentes = [];
-        }
+        listaAsistentes = (!error && data) ? data : [];
         renderizarGrilla();
     } catch (err) {
         console.error("Error leyendo asistentes de Supabase:", err);
     }
 }
 
-// 2. BUSCAR EMPLEADO LOCAL Y AGREGAR A LA LISTA
+// 2. AGREGAR PARTICIPANTE (Carga datos extendidos en segundo plano)
 function agregarParticipante() {
-    const inputLegajo = document.getElementById('inputLegajo');
-    const inputCalificacion = document.getElementById('inputCalificacion');
-    const inputObservaciones = document.getElementById('inputObservaciones');
-    const idCap = document.getElementById('resumenIdCap')?.value;
+    const inputs = document.querySelectorAll('input');
+    // Buscamos los inputs del bloque de ingreso (Legajo, Calificación, Observaciones)
+    const inputLegajo = document.getElementById('inputLegajo') || document.getElementById('legajo') || inputs[5];
+    const inputCalificaciones = document.getElementById('inputCalificacion') || document.getElementById('calificacion') || inputs[6];
+    const inputObservaciones = document.getElementById('inputObservaciones') || document.getElementById('observaciones') || inputs[7];
 
+    const idCap = document.querySelectorAll('input')[0]?.value || '';
     const legajoVal = inputLegajo?.value.trim();
+
     if (!legajoVal) {
         alert("Por favor, ingrese un número de legajo.");
         return;
     }
 
-    // Compatibilidad multi-origen con empleados / dotación local
     const nomina = window.empleados || window.dotacion || (typeof empleados !== 'undefined' ? empleados : []);
     const emp = nomina.find(e => e.legajo && String(e.legajo).trim().toLowerCase() === legajoVal.toLowerCase());
 
@@ -108,7 +139,7 @@ function agregarParticipante() {
         return;
     }
 
-    // Construir el objeto mapeando exacto las columnas de la tabla 'asistentes'
+    // Objeto completo para guardar en Supabase
     const nuevoAsistente = {
         id_cap: idCap,
         legajo: String(emp.legajo).trim(),
@@ -120,7 +151,7 @@ function agregarParticipante() {
         gerencia: emp.gerencia || '',
         jefatura: emp.jefatura || '',
         email: emp.email || '',
-        calificacion: inputCalificacion?.value.trim() || '-',
+        calificacion: inputCalificaciones?.value.trim() || '-',
         observaciones: inputObservaciones?.value.trim() || '-'
     };
 
@@ -128,12 +159,12 @@ function agregarParticipante() {
     renderizarGrilla();
 
     if (inputLegajo) inputLegajo.value = '';
-    if (inputCalificacion) inputCalificacion.value = '';
+    if (inputCalificaciones) inputCalificaciones.value = '';
     if (inputObservaciones) inputObservaciones.value = '';
 }
 
 function renderizarGrilla() {
-    const tbody = document.getElementById('tbodyAsistentes');
+    const tbody = document.getElementById('tbodyAsistentes') || document.querySelector('tbody');
     if (!tbody) return;
 
     tbody.innerHTML = '';
@@ -175,38 +206,29 @@ window.quitarParticipante = function(index) {
     renderizarGrilla();
 };
 
-// 3. GUARDAR ASISTENTES Y CERRAR REGISTRO
+// 3. GUARDAR EN SUPABASE Y CERRAR REGISTRO
 async function cerrarRegistro() {
-    const idCap = document.getElementById('resumenIdCap')?.value;
+    const idCap = document.querySelectorAll('input')[0]?.value;
+
     if (!idCap) {
         alert("No hay un ID_CAP válido asignado.");
         return;
     }
 
-    const totalAsistentes = listaAsistentes.length;
-    const confirmacion = confirm(`¿Desea cerrar el registro de la capacitación?\n\nID: ${idCap}\nTotal de asistentes: ${totalAsistentes}`);
-
+    const confirmacion = confirm(`¿Desea cerrar el registro de la capacitación?\n\nID: ${idCap}\nTotal de asistentes: ${listaAsistentes.length}`);
     if (!confirmacion) return;
 
     const db = obtenerDB();
     if (db) {
         try {
-            // 1. Limpiar registros previos de este id_cap para evitar duplicados
             await db.from('asistentes').delete().eq('id_cap', idCap);
 
-            // 2. Insertar cada fila de asistente
             if (listaAsistentes.length > 0) {
                 const { error: errInsert } = await db.from('asistentes').insert(listaAsistentes);
                 if (errInsert) throw errInsert;
             }
 
-            // 3. Actualizar estado de la capacitación a Finalizado
-            const { error: errCap } = await db
-                .from('capacitaciones')
-                .update({ estado: 'Finalizado' })
-                .eq('id_cap', idCap);
-
-            if (errCap) console.warn("Aviso al actualizar estado en capacitaciones:", errCap);
+            await db.from('capacitaciones').update({ estado: 'Finalizado' }).eq('id_cap', idCap);
 
         } catch (err) {
             console.error("Error guardando en Supabase:", err);
@@ -223,24 +245,22 @@ async function cerrarRegistro() {
 }
 
 function configurarEventos() {
-    const btnAgregar = document.getElementById('btnAgregarParticipante');
+    const botones = document.querySelectorAll('button');
+    
+    // Asignación flexible de botones
+    const btnAgregar = document.getElementById('btnAgregarParticipante') || Array.from(botones).find(b => b.textContent.includes('Agregar'));
     if (btnAgregar) btnAgregar.onclick = (e) => { e.preventDefault(); agregarParticipante(); };
 
-    const btnCerrar = document.getElementById('btnCerrarRegistro');
+    const btnCerrar = document.getElementById('btnCerrarRegistro') || Array.from(botones).find(b => b.textContent.includes('Cerrar'));
     if (btnCerrar) btnCerrar.onclick = (e) => { e.preventDefault(); cerrarRegistro(); };
 
-    const btnCancelar = document.getElementById('btnCancelar');
+    const btnCancelar = document.getElementById('btnCancelar') || Array.from(botones).find(b => b.textContent.includes('Cancelar'));
     if (btnCancelar) btnCancelar.onclick = (e) => {
         e.preventDefault();
         localStorage.removeItem("capacitacion_activa");
         window.location.href = "actividades.html";
     };
 
-    const btnImprimir = document.getElementById('btnImprimir');
+    const btnImprimir = document.getElementById('btnImprimir') || Array.from(botones).find(b => b.textContent.includes('Imprimir'));
     if (btnImprimir) btnImprimir.onclick = (e) => { e.preventDefault(); window.print(); };
-}
-
-function setVal(id, valor) {
-    const elem = document.getElementById(id);
-    if (elem) elem.value = valor || '';
 }

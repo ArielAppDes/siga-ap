@@ -1,5 +1,5 @@
 // ===================================================
-// 10/08/2026 - V0.3 - SIGA_APP - REGISTRO DE ASISTENTES
+// 10/08/2026 - V0.2 - SIGA_APP - REGISTRO DE ASISTENTES CON TRANSICIÓN DE CLASES
 // ===================================================
 
 let listaAsistentes = [];
@@ -13,21 +13,17 @@ function obtenerDB() {
     return window.supabaseClient || window.supabase || null;
 }
 
-// Función central para recuperar el ID_CAP actual sin importar el formato de origen
 function obtenerIdCapActual(capData) {
     if (capData) {
         const idEncontrado = capData.id_cap || capData.idCap || capData.id;
         if (idEncontrado) return idEncontrado;
     }
 
-    // Intento por selector en HTML
     const inputId = document.getElementById('resumenIdCap') || 
                     document.getElementById('idCap') || 
-                    document.getElementById('id_cap') || 
-                    document.querySelector("input[placeholder*='CAP']");
+                    document.getElementById('id_cap');
     if (inputId && inputId.value.trim()) return inputId.value.trim();
 
-    // Intento por localStorage directo
     const capActivaRaw = localStorage.getItem("capacitacion_activa");
     if (capActivaRaw) {
         try {
@@ -40,7 +36,7 @@ function obtenerIdCapActual(capData) {
     return localStorage.getItem("id_cap_asistencia") || '';
 }
 
-// 1. CARGA DE CABECERA Y ASISTENTES
+// 1. CARGA DE CABECERA
 async function inicializarPantallaAsistentes() {
     const capActivaRaw = localStorage.getItem("capacitacion_activa");
     let capData = null;
@@ -52,7 +48,6 @@ async function inicializarPantallaAsistentes() {
     const urlParams = new URLSearchParams(window.location.search);
     const idCapTarget = obtenerIdCapActual(capData) || urlParams.get('id_cap');
 
-    // Consultar a Supabase si falta información del curso
     const db = obtenerDB();
     if (db && idCapTarget && (!capData || !capData.nombre_curso)) {
         try {
@@ -76,15 +71,20 @@ async function inicializarPantallaAsistentes() {
 }
 
 function poblarCabeceraVisible(cap, idFallback) {
+    // Concatenar instructores 1 y 2 en una sola casilla
+    const instructoresUnificados = [cap?.instructor_1, cap?.instructor_2, cap?.instructor1, cap?.instructor]
+        .filter(Boolean)
+        .filter((v, i, a) => a.indexOf(v) === i)
+        .join(', ');
+
     const datos = {
         id: obtenerIdCapActual(cap) || idFallback || '',
         curso: cap?.nombre_curso || cap?.curso || '',
         clase: cap?.clase_nro || cap?.clase || '1',
         fecha: cap?.fecha || '',
-        instructor: cap?.instructor_1 || cap?.instructor1 || cap?.instructor || ''
+        instructor: instructoresUnificados || '-'
     };
 
-    // 1. Asignación por selector o ID explícito
     const inputId = document.getElementById('resumenIdCap') || document.getElementById('idCap') || document.getElementById('id_cap');
     const inputCurso = document.getElementById('resumenCurso') || document.getElementById('curso') || document.getElementById('nombre_curso');
     const inputClase = document.getElementById('resumenClase') || document.getElementById('clase') || document.getElementById('clase_nro');
@@ -97,7 +97,6 @@ function poblarCabeceraVisible(cap, idFallback) {
     if (inputFecha) inputFecha.value = datos.fecha;
     if (inputInst) inputInst.value = datos.instructor;
 
-    // 2. Respaldo directo por posición de inputs en el bloque superior
     const todosInputs = document.querySelectorAll('main input, form input, .card input, input');
     if (todosInputs.length >= 5) {
         if (!inputId || !inputId.value) todosInputs[0].value = datos.id;
@@ -125,7 +124,7 @@ async function cargarAsistentesSupabase(idCap) {
     }
 }
 
-// 2. AGREGAR PARTICIPANTE
+// 2. AGREGAR Y RENDERIZAR PARTICIPANTE
 function agregarParticipante() {
     const inputs = document.querySelectorAll('input');
     const inputLegajo = document.getElementById('inputLegajo') || document.getElementById('legajo') || inputs[5];
@@ -219,7 +218,7 @@ window.quitarParticipante = function(index) {
     renderizarGrilla();
 };
 
-// 3. GUARDAR EN SUPABASE Y CERRAR REGISTRO
+// 3. CERRAR REGISTRO Y GESTIONAR TRANSICIÓN DE CLASES
 async function cerrarRegistro() {
     const idCap = obtenerIdCapActual();
 
@@ -228,12 +227,13 @@ async function cerrarRegistro() {
         return;
     }
 
-    const confirmacion = confirm(`¿Desea cerrar el registro de la capacitación?\n\nID: ${idCap}\nTotal de asistentes: ${listaAsistentes.length}`);
+    const confirmacion = confirm(`¿Desea cerrar el registro de esta clase?\n\nID: ${idCap}\nTotal de asistentes: ${listaAsistentes.length}`);
     if (!confirmacion) return;
 
     const db = obtenerDB();
     if (db) {
         try {
+            // A. Guardar asistentes en Supabase
             await db.from('asistentes').delete().eq('id_cap', idCap);
 
             if (listaAsistentes.length > 0) {
@@ -241,10 +241,45 @@ async function cerrarRegistro() {
                 if (errInsert) throw errInsert;
             }
 
-            await db.from('capacitaciones').update({ estado: 'Finalizado' }).eq('id_cap', idCap);
+            // B. Marcar la CLASE ACTUAL como 'Finalizado' en Supabase
+            await db
+                .from('capacitaciones')
+                .update({ estado: 'Finalizado' })
+                .eq('id_cap', idCap);
+
+            // C. Obtener datos de la capacitación activa
+            const capActivaRaw = localStorage.getItem("capacitacion_activa");
+            let capData = capActivaRaw ? JSON.parse(capActivaRaw) : null;
+
+            if (!capData) {
+                const { data } = await db.from('capacitaciones').select('*').eq('id_cap', idCap').maybeSingle();
+                capData = data;
+            }
+
+            // D. Evaluar si hay una siguiente clase (ej. Clase 1 -> Generar Clase 02 'En curso')
+            const claseNum = parseInt(capData?.clase_nro || "1", 10);
+            const totalClases = parseInt(capData?.total_clases || capData?.clases_totales || "3", 10);
+
+            if (claseNum < totalClases) {
+                const siguienteClaseNum = claseNum + 1;
+                const numClaseFormateado = String(siguienteClaseNum).padStart(2, '0');
+                const partes = idCap.split('-');
+                const nuevoIdCap = partes.slice(0, 3).join('-') + '-' + numClaseFormateado;
+
+                const nuevaClase = {
+                    ...capData,
+                    id_cap: nuevoIdCap,
+                    clase_nro: String(siguienteClaseNum),
+                    estado: 'En curso',
+                    fecha: new Date().toISOString().split('T')[0]
+                };
+
+                // Crear la nueva clase en Supabase con estado 'En curso'
+                await db.from('capacitaciones').upsert([nuevaClase], { onConflict: 'id_cap' });
+            }
 
         } catch (err) {
-            console.error("Error guardando en Supabase:", err);
+            console.error("Error en el cierre de registro:", err);
             alert("Error al guardar asistentes: " + (err.message || "Error de conexión"));
             return;
         }
@@ -253,7 +288,7 @@ async function cerrarRegistro() {
     localStorage.removeItem("capacitacion_activa");
     localStorage.removeItem("id_cap_asistencia");
 
-    alert(`Registro cerrado con éxito. La capacitación ${idCap} pasó a estado Finalizado.`);
+    alert(`Registro de la clase ${idCap} cerrado con éxito.`);
     window.location.href = "actividades.html";
 }
 

@@ -1,5 +1,5 @@
 // ===================================================
-// SIGA_APP - LÓGICA DE REGISTRO DE ASISTENTES
+// 10/08/2026 - V0.1 - SIGA_APP - LÓGICA DE REGISTRO DE ASISTENTES
 // ===================================================
 
 let listaAsistentes = [];
@@ -28,7 +28,7 @@ async function inicializarPantallaAsistentes() {
         try { capData = JSON.parse(localCap); } catch (e) { console.error(e); }
     }
 
-    // Consultar a Supabase para obtener datos frescos
+    // Consultar a Supabase para obtener datos frescos de la capacitación
     const db = obtenerDB();
     if (db && idCapTarget) {
         try {
@@ -55,7 +55,7 @@ async function inicializarPantallaAsistentes() {
         setVal('resumenIdCap', idCapTarget);
     }
 
-    // Cargar los participantes previamente guardados
+    // Cargar los participantes previamente guardados en Supabase
     if (idCapTarget) {
         await cargarAsistentesSupabase(idCapTarget);
     }
@@ -83,7 +83,7 @@ async function cargarAsistentesSupabase(idCap) {
     }
 }
 
-// 2. SUMAR Y QUITAR PARTICIPANTES
+// 2. SUMAR Y QUITAR PARTICIPANTES (Búsqueda en dotación local)
 function agregarParticipante() {
     const inputLegajo = document.getElementById('inputLegajo');
     const inputCalificacion = document.getElementById('inputCalificacion');
@@ -95,23 +95,25 @@ function agregarParticipante() {
         return;
     }
 
-    const nomina = window.empleados || (typeof empleados !== 'undefined' ? empleados : []);
-    const emp = nomina.find(e => e.legajo && e.legajo.toString().toLowerCase() === legajoVal.toLowerCase());
+    // Compatibilidad multi-origen con dotacion.js / empleados
+    const nomina = window.dotacion || window.DOTACION || window.empleados || (typeof empleados !== 'undefined' ? empleados : []);
+    
+    const emp = nomina.find(e => e.legajo && String(e.legajo).trim().toLowerCase() === legajoVal.toLowerCase());
 
     if (!emp) {
-        alert(`El legajo ${legajoVal} no se encuentra en la base de empleados.`);
+        alert(`El legajo ${legajoVal} no se encuentra en la base de dotación.`);
         return;
     }
 
-    if (listaAsistentes.some(a => a.legajo === emp.legajo)) {
+    if (listaAsistentes.some(a => String(a.legajo).trim() === String(emp.legajo).trim())) {
         alert("El empleado ya está agregado en la grilla.");
         return;
     }
 
     const nuevo = {
         legajo: emp.legajo,
-        apellido: emp.apellido,
-        nombre: emp.nombre,
+        apellido: emp.apellido || emp.Apellido || '-',
+        nombre: emp.nombre || emp.Nombre || '-',
         calificacion: inputCalificacion?.value.trim() || '-',
         observaciones: inputObservaciones?.value.trim() || '-',
         firma: 'Pendiente'

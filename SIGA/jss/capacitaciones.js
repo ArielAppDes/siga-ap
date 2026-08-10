@@ -3,23 +3,72 @@
 // ===================================================
 
 document.addEventListener("DOMContentLoaded", async () => {
+    // Intentar cargar selectores al iniciar
     await cargarSelectoresDesdeJS();
 
     const dataGuardada = localStorage.getItem("capacitacion_activa");
 
     if (dataGuardada) {
-        // Cargar datos existentes si venimos de Actividades o Asistentes
         const cap = JSON.parse(dataGuardada);
         poblarFormulario(cap);
     } else {
-        // Generar nuevo ID solo si es una capacitación creada desde cero
         await generarProximoIdCap();
     }
 
     evaluarEstadoFormulario();
 });
 
-// Rellenar todos los campos del formulario
+// Carga asíncrona de selectores desde Supabase
+async function cargarSelectoresDesdeJS() {
+    const db = window.supabaseClient;
+    if (!db) {
+        console.warn("Cliente de Supabase aún no disponible. Reintentando...");
+        setTimeout(cargarSelectoresDesdeJS, 500);
+        return;
+    }
+
+    try {
+        // 1. Cargar Programas
+        const { data: progs, error: errProgs } = await db.from("programas").select("nombre");
+        if (errProgs) console.error("Error al cargar programas:", errProgs);
+        if (progs && progs.length > 0) {
+            poblarSelect("programa", progs.map(p => p.nombre));
+        }
+
+        // 2. Cargar Cursos
+        const { data: cursos, error: errCursos } = await db.from("cursos").select("nombre");
+        if (errCursos) console.error("Error al cargar cursos:", errCursos);
+        if (cursos && cursos.length > 0) {
+            poblarSelect("curso", cursos.map(c => c.nombre));
+        }
+
+        // 3. Cargar Instructores
+        const { data: insts, error: errInsts } = await db.from("instructores").select("nombre, apellido");
+        if (errInsts) console.error("Error al cargar instructores:", errInsts);
+        if (insts && insts.length > 0) {
+            const listaNombres = insts.map(i => `${i.nombre} ${i.apellido}`);
+            poblarSelect("instructor1", listaNombres);
+            poblarSelect("instructor2", listaNombres);
+        }
+    } catch (err) {
+        console.error("Error inesperado en cargarSelectoresDesdeJS:", err);
+    }
+}
+
+function poblarSelect(idElemento, listaDatos) {
+    const select = document.getElementById(idElemento);
+    if (!select) return;
+
+    select.innerHTML = '<option value="">Seleccione...</option>';
+    listaDatos.forEach(item => {
+        const option = document.createElement("option");
+        const valor = typeof item === "object" ? (item.nombre || item.titulo || item.id) : item;
+        option.value = valor;
+        option.textContent = valor;
+        select.appendChild(option);
+    });
+}
+
 function poblarFormulario(cap) {
     if (document.getElementById("idCap")) document.getElementById("idCap").value = cap.id_cap || "";
     if (document.getElementById("programa")) document.getElementById("programa").value = cap.programa || "";
@@ -44,7 +93,6 @@ function getValor(id) {
     return (val === "Seleccione...") ? "" : val;
 }
 
-// Extrae los datos limpios alineados exactamente con la tabla public.capacitaciones
 function obtenerObjetoFormulario() {
     return {
         id_cap: getValor("idCap"),
@@ -64,7 +112,6 @@ function obtenerObjetoFormulario() {
     };
 }
 
-// Evalúa el estado para habilitar o bloquear el botón de Asistentes
 function evaluarEstadoFormulario() {
     const estado = getValor("estado");
     const btnAsistentes = document.getElementById("btnAsistentes");
@@ -82,24 +129,20 @@ function evaluarEstadoFormulario() {
     }
 }
 
-// Evento cambio de estado
 document.getElementById("estado")?.addEventListener("change", evaluarEstadoFormulario);
 
-// Actualizar idCap cuando el usuario cambia manualmente el campo 'Clase Nº'
 document.getElementById("clase")?.addEventListener("input", () => {
     const inputIdCap = document.getElementById("idCap");
     const numClase = getValor("clase") || "1";
     
     if (inputIdCap && inputIdCap.value) {
         const partes = inputIdCap.value.split("-");
-        // Reemplazar o añadir la clase al final (CAP-2026-001 -> CAP-2026-001-2)
         if (partes.length >= 3) {
             inputIdCap.value = `${partes[0]}-${partes[1]}-${partes[2]}-${numClase}`;
         }
     }
 });
 
-// Generación automática del ID secuencial correlativo
 async function generarProximoIdCap() {
     const inputIdCap = document.getElementById("idCap");
     const inputClase = document.getElementById("clase");
@@ -142,43 +185,6 @@ async function generarProximoIdCap() {
         if (inputIdCap) inputIdCap.value = "CAP-2026-001-1";
         if (inputClase) inputClase.value = "1";
     }
-}
-
-// Carga de selectores consultando directamente a Supabase (columnas existentes)
-async function cargarSelectoresDesdeJS() {
-    const db = window.supabaseClient;
-    if (!db) return;
-
-    try {
-        const { data: progs } = await db.from("programas").select("nombre");
-        if (progs) poblarSelect("programa", progs.map(p => p.nombre));
-
-        const { data: cursos } = await db.from("cursos").select("nombre");
-        if (cursos) poblarSelect("curso", cursos.map(c => c.nombre));
-
-        const { data: insts } = await db.from("instructores").select("nombre, apellido");
-        if (insts) {
-            const listaNombres = insts.map(i => `${i.nombre} ${i.apellido}`);
-            poblarSelect("instructor1", listaNombres);
-            poblarSelect("instructor2", listaNombres);
-        }
-    } catch (err) {
-        console.warn("Aviso al cargar selectores:", err);
-    }
-}
-
-function poblarSelect(idElemento, listaDatos) {
-    const select = document.getElementById(idElemento);
-    if (!select) return;
-
-    select.innerHTML = '<option value="">Seleccione...</option>';
-    listaDatos.forEach(item => {
-        const option = document.createElement("option");
-        const valor = typeof item === "object" ? (item.nombre || item.titulo || item.id) : item;
-        option.value = valor;
-        option.textContent = valor;
-        select.appendChild(option);
-    });
 }
 
 function limpiarFormulario() {

@@ -1,5 +1,5 @@
 // ===================================================
-// 10/08/2026 - V0.2 - SIGA_APP - REGISTRO DE ASISTENTES CON TRANSICIÓN DE CLASES
+// 10/08/2026 - V0.3 - SIGA_APP - REGISTRO DE ASISTENTES CON TRANSICIÓN DE CLASES
 // ===================================================
 
 let listaAsistentes = [];
@@ -36,8 +36,9 @@ function obtenerIdCapActual(capData) {
     return localStorage.getItem("id_cap_asistencia") || '';
 }
 
-// 1. CARGA DE CABECERA
+// 1. CARGA DE CABECERA Y ASISTENTES
 async function inicializarPantallaAsistentes() {
+    // A. Recuperar datos locales inmediatamente
     const capActivaRaw = localStorage.getItem("capacitacion_activa");
     let capData = null;
 
@@ -46,10 +47,16 @@ async function inicializarPantallaAsistentes() {
     }
 
     const urlParams = new URLSearchParams(window.location.search);
-    const idCapTarget = obtenerIdCapActual(capData) || urlParams.get('id_cap');
+    const idCapTarget = capData?.id_cap || capData?.idCap || urlParams.get('id_cap') || localStorage.getItem("id_cap_asistencia");
 
+    // B. Poblar de inmediato con lo que tengamos a mano
+    if (capData || idCapTarget) {
+        poblarCabeceraVisible(capData, idCapTarget);
+    }
+
+    // C. Consultar Supabase para completar o actualizar datos
     const db = obtenerDB();
-    if (db && idCapTarget && (!capData || !capData.nombre_curso)) {
+    if (db && idCapTarget) {
         try {
             const { data } = await db
                 .from('capacitaciones')
@@ -57,20 +64,21 @@ async function inicializarPantallaAsistentes() {
                 .eq('id_cap', idCapTarget)
                 .maybeSingle();
 
-            if (data) capData = data;
+            if (data) {
+                capData = data;
+                poblarCabeceraVisible(capData, idCapTarget);
+            }
         } catch (err) {
-            console.error("Error consultando capacitación:", err);
+            console.error("Error consultando capacitación en Supabase:", err);
         }
-    }
 
-    poblarCabeceraVisible(capData, idCapTarget);
-
-    if (idCapTarget) {
         await cargarAsistentesSupabase(idCapTarget);
     }
 }
 
 function poblarCabeceraVisible(cap, idFallback) {
+    const idFinal = cap?.id_cap || cap?.idCap || idFallback || '';
+    
     // Concatenar instructores 1 y 2 en una sola casilla
     const instructoresUnificados = [cap?.instructor_1, cap?.instructor_2, cap?.instructor1, cap?.instructor]
         .filter(Boolean)
@@ -78,13 +86,14 @@ function poblarCabeceraVisible(cap, idFallback) {
         .join(', ');
 
     const datos = {
-        id: obtenerIdCapActual(cap) || idFallback || '',
+        id: idFinal,
         curso: cap?.nombre_curso || cap?.curso || '',
         clase: cap?.clase_nro || cap?.clase || '1',
-        fecha: cap?.fecha || '',
+        fecha: cap?.fecha || new Date().toISOString().split('T')[0],
         instructor: instructoresUnificados || '-'
     };
 
+    // Asignación por ID
     const inputId = document.getElementById('resumenIdCap') || document.getElementById('idCap') || document.getElementById('id_cap');
     const inputCurso = document.getElementById('resumenCurso') || document.getElementById('curso') || document.getElementById('nombre_curso');
     const inputClase = document.getElementById('resumenClase') || document.getElementById('clase') || document.getElementById('clase_nro');
@@ -97,13 +106,14 @@ function poblarCabeceraVisible(cap, idFallback) {
     if (inputFecha) inputFecha.value = datos.fecha;
     if (inputInst) inputInst.value = datos.instructor;
 
+    // Respaldo por orden de casillas si los IDs de los inputs fallan
     const todosInputs = document.querySelectorAll('main input, form input, .card input, input');
     if (todosInputs.length >= 5) {
-        if (!inputId || !inputId.value) todosInputs[0].value = datos.id;
-        if (!inputCurso || !inputCurso.value) todosInputs[1].value = datos.curso;
-        if (!inputClase || !inputClase.value) todosInputs[2].value = datos.clase;
-        if (!inputFecha || !inputFecha.value) todosInputs[3].value = datos.fecha;
-        if (!inputInst || !inputInst.value) todosInputs[4].value = datos.instructor;
+        if (!todosInputs[0].value) todosInputs[0].value = datos.id;
+        if (!todosInputs[1].value) todosInputs[1].value = datos.curso;
+        if (!todosInputs[2].value) todosInputs[2].value = datos.clase;
+        if (!todosInputs[3].value) todosInputs[3].value = datos.fecha;
+        if (!todosInputs[4].value) todosInputs[4].value = datos.instructor;
     }
 }
 
@@ -233,7 +243,6 @@ async function cerrarRegistro() {
     const db = obtenerDB();
     if (db) {
         try {
-            // A. Guardar asistentes en Supabase
             await db.from('asistentes').delete().eq('id_cap', idCap);
 
             if (listaAsistentes.length > 0) {
@@ -241,22 +250,19 @@ async function cerrarRegistro() {
                 if (errInsert) throw errInsert;
             }
 
-            // B. Marcar la CLASE ACTUAL como 'Finalizado' en Supabase
             await db
                 .from('capacitaciones')
                 .update({ estado: 'Finalizado' })
                 .eq('id_cap', idCap);
 
-            // C. Obtener datos de la capacitación activa
             const capActivaRaw = localStorage.getItem("capacitacion_activa");
             let capData = capActivaRaw ? JSON.parse(capActivaRaw) : null;
 
             if (!capData) {
-                const { data } = await db.from('capacitaciones').select('*').eq('id_cap', idCap').maybeSingle();
+                const { data } = await db.from('capacitaciones').select('*').eq('id_cap', idCap).maybeSingle();
                 capData = data;
             }
 
-            // D. Evaluar si hay una siguiente clase (ej. Clase 1 -> Generar Clase 02 'En curso')
             const claseNum = parseInt(capData?.clase_nro || "1", 10);
             const totalClases = parseInt(capData?.total_clases || capData?.clases_totales || "3", 10);
 
@@ -274,7 +280,6 @@ async function cerrarRegistro() {
                     fecha: new Date().toISOString().split('T')[0]
                 };
 
-                // Crear la nueva clase en Supabase con estado 'En curso'
                 await db.from('capacitaciones').upsert([nuevaClase], { onConflict: 'id_cap' });
             }
 

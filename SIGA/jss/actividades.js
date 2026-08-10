@@ -1,5 +1,5 @@
 // ===================================================
-// 10/08/2026 - V0.1 - SIGA_APP - LÓGICA DE ACTIVIDADES (Navegación de Clases)
+// 10/08/2026 - V0.2 - SIGA_APP - LÓGICA DE ACTIVIDADES (Ciclo de Vida Limpio)
 // ===================================================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -17,10 +17,8 @@ function inicializarTarjetas() {
     document.getElementById("cardNueva")?.addEventListener("click", async () => {
         localStorage.removeItem("capacitacion_activa");
 
-        // Obtener el siguiente correlativo directamente desde Supabase
         const nuevoIdCap = await obtenerSiguienteIdCap();
 
-        // Guardar plantilla activa con el nuevo ID_CAP asignado
         const nuevaCap = {
             id_cap: nuevoIdCap,
             clase_nro: "1",
@@ -47,7 +45,7 @@ function inicializarTarjetas() {
     });
 }
 
-// Consulta Supabase para obtener el mayor ID_CAP e incrementar el correlativo
+// Genera correlativo CAP-AAAA-XXX-01 siempre formateado
 async function obtenerSiguienteIdCap() {
     const db = obtenerDB();
     const anioActual = new Date().getFullYear();
@@ -86,7 +84,6 @@ async function obtenerSiguienteIdCap() {
     }
 }
 
-// Asigna el ID_CAP directamente si se encuentra presente en la vista actual
 async function verificarCampoIdCapLocal() {
     const inputIdCap = document.getElementById("id_cap") || document.querySelector("input[placeholder*='CAP-']");
     if (inputIdCap && (!inputIdCap.value || inputIdCap.value.endsWith("-001-01"))) {
@@ -159,6 +156,8 @@ function renderizarFilasModal(lista, estadoFiltro) {
         tr.style.borderBottom = "1px solid #eee";
 
         let botonAccion = "";
+        // Unificar instructores para mostrar en la grilla
+        const instructores = [item.instructor_1, item.instructor_2].filter(Boolean).join(", ") || "-";
 
         if (estadoFiltro === "Programado") {
             botonAccion = `<button onclick="editarProgramada('${item.id_cap}')" style="background:#27ae60; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">Editar</button>`;
@@ -171,9 +170,9 @@ function renderizarFilasModal(lista, estadoFiltro) {
         tr.innerHTML = `
             <td style="padding:10px; font-weight:bold;">${item.id_cap || "-"}</td>
             <td style="padding:10px;">${item.nombre_curso || "-"}</td>
-            <td style="padding:10px; text-align:center;">Clase ${item.clase_nro || "1"}</td>
+            <td style="padding:10px; text-align:center;">Clase ${parseInt(item.clase_nro || "1", 10)}</td>
             <td style="padding:10px;">${item.fecha || "-"}</td>
-            <td style="padding:10px;">${item.instructor_1 || "-"}</td>
+            <td style="padding:10px;">${instructores}</td>
             <td style="padding:10px; text-align:center;">${botonAccion}</td>
         `;
 
@@ -192,28 +191,37 @@ window.editarProgramada = function(idCap) {
     window.location.href = "capacitaciones.html";
 };
 
-// 2. Continuar Clase "En curso"
-window.cargarSiguienteClase = function(idCap) {
+// 2. Continuar Clase "En curso" (Finaliza la anterior y formatea a 2 dígitos)
+window.cargarSiguienteClase = async function(idCap) {
     const cap = window.listaCapacitacionesTemp?.find(c => c.id_cap === idCap);
     if (!cap) return;
+
+    const db = obtenerDB();
+    if (db) {
+        // Marcar la clase actual/anterior como Finalizada en Supabase
+        await db
+            .from("capacitaciones")
+            .update({ estado: "Finalizado" })
+            .eq("id_cap", idCap);
+    }
 
     let claseActual = parseInt(cap.clase_nro || "1", 10);
     let siguienteClase = claseActual + 1;
 
-    const partes = idCap.split("-");
+    // Formatear SIEMPRE a 2 dígitos: 02, 03, 04...
     const numClaseFormateado = String(siguienteClase).padStart(2, "0");
+    const partes = idCap.split("-");
 
-    if (partes.length >= 4) {
+    if (partes.length >= 3) {
         partes[3] = numClaseFormateado;
-    } else if (partes.length === 3) {
-        partes.push(numClaseFormateado);
     }
-    const nuevoIdCap = partes.join("-");
+    const nuevoIdCap = partes.slice(0, 3).join("-") + "-" + numClaseFormateado;
 
     const nuevaClaseCap = {
         ...cap,
         id_cap: nuevoIdCap,
         clase_nro: String(siguienteClase),
+        estado: "En curso",
         fecha: new Date().toISOString().split("T")[0]
     };
 

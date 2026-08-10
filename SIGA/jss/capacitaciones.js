@@ -1,5 +1,5 @@
 // ===================================================
-// 10/08/2026 - SIGA_APP - CAPACITACIONES (Integración con Supabase)
+// 10/08/2026 - V0.1 - SIGA_APP - CAPACITACIONES (Integración con Supabase)
 // ===================================================
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     evaluarEstadoFormulario();
 });
 
-// Carga asíncrona de selectores desde las tablas de Supabase
+// Carga asíncrona de selectores desde las tablas de Supabase (con limpieza de espacios)
 async function cargarSelectoresDesdeJS() {
     const db = window.supabaseClient || window.supabase;
     if (!db) {
@@ -29,26 +29,36 @@ async function cargarSelectoresDesdeJS() {
 
     try {
         // 1. Cargar Programas desde la tabla 'programas'
-        const { data: progs, error: errProgs } = await db.from("programas").select("nombre").eq("estado", "Activo");
+        const { data: progs, error: errProgs } = await db.from("programas").select("nombre, estado");
         if (!errProgs && progs) {
-            poblarSelect("programa", progs.map(p => p.nombre));
+            const programasFiltrados = progs
+                .filter(p => !p.estado || p.estado.trim() === "Activo")
+                .map(p => p.nombre.trim());
+            poblarSelect("programa", programasFiltrados);
+        } else if (errProgs) {
+            console.error("Error al cargar programas desde Supabase:", errProgs);
         }
 
         // 2. Cargar Cursos desde la tabla 'cursos'
-        const { data: cursos, error: errCursos } = await db.from("cursos").select("nombre").eq("estado", "Activo");
+        const { data: cursos, error: errCursos } = await db.from("cursos").select("nombre, estado");
         if (!errCursos && cursos) {
-            poblarSelect("curso", cursos.map(c => c.nombre));
+            const cursosFiltrados = cursos
+                .filter(c => !c.estado || c.estado.trim() === "Activo")
+                .map(c => c.nombre.trim());
+            poblarSelect("curso", cursosFiltrados);
         }
 
         // 3. Cargar Instructores desde la tabla 'instructores'
-        const { data: insts, error: errInsts } = await db.from("instructores").select("nombre, apellido").eq("estado", "Activo");
+        const { data: insts, error: errInsts } = await db.from("instructores").select("nombre, apellido, estado");
         if (!errInsts && insts) {
-            const listaNombres = insts.map(i => `${i.nombre} ${i.apellido}`);
-            poblarSelect("instructor1", listaNombres);
-            poblarSelect("instructor2", listaNombres);
+            const instFiltrados = insts
+                .filter(i => !i.estado || i.estado.trim() === "Activo")
+                .map(i => `${i.nombre.trim()} ${i.apellido.trim()}`);
+            poblarSelect("instructor1", instFiltrados);
+            poblarSelect("instructor2", instFiltrados);
         }
     } catch (err) {
-        console.error("Error al cargar desplegables desde Supabase:", err);
+        console.error("Error inesperado al cargar desplegables:", err);
     }
 }
 

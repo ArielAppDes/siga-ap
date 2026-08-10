@@ -257,3 +257,19 @@ document.getElementById("btnVolver")?.addEventListener("click", (e) => {
     limpiarFormulario();
     window.location.href = "actividades.html";
 });
+
+function poblarSelect(idElemento, listaDatos) {
+    const select = document.getElementById(idElemento);
+    if (!select) return;
+
+    // Sobrescribe y deja solo la opción por defecto
+    select.innerHTML = '<option value="">Seleccione...</option>';
+
+    listaDatos.forEach(item => {
+        const option = document.createElement("option");
+        const valor = typeof item === "object" ? (item.nombre || item.titulo || item.id) : item;
+        option.value = valor;
+        option.textContent = valor;
+        select.appendChild(option);
+    });
+}

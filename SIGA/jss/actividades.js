@@ -1,231 +1,259 @@
 // ===================================================
-// SIGA_APP - LÓGICA DE ACTIVIDADES (Navegación de Clases)
+// 10/08/2026 - SIGA_APP - CAPACITACIONES (Integración con Supabase)
 // ===================================================
 
-document.addEventListener("DOMContentLoaded", () => {
-    inicializarTarjetas();
-    configurarEventosModal();
-    verificarCampoIdCapLocal();
+document.addEventListener("DOMContentLoaded", async () => {
+    // 1. Cargar desplegables dinámicos desde Supabase
+    await cargarSelectoresDesdeJS();
+
+    // 2. Comprobar si hay una capacitación seleccionada en localStorage
+    const dataGuardada = localStorage.getItem("capacitacion_activa");
+
+    if (dataGuardada) {
+        const cap = JSON.parse(dataGuardada);
+        poblarFormulario(cap);
+    } else {
+        await generarProximoIdCap();
+    }
+
+    evaluarEstadoFormulario();
 });
 
-function obtenerDB() {
-    return window.supabaseClient || window.supabase || null;
-}
-
-function inicializarTarjetas() {
-    // Tarjeta Nueva Capacitación
-    document.getElementById("cardNueva")?.addEventListener("click", async () => {
-        localStorage.removeItem("capacitacion_activa");
-
-        // Obtener el siguiente correlativo directamente desde Supabase
-        const nuevoIdCap = await obtenerSiguienteIdCap();
-
-        // Guardar plantilla activa con el nuevo ID_CAP asignado
-        const nuevaCap = {
-            id_cap: nuevoIdCap,
-            clase_nro: "1",
-            estado: "Programado"
-        };
-
-        localStorage.setItem("capacitacion_activa", JSON.stringify(nuevaCap));
-        window.location.href = "capacitaciones.html";
-    });
-
-    // Tarjeta Programadas
-    document.getElementById("cardProgramadas")?.addEventListener("click", () => {
-        abrirModalPorEstado("Programado", "Capacitaciones Programadas");
-    });
-
-    // Tarjeta En curso
-    document.getElementById("cardEnCurso")?.addEventListener("click", () => {
-        abrirModalPorEstado("En curso", "Capacitaciones En Curso");
-    });
-
-    // Tarjeta Finalizadas
-    document.getElementById("cardFinalizadas")?.addEventListener("click", () => {
-        abrirModalPorEstado("Finalizado", "Historial de Capacitaciones Finalizadas");
-    });
-}
-
-// Consulta Supabase para obtener el mayor ID_CAP e incrementar el correlativo
-async function obtenerSiguienteIdCap() {
-    const db = obtenerDB();
-    const anioActual = new Date().getFullYear();
-
-    if (!db) return `CAP-${anioActual}-001-01`;
+// Carga asíncrona de selectores desde las tablas de Supabase
+async function cargarSelectoresDesdeJS() {
+    const db = window.supabaseClient || window.supabase;
+    if (!db) {
+        setTimeout(cargarSelectoresDesdeJS, 400);
+        return;
+    }
 
     try {
-        const { data, error } = await db
-            .from("capacitaciones")
-            .select("id_cap");
-
-        if (error || !data || data.length === 0) {
-            return `CAP-${anioActual}-001-01`;
+        // 1. Cargar Programas desde la tabla 'programas'
+        const { data: progs, error: errProgs } = await db.from("programas").select("nombre").eq("estado", "Activo");
+        if (!errProgs && progs) {
+            poblarSelect("programa", progs.map(p => p.nombre));
         }
 
-        let maxNumero = 0;
+        // 2. Cargar Cursos desde la tabla 'cursos'
+        const { data: cursos, error: errCursos } = await db.from("cursos").select("nombre").eq("estado", "Activo");
+        if (!errCursos && cursos) {
+            poblarSelect("curso", cursos.map(c => c.nombre));
+        }
 
+        // 3. Cargar Instructores desde la tabla 'instructores'
+        const { data: insts, error: errInsts } = await db.from("instructores").select("nombre, apellido").eq("estado", "Activo");
+        if (!errInsts && insts) {
+            const listaNombres = insts.map(i => `${i.nombre} ${i.apellido}`);
+            poblarSelect("instructor1", listaNombres);
+            poblarSelect("instructor2", listaNombres);
+        }
+    } catch (err) {
+        console.error("Error al cargar desplegables desde Supabase:", err);
+    }
+}
+
+function poblarSelect(idElemento, listaDatos) {
+    const select = document.getElementById(idElemento);
+    if (!select) return;
+
+    select.innerHTML = '<option value="">Seleccione...</option>';
+    listaDatos.forEach(item => {
+        const option = document.createElement("option");
+        option.value = item;
+        option.textContent = item;
+        select.appendChild(option);
+    });
+}
+
+function poblarFormulario(cap) {
+    if (document.getElementById("idCap")) document.getElementById("idCap").value = cap.id_cap || "";
+    if (document.getElementById("programa")) document.getElementById("programa").value = cap.programa || "";
+    if (document.getElementById("curso")) document.getElementById("curso").value = cap.nombre_curso || "";
+    if (document.getElementById("clase")) document.getElementById("clase").value = cap.clase_nro || "1";
+    if (document.getElementById("estado")) document.getElementById("estado").value = cap.estado || "Programado";
+    if (document.getElementById("tema")) document.getElementById("tema").value = cap.tema || "";
+    if (document.getElementById("fecha")) document.getElementById("fecha").value = cap.fecha || "";
+    if (document.getElementById("horaInicio")) document.getElementById("horaInicio").value = cap.hs_inicio || "";
+    if (document.getElementById("horaFin")) document.getElementById("horaFin").value = cap.hs_fin || "";
+    if (document.getElementById("lugar")) document.getElementById("lugar").value = cap.lugar || "";
+    if (document.getElementById("centro")) document.getElementById("centro").value = cap.centro || "";
+    if (document.getElementById("instructor1")) document.getElementById("instructor1").value = cap.instructor_1 || "";
+    if (document.getElementById("instructor2")) document.getElementById("instructor2").value = cap.instructor_2 || "";
+    if (document.getElementById("observaciones")) document.getElementById("observaciones").value = cap.observaciones || "";
+}
+
+function getValor(id) {
+    const el = document.getElementById(id);
+    if (!el) return "";
+    const val = el.value ? el.value.trim() : "";
+    return (val === "Seleccione...") ? "" : val;
+}
+
+function obtenerObjetoFormulario() {
+    return {
+        id_cap: getValor("idCap"),
+        programa: getValor("programa"),
+        nombre_curso: getValor("curso"),
+        clase_nro: parseInt(getValor("clase") || "1", 10),
+        estado: getValor("estado") || "Programado",
+        tema: getValor("tema"),
+        fecha: document.getElementById("fecha")?.value || null,
+        hs_inicio: document.getElementById("horaInicio")?.value || null,
+        hs_fin: document.getElementById("horaFin")?.value || null,
+        lugar: getValor("lugar"),
+        centro: getValor("centro"),
+        instructor_1: getValor("instructor1"),
+        instructor_2: getValor("instructor2"),
+        observaciones: getValor("observaciones")
+    };
+}
+
+// Bloquea/Desbloquea el acceso a Asistentes según los 3 estados
+function evaluarEstadoFormulario() {
+    const estado = getValor("estado");
+    const btnAsistentes = document.getElementById("btnAsistentes");
+
+    if (btnAsistentes) {
+        if (estado === "Programado") {
+            btnAsistentes.style.opacity = "0.5";
+            btnAsistentes.style.cursor = "not-allowed";
+            btnAsistentes.title = "Las capacitaciones 'Programadas' no permiten tomar lista de asistentes.";
+        } else {
+            btnAsistentes.style.opacity = "1";
+            btnAsistentes.style.cursor = "pointer";
+            btnAsistentes.title = "Pasar a la toma de asistencia.";
+        }
+    }
+}
+
+document.getElementById("estado")?.addEventListener("change", evaluarEstadoFormulario);
+
+// Formateo dinámico de ID_CAP al cambiar el número de clase
+document.getElementById("clase")?.addEventListener("input", () => {
+    const inputIdCap = document.getElementById("idCap");
+    const numClase = String(getValor("clase") || "1").padStart(2, "0");
+    
+    if (inputIdCap && inputIdCap.value) {
+        const partes = inputIdCap.value.split("-");
+        if (partes.length >= 3) {
+            inputIdCap.value = `${partes[0]}-${partes[1]}-${partes[2]}-${numClase}`;
+        }
+    }
+});
+
+// Autogenera el próximo correlativo si es una capacitación nueva
+async function generarProximoIdCap() {
+    const inputIdCap = document.getElementById("idCap");
+    const inputClase = document.getElementById("clase");
+    const db = window.supabaseClient || window.supabase;
+    const anio = new Date().getFullYear();
+
+    try {
+        if (!db) {
+            if (inputIdCap) inputIdCap.value = `CAP-${anio}-001-01`;
+            if (inputClase) inputClase.value = "1";
+            return;
+        }
+
+        const { data, error } = await db.from("capacitaciones").select("id_cap");
+
+        if (error || !data || data.length === 0) {
+            if (inputIdCap) inputIdCap.value = `CAP-${anio}-001-01`;
+            if (inputClase) inputClase.value = "1";
+            return;
+        }
+
+        let maxCurso = 0;
         data.forEach(item => {
             if (item.id_cap) {
                 const partes = item.id_cap.split("-");
                 if (partes.length >= 3) {
                     const num = parseInt(partes[2], 10);
-                    if (!isNaN(num) && num > maxNumero) {
-                        maxNumero = num;
-                    }
+                    if (!isNaN(num) && num > maxCurso) maxCurso = num;
                 }
             }
         });
 
-        const siguienteNumero = String(maxNumero + 1).padStart(3, "0");
-        return `CAP-${anioActual}-${siguienteNumero}-01`;
+        const nuevoNum = maxCurso + 1;
+        const cursoPadded = String(nuevoNum).padStart(3, "0");
+
+        if (inputIdCap) inputIdCap.value = `CAP-${anio}-${cursoPadded}-01`;
+        if (inputClase) inputClase.value = "1";
 
     } catch (err) {
-        console.error("Error al consultar último ID_CAP en Supabase:", err);
-        return `CAP-${anioActual}-001-01`;
+        console.error("Error al generar ID:", err);
+        if (inputIdCap) inputIdCap.value = `CAP-${anio}-001-01`;
+        if (inputClase) inputClase.value = "1";
     }
 }
 
-// Asigna el ID_CAP directamente si se encuentra presente en la vista actual
-async function verificarCampoIdCapLocal() {
-    const inputIdCap = document.getElementById("id_cap") || document.querySelector("input[placeholder*='CAP-']");
-    if (inputIdCap && (!inputIdCap.value || inputIdCap.value.endsWith("-001-01"))) {
-        const capActiva = localStorage.getItem("capacitacion_activa");
-        if (!capActiva) {
-            const nuevoId = await obtenerSiguienteIdCap();
-            inputIdCap.value = nuevoId;
-        }
-    }
+function limpiarFormulario() {
+    localStorage.removeItem("capacitacion_activa");
+    ["programa", "curso", "tema", "fecha", "horaInicio", "horaFin", "lugar", "centro", "instructor1", "instructor2", "observaciones"].forEach(id => {
+        const elem = document.getElementById(id);
+        if (elem) elem.value = "";
+    });
+    if (document.getElementById("clase")) document.getElementById("clase").value = "1";
+    if (document.getElementById("estado")) document.getElementById("estado").value = "Programado";
+    evaluarEstadoFormulario();
 }
 
-function configurarEventosModal() {
-    const modal = document.getElementById("modalCapacitaciones");
-    const btnCerrar = document.getElementById("btnCerrarModal");
+// BOTÓN: Guardar
+document.getElementById("btnGuardar")?.addEventListener("click", async (e) => {
+    e.preventDefault();
+    const datos = obtenerObjetoFormulario();
 
-    btnCerrar?.addEventListener("click", () => {
-        if (modal) modal.style.display = "none";
-    });
-
-    window.addEventListener("click", (e) => {
-        if (e.target === modal) modal.style.display = "none";
-    });
-}
-
-async function abrirModalPorEstado(estadoFiltro, titulo) {
-    const modal = document.getElementById("modalCapacitaciones");
-    const txtTitulo = document.getElementById("tituloModal");
-    const tbody = document.getElementById("tbodyCapacitaciones");
-
-    if (txtTitulo) txtTitulo.textContent = titulo;
-    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Cargando datos...</td></tr>';
-    if (modal) modal.style.display = "flex";
-
-    const db = obtenerDB();
-    if (!db) {
-        if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red; padding:20px;">Sin conexión a Supabase.</td></tr>';
+    if (!datos.nombre_curso || !datos.fecha) {
+        alert("Atención: Seleccioná un Curso y una Fecha antes de guardar.");
         return;
     }
 
-    try {
-        const { data, error } = await db
-            .from("capacitaciones")
-            .select("*")
-            .eq("estado", estadoFiltro)
-            .order("id_cap", { ascending: false });
-
-        if (error) throw error;
-
-        if (!data || data.length === 0) {
-            if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px;">No hay capacitaciones en estado '<strong>${estadoFiltro}</strong>'.</td></tr>`;
+    const db = window.supabaseClient || window.supabase;
+    if (db) {
+        const { error } = await db.from("capacitaciones").upsert([datos]);
+        if (error) {
+            alert("Error al guardar en Supabase: " + error.message);
             return;
         }
-
-        renderizarFilasModal(data, estadoFiltro);
-
-    } catch (err) {
-        console.error("Error al obtener capacitaciones:", err);
-        if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red; padding:20px;">Error al consultar la base de datos.</td></tr>';
     }
-}
 
-function renderizarFilasModal(lista, estadoFiltro) {
-    const tbody = document.getElementById("tbodyCapacitaciones");
-    if (!tbody) return;
+    alert(`Capacitación ${datos.id_cap} guardada con éxito con estado '${datos.estado}'.`);
+    limpiarFormulario();
+    window.location.href = "actividades.html";
+});
 
-    tbody.innerHTML = "";
+// BOTÓN: Registrar Asistentes
+document.getElementById("btnAsistentes")?.addEventListener("click", async (e) => {
+    e.preventDefault();
+    const datos = obtenerObjetoFormulario();
 
-    lista.forEach(item => {
-        const tr = document.createElement("tr");
-        tr.style.borderBottom = "1px solid #eee";
+    if (datos.estado === "Programado") {
+        alert("Las capacitaciones en estado 'Programado' no admiten la toma de asistencia. Cambiá el estado a 'En curso' o 'Finalizado'.");
+        return;
+    }
 
-        let botonAccion = "";
+    if (!datos.nombre_curso || !datos.fecha) {
+        alert("Completá los datos requeridos (Curso y Fecha) antes de continuar.");
+        return;
+    }
 
-        if (estadoFiltro === "Programado") {
-            botonAccion = `<button onclick="editarProgramada('${item.id_cap}')" style="background:#27ae60; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">Editar</button>`;
-        } else if (estadoFiltro === "En curso") {
-            botonAccion = `<button onclick="cargarSiguienteClase('${item.id_cap}')" style="background:#2980b9; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">Continuar Clase</button>`;
-        } else {
-            botonAccion = `<button onclick="verFinalizada('${item.id_cap}')" style="background:#7f8c8d; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">Ver Detalle</button>`;
+    localStorage.setItem("capacitacion_activa", JSON.stringify(datos));
+
+    const db = window.supabaseClient || window.supabase;
+    if (db) {
+        try {
+            await db.from("capacitaciones").upsert([datos]);
+        } catch (err) {
+            console.warn("Aviso al actualizar capacitación previa a asistencia:", err);
         }
-
-        tr.innerHTML = `
-            <td style="padding:10px; font-weight:bold;">${item.id_cap || "-"}</td>
-            <td style="padding:10px;">${item.nombre_curso || "-"}</td>
-            <td style="padding:10px; text-align:center;">Clase ${item.clase_nro || "1"}</td>
-            <td style="padding:10px;">${item.fecha || "-"}</td>
-            <td style="padding:10px;">${item.instructor_1 || "-"}</td>
-            <td style="padding:10px; text-align:center;">${botonAccion}</td>
-        `;
-
-        tbody.appendChild(tr);
-    });
-
-    window.listaCapacitacionesTemp = lista;
-}
-
-// 1. Editar Programada (Mantiene el mismo ID y misma clase)
-window.editarProgramada = function(idCap) {
-    const cap = window.listaCapacitacionesTemp?.find(c => c.id_cap === idCap);
-    if (!cap) return;
-
-    localStorage.setItem("capacitacion_activa", JSON.stringify(cap));
-    window.location.href = "capacitaciones.html";
-};
-
-// 2. Continuar Clase "En curso" (CAP-2026-002-01 -> CAP-2026-002-02)
-window.cargarSiguienteClase = function(idCap) {
-    const cap = window.listaCapacitacionesTemp?.find(c => c.id_cap === idCap);
-    if (!cap) return;
-
-    let claseActual = parseInt(cap.clase_nro || "1", 10);
-    let siguienteClase = claseActual + 1;
-
-    const partes = idCap.split("-");
-    const numClaseFormateado = String(siguienteClase).padStart(2, "0");
-
-    if (partes.length >= 4) {
-        partes[3] = numClaseFormateado;
-    } else if (partes.length === 3) {
-        partes.push(numClaseFormateado);
     }
-    const nuevoIdCap = partes.join("-");
 
-    const nuevaClaseCap = {
-        ...cap,
-        id_cap: nuevoIdCap,
-        clase_nro: String(siguienteClase),
-        fecha: new Date().toISOString().split("T")[0]
-    };
+    window.location.href = "asistentes.html";
+});
 
-    localStorage.setItem("capacitacion_activa", JSON.stringify(nuevaClaseCap));
-    window.location.href = "capacitaciones.html";
-};
-
-// 3. Ver Finalizada (Consulta con los datos tal cual)
-window.verFinalizada = function(idCap) {
-    const cap = window.listaCapacitacionesTemp?.find(c => c.id_cap === idCap);
-    if (!cap) return;
-
-    localStorage.setItem("capacitacion_activa", JSON.stringify(cap));
-    window.location.href = "capacitaciones.html";
-};
+// BOTÓN: Volver
+document.getElementById("btnVolver")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    limpiarFormulario();
+    window.location.href = "actividades.html";
+});

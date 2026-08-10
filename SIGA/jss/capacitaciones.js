@@ -106,6 +106,7 @@ function obtenerObjetoFormulario() {
         programa: getValor("programa"),
         nombre_curso: getValor("curso"),
         clase_nro: parseInt(getValor("clase") || "1", 10),
+        total_clases: parseInt(getValor("totalClases") || "1", 10),
         estado: getValor("estado") || "Programado",
         tema: getValor("tema"),
         fecha: document.getElementById("fecha")?.value || null,
@@ -118,6 +119,7 @@ function obtenerObjetoFormulario() {
         observaciones: getValor("observaciones")
     };
 }
+
 
 // Bloquea/Desbloquea el acceso a Asistentes según los 3 estados
 function evaluarEstadoFormulario() {
@@ -205,6 +207,7 @@ function limpiarFormulario() {
         if (elem) elem.value = "";
     });
     if (document.getElementById("clase")) document.getElementById("clase").value = "1";
+    if (document.getElementById("totalClases")) document.getElementById("totalClases").value = "1";
     if (document.getElementById("estado")) document.getElementById("estado").value = "Programado";
     evaluarEstadoFormulario();
 }

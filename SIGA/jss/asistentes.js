@@ -1,318 +1,153 @@
 // ===================================================
-// 10/08/2026 - V0.3 - SIGA_APP - REGISTRO DE ASISTENTES CON TRANSICIÓN DE CLASES
+// 10/08/2026 - V11.0 - SIGA_APP - LÓGICA DE ACTIVIDADES
 // ===================================================
 
-let listaAsistentes = [];
-
-document.addEventListener('DOMContentLoaded', async () => {
-    await inicializarPantallaAsistentes();
-    configurarEventos();
+document.addEventListener("DOMContentLoaded", () => {
+    inicializarTarjetas();
+    configurarEventosModal();
 });
 
 function obtenerDB() {
     return window.supabaseClient || window.supabase || null;
 }
 
-function obtenerIdCapActual(capData) {
-    if (capData) {
-        const idEncontrado = capData.id_cap || capData.idCap || capData.id;
-        if (idEncontrado) return idEncontrado;
-    }
+function inicializarTarjetas() {
+    document.getElementById("cardNueva")?.addEventListener("click", async () => {
+        localStorage.removeItem("capacitacion_activa");
+        const nuevoIdCap = await obtenerSiguienteIdCap();
 
-    const inputId = document.getElementById('resumenIdCap') || 
-                    document.getElementById('idCap') || 
-                    document.getElementById('id_cap');
-    if (inputId && inputId.value.trim()) return inputId.value.trim();
+        const nuevaCap = {
+            id_cap: nuevoIdCap,
+            clase_nro: "1",
+            estado: "" // Fuerza al usuario a seleccionar estado
+        };
 
-    const capActivaRaw = localStorage.getItem("capacitacion_activa");
-    if (capActivaRaw) {
-        try {
-            const parsed = JSON.parse(capActivaRaw);
-            const idParsed = parsed.id_cap || parsed.idCap || parsed.id;
-            if (idParsed) return idParsed;
-        } catch (e) { console.error(e); }
-    }
+        localStorage.setItem("capacitacion_activa", JSON.stringify(nuevaCap));
+        window.location.href = "capacitaciones.html";
+    });
 
-    return localStorage.getItem("id_cap_asistencia") || '';
+    document.getElementById("cardProgramadas")?.addEventListener("click", () => {
+        abrirModalPorEstado("Programado", "Capacitaciones Programadas");
+    });
+
+    document.getElementById("cardEnCurso")?.addEventListener("click", () => {
+        abrirModalPorEstado("En curso", "Capacitaciones En Curso");
+    });
+
+    document.getElementById("cardFinalizadas")?.addEventListener("click", () => {
+        abrirModalPorEstado("Finalizado", "Historial de Capacitaciones Finalizadas");
+    });
 }
 
-// 1. CARGA DE CABECERA Y ASISTENTES
-async function inicializarPantallaAsistentes() {
-    // A. Recuperar datos locales inmediatamente
-    const capActivaRaw = localStorage.getItem("capacitacion_activa");
-    let capData = null;
-
-    if (capActivaRaw) {
-        try { capData = JSON.parse(capActivaRaw); } catch (e) { console.error(e); }
-    }
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const idCapTarget = capData?.id_cap || capData?.idCap || urlParams.get('id_cap') || localStorage.getItem("id_cap_asistencia");
-
-    // B. Poblar de inmediato con lo que tengamos a mano
-    if (capData || idCapTarget) {
-        poblarCabeceraVisible(capData, idCapTarget);
-    }
-
-    // C. Consultar Supabase para completar o actualizar datos
+async function obtenerSiguienteIdCap() {
     const db = obtenerDB();
-    if (db && idCapTarget) {
-        try {
-            const { data } = await db
-                .from('capacitaciones')
-                .select('*')
-                .eq('id_cap', idCapTarget)
-                .maybeSingle();
+    const anioActual = new Date().getFullYear();
 
-            if (data) {
-                capData = data;
-                poblarCabeceraVisible(capData, idCapTarget);
+    if (!db) return `CAP-${anioActual}-001-01`;
+
+    try {
+        const { data, error } = await db.from("capacitaciones").select("id_cap");
+        if (error || !data || data.length === 0) return `CAP-${anioActual}-001-01`;
+
+        let maxNumero = 0;
+        data.forEach(item => {
+            if (item.id_cap) {
+                const partes = item.id_cap.split("-");
+                if (partes.length >= 3) {
+                    const num = parseInt(partes[2], 10);
+                    if (!isNaN(num) && num > maxNumero) maxNumero = num;
+                }
             }
-        } catch (err) {
-            console.error("Error consultando capacitación en Supabase:", err);
-        }
+        });
 
-        await cargarAsistentesSupabase(idCapTarget);
+        const siguienteNumero = String(maxNumero + 1).padStart(3, "0");
+        return `CAP-${anioActual}-${siguienteNumero}-01`;
+    } catch (err) {
+        console.error("Error consultando ID_CAP:", err);
+        return `CAP-${anioActual}-001-01`;
     }
 }
 
-function poblarCabeceraVisible(cap, idFallback) {
-    const idFinal = cap?.id_cap || cap?.idCap || idFallback || '';
-    
-    // Concatenar instructores 1 y 2 en una sola casilla
-    const instructoresUnificados = [cap?.instructor_1, cap?.instructor_2, cap?.instructor1, cap?.instructor]
-        .filter(Boolean)
-        .filter((v, i, a) => a.indexOf(v) === i)
-        .join(', ');
+function configurarEventosModal() {
+    const modal = document.getElementById("modalCapacitaciones");
+    const btnCerrar = document.getElementById("btnCerrarModal");
 
-    const datos = {
-        id: idFinal,
-        curso: cap?.nombre_curso || cap?.curso || '',
-        clase: cap?.clase_nro || cap?.clase || '1',
-        fecha: cap?.fecha || new Date().toISOString().split('T')[0],
-        instructor: instructoresUnificados || '-'
-    };
-
-    // Asignación por ID
-    const inputId = document.getElementById('resumenIdCap') || document.getElementById('idCap') || document.getElementById('id_cap');
-    const inputCurso = document.getElementById('resumenCurso') || document.getElementById('curso') || document.getElementById('nombre_curso');
-    const inputClase = document.getElementById('resumenClase') || document.getElementById('clase') || document.getElementById('clase_nro');
-    const inputFecha = document.getElementById('resumenFecha') || document.getElementById('fecha');
-    const inputInst = document.getElementById('resumenInstructor') || document.getElementById('instructor') || document.getElementById('instructor_1');
-
-    if (inputId) inputId.value = datos.id;
-    if (inputCurso) inputCurso.value = datos.curso;
-    if (inputClase) inputClase.value = datos.clase;
-    if (inputFecha) inputFecha.value = datos.fecha;
-    if (inputInst) inputInst.value = datos.instructor;
-
-    // Respaldo por orden de casillas si los IDs de los inputs fallan
-    const todosInputs = document.querySelectorAll('main input, form input, .card input, input');
-    if (todosInputs.length >= 5) {
-        if (!todosInputs[0].value) todosInputs[0].value = datos.id;
-        if (!todosInputs[1].value) todosInputs[1].value = datos.curso;
-        if (!todosInputs[2].value) todosInputs[2].value = datos.clase;
-        if (!todosInputs[3].value) todosInputs[3].value = datos.fecha;
-        if (!todosInputs[4].value) todosInputs[4].value = datos.instructor;
-    }
+    btnCerrar?.addEventListener("click", () => { if (modal) modal.style.display = "none"; });
+    window.addEventListener("click", (e) => { if (e.target === modal) modal.style.display = "none"; });
 }
 
-async function cargarAsistentesSupabase(idCap) {
+async function abrirModalPorEstado(estadoFiltro, titulo) {
+    const modal = document.getElementById("modalCapacitaciones");
+    const txtTitulo = document.getElementById("tituloModal");
+    const tbody = document.getElementById("tbodyCapacitaciones");
+
+    if (txtTitulo) txtTitulo.textContent = titulo;
+    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Cargando datos...</td></tr>';
+    if (modal) modal.style.display = "flex";
+
     const db = obtenerDB();
     if (!db) return;
 
     try {
         const { data, error } = await db
-            .from('asistentes')
-            .select('*')
-            .eq('id_cap', idCap);
+            .from("capacitaciones")
+            .select("*")
+            .eq("estado", estadoFiltro)
+            .order("id_cap", { ascending: false });
 
-        listaAsistentes = (!error && data) ? data : [];
-        renderizarGrilla();
-    } catch (err) {
-        console.error("Error leyendo asistentes de Supabase:", err);
-    }
-}
+        if (error) throw error;
 
-// 2. AGREGAR Y RENDERIZAR PARTICIPANTE
-function agregarParticipante() {
-    const inputs = document.querySelectorAll('input');
-    const inputLegajo = document.getElementById('inputLegajo') || document.getElementById('legajo') || inputs[5];
-    const inputCalificaciones = document.getElementById('inputCalificacion') || document.getElementById('calificacion') || inputs[6];
-    const inputObservaciones = document.getElementById('inputObservaciones') || document.getElementById('observaciones') || inputs[7];
-
-    const idCap = obtenerIdCapActual();
-    const legajoVal = inputLegajo?.value.trim();
-
-    if (!legajoVal) {
-        alert("Por favor, ingrese un número de legajo.");
-        return;
-    }
-
-    const nomina = window.empleados || window.dotacion || (typeof empleados !== 'undefined' ? empleados : []);
-    const emp = nomina.find(e => e.legajo && String(e.legajo).trim().toLowerCase() === legajoVal.toLowerCase());
-
-    if (!emp) {
-        alert(`El legajo ${legajoVal} no se encuentra registrado en la base de empleados.`);
-        return;
-    }
-
-    if (listaAsistentes.some(a => String(a.legajo).trim() === String(emp.legajo).trim())) {
-        alert("El empleado ya está agregado en la grilla.");
-        return;
-    }
-
-    const nuevoAsistente = {
-        id_cap: idCap,
-        legajo: String(emp.legajo).trim(),
-        apellido: emp.apellido || '',
-        nombre: emp.nombre || '',
-        puesto: emp.puesto || '',
-        categoria: emp.categoria || '',
-        direccion: emp.direccion || '',
-        gerencia: emp.gerencia || '',
-        jefatura: emp.jefatura || '',
-        email: emp.email || '',
-        calificacion: inputCalificaciones?.value.trim() || '-',
-        observaciones: inputObservaciones?.value.trim() || '-'
-    };
-
-    listaAsistentes.push(nuevoAsistente);
-    renderizarGrilla();
-
-    if (inputLegajo) inputLegajo.value = '';
-    if (inputCalificaciones) inputCalificaciones.value = '';
-    if (inputObservaciones) inputObservaciones.value = '';
-}
-
-function renderizarGrilla() {
-    const tbody = document.getElementById('tbodyAsistentes') || document.querySelector('tbody');
-    if (!tbody) return;
-
-    tbody.innerHTML = '';
-
-    if (listaAsistentes.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="7" style="text-align:center; padding:20px; color:#94a3b8;">
-                    No hay participantes registrados para esta clase aún.
-                </td>
-            </tr>
-        `;
-        return;
-    }
-
-    listaAsistentes.forEach((item, idx) => {
-        const tr = document.createElement('tr');
-        tr.style.borderBottom = '1px solid #e2e8f0';
-
-        tr.innerHTML = `
-            <td style="padding:12px 15px; font-weight:bold;">${item.legajo}</td>
-            <td style="padding:12px 15px;">${item.apellido}</td>
-            <td style="padding:12px 15px;">${item.nombre}</td>
-            <td style="padding:12px 15px;">${item.calificacion}</td>
-            <td style="padding:12px 15px;">${item.observaciones}</td>
-            <td style="padding:12px 15px; color:#64748b;">Pendiente</td>
-            <td style="padding:12px 15px; text-align:center;">
-                <button onclick="quitarParticipante(${idx})" style="background:#ef4444; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">
-                    Quitar
-                </button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-window.quitarParticipante = function(index) {
-    listaAsistentes.splice(index, 1);
-    renderizarGrilla();
-};
-
-// 3. CERRAR REGISTRO Y GESTIONAR TRANSICIÓN DE CLASES
-async function cerrarRegistro() {
-    const idCap = obtenerIdCapActual();
-
-    if (!idCap) {
-        alert("No hay un ID_CAP válido asignado.");
-        return;
-    }
-
-    const confirmacion = confirm(`¿Desea cerrar el registro de esta clase?\n\nID: ${idCap}\nTotal de asistentes: ${listaAsistentes.length}`);
-    if (!confirmacion) return;
-
-    const db = obtenerDB();
-    if (db) {
-        try {
-            await db.from('asistentes').delete().eq('id_cap', idCap);
-
-            if (listaAsistentes.length > 0) {
-                const { error: errInsert } = await db.from('asistentes').insert(listaAsistentes);
-                if (errInsert) throw errInsert;
-            }
-
-            await db
-                .from('capacitaciones')
-                .update({ estado: 'Finalizado' })
-                .eq('id_cap', idCap);
-
-            const capActivaRaw = localStorage.getItem("capacitacion_activa");
-            let capData = capActivaRaw ? JSON.parse(capActivaRaw) : null;
-
-            if (!capData) {
-                const { data } = await db.from('capacitaciones').select('*').eq('id_cap', idCap).maybeSingle();
-                capData = data;
-            }
-
-            const claseNum = parseInt(capData?.clase_nro || "1", 10);
-            const totalClases = parseInt(capData?.total_clases || capData?.clases_totales || "3", 10);
-
-            if (claseNum < totalClases) {
-                const siguienteClaseNum = claseNum + 1;
-                const numClaseFormateado = String(siguienteClaseNum).padStart(2, '0');
-                const partes = idCap.split('-');
-                const nuevoIdCap = partes.slice(0, 3).join('-') + '-' + numClaseFormateado;
-
-                const nuevaClase = {
-                    ...capData,
-                    id_cap: nuevoIdCap,
-                    clase_nro: String(siguienteClaseNum),
-                    estado: 'En curso',
-                    fecha: new Date().toISOString().split('T')[0]
-                };
-
-                await db.from('capacitaciones').upsert([nuevaClase], { onConflict: 'id_cap' });
-            }
-
-        } catch (err) {
-            console.error("Error en el cierre de registro:", err);
-            alert("Error al guardar asistentes: " + (err.message || "Error de conexión"));
+        if (!data || data.length === 0) {
+            if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px;">No hay registros en estado '<strong>${estadoFiltro}</strong>'.</td></tr>`;
             return;
         }
+
+        renderizarFilasModal(data, estadoFiltro);
+    } catch (err) {
+        console.error("Error consultando capacitaciones:", err);
     }
-
-    localStorage.removeItem("capacitacion_activa");
-    localStorage.removeItem("id_cap_asistencia");
-
-    alert(`Registro de la clase ${idCap} cerrado con éxito.`);
-    window.location.href = "actividades.html";
 }
 
-function configurarEventos() {
-    const botones = document.querySelectorAll('button');
-    
-    const btnAgregar = document.getElementById('btnAgregarParticipante') || Array.from(botones).find(b => b.textContent.includes('Agregar'));
-    if (btnAgregar) btnAgregar.onclick = (e) => { e.preventDefault(); agregarParticipante(); };
+function renderizarFilasModal(lista, estadoFiltro) {
+    const tbody = document.getElementById("tbodyCapacitaciones");
+    if (!tbody) return;
 
-    const btnCerrar = document.getElementById('btnCerrarRegistro') || Array.from(botones).find(b => b.textContent.includes('Cerrar'));
-    if (btnCerrar) btnCerrar.onclick = (e) => { e.preventDefault(); cerrarRegistro(); };
+    tbody.innerHTML = "";
 
-    const btnCancelar = document.getElementById('btnCancelar') || Array.from(botones).find(b => b.textContent.includes('Cancelar'));
-    if (btnCancelar) btnCancelar.onclick = (e) => {
-        e.preventDefault();
-        localStorage.removeItem("capacitacion_activa");
-        window.location.href = "actividades.html";
-    };
+    lista.forEach(item => {
+        const tr = document.createElement("tr");
+        tr.style.borderBottom = "1px solid #eee";
 
-    const btnImprimir = document.getElementById('btnImprimir') || Array.from(botones).find(b => b.textContent.includes('Imprimir'));
-    if (btnImprimir) btnImprimir.onclick = (e) => { e.preventDefault(); window.print(); };
+        let botonAccion = "";
+        const instructores = [item.instructor_1, item.instructor_2].filter(Boolean).join(", ") || "-";
+
+        if (estadoFiltro === "Programado") {
+            botonAccion = `<button onclick="abrirCapacitacion('${item.id_cap}', 'capacitaciones.html')" style="background:#27ae60; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">Editar</button>`;
+        } else if (estadoFiltro === "En curso") {
+            botonAccion = `<button onclick="abrirCapacitacion('${item.id_cap}', 'asistentes.html')" style="background:#2980b9; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">Tomar Asistencia</button>`;
+        } else {
+            botonAccion = `<button onclick="abrirCapacitacion('${item.id_cap}', 'asistentes.html')" style="background:#7f8c8d; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">Ver Detalle</button>`;
+        }
+
+        tr.innerHTML = `
+            <td style="padding:10px; font-weight:bold;">${item.id_cap || "-"}</td>
+            <td style="padding:10px;">${item.nombre_curso || "-"}</td>
+            <td style="padding:10px; text-align:center;">Clase ${parseInt(item.clase_nro || "1", 10)}</td>
+            <td style="padding:10px;">${item.fecha || "-"}</td>
+            <td style="padding:10px;">${instructores}</td>
+            <td style="padding:10px; text-align:center;">${botonAccion}</td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+
+    window.listaCapacitacionesTemp = lista;
 }
+
+window.abrirCapacitacion = function(idCap, destinoHtml) {
+    const cap = window.listaCapacitacionesTemp?.find(c => c.id_cap === idCap);
+    if (!cap) return;
+
+    localStorage.setItem("capacitacion_activa", JSON.stringify(cap));
+    window.location.href = destinoHtml;
+};

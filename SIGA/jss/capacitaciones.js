@@ -80,6 +80,7 @@ function poblarFormulario(cap) {
     if (document.getElementById("programa")) document.getElementById("programa").value = cap.programa || "";
     if (document.getElementById("curso")) document.getElementById("curso").value = cap.nombre_curso || "";
     if (document.getElementById("clase")) document.getElementById("clase").value = cap.clase_nro || "1";
+    if (document.getElementById("totalClases")) document.getElementById("totalClases").value = cap.total_clases || "1";
     if (document.getElementById("estado")) document.getElementById("estado").value = cap.estado || "Programado";
     if (document.getElementById("tema")) document.getElementById("tema").value = cap.tema || "";
     if (document.getElementById("fecha")) document.getElementById("fecha").value = cap.fecha || "";

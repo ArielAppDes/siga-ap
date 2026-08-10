@@ -1,5 +1,5 @@
 // ===================================================
-// 10/08/2026 - V0.1 - SIGA_APP - REGISTRO DE ASISTENTES
+// 10/08/2026 - V0.2 - SIGA_APP - REGISTRO DE ASISTENTES (Con lógica Clase X de Y y Estado)
 // ===================================================
 
 let listaAsistentes = [];
@@ -76,35 +76,42 @@ async function inicializarPantallaAsistentes() {
 }
 
 function poblarCabeceraVisible(cap, idFallback) {
+    const cActual = cap?.clase_nro || cap?.clase || '1';
+    const cTotal = cap?.total_clases || cap?.totalClases || '1';
+
     const datos = {
         id: obtenerIdCapActual(cap) || idFallback || '',
         curso: cap?.nombre_curso || cap?.curso || '',
-        clase: cap?.clase_nro || cap?.clase || '1',
+        clase: `${cActual} de ${cTotal}`,
         fecha: cap?.fecha || '',
-        instructor: cap?.instructor_1 || cap?.instructor1 || cap?.instructor || ''
+        instructor: cap?.instructor_1 || cap?.instructor1 || cap?.instructor || '',
+        estado: cap?.estado || 'Programado'
     };
 
     // 1. Asignación por selector o ID explícito
-    const inputId = document.getElementById('resumenIdCap') || document.getElementById('idCap') || document.getElementById('id_cap');
+    const inputId = document.getElementById('resumenIdCap') || document.getElementById('idCap') || document.getElementById('idcap') || document.getElementById('id_cap');
     const inputCurso = document.getElementById('resumenCurso') || document.getElementById('curso') || document.getElementById('nombre_curso');
     const inputClase = document.getElementById('resumenClase') || document.getElementById('clase') || document.getElementById('clase_nro');
     const inputFecha = document.getElementById('resumenFecha') || document.getElementById('fecha');
     const inputInst = document.getElementById('resumenInstructor') || document.getElementById('instructor') || document.getElementById('instructor_1');
+    const inputEstado = document.getElementById('resumenEstado') || document.getElementById('estado');
 
     if (inputId) inputId.value = datos.id;
     if (inputCurso) inputCurso.value = datos.curso;
     if (inputClase) inputClase.value = datos.clase;
     if (inputFecha) inputFecha.value = datos.fecha;
     if (inputInst) inputInst.value = datos.instructor;
+    if (inputEstado) inputEstado.value = datos.estado;
 
     // 2. Respaldo directo por posición de inputs en el bloque superior
     const todosInputs = document.querySelectorAll('main input, form input, .card input, input');
-    if (todosInputs.length >= 5) {
+    if (todosInputs.length >= 6) {
         if (!inputId || !inputId.value) todosInputs[0].value = datos.id;
         if (!inputCurso || !inputCurso.value) todosInputs[1].value = datos.curso;
         if (!inputClase || !inputClase.value) todosInputs[2].value = datos.clase;
         if (!inputFecha || !inputFecha.value) todosInputs[3].value = datos.fecha;
         if (!inputInst || !inputInst.value) todosInputs[4].value = datos.instructor;
+        if (!inputEstado || !inputEstado.value) todosInputs[5].value = datos.estado;
     }
 }
 
@@ -128,9 +135,9 @@ async function cargarAsistentesSupabase(idCap) {
 // 2. AGREGAR PARTICIPANTE
 function agregarParticipante() {
     const inputs = document.querySelectorAll('input');
-    const inputLegajo = document.getElementById('inputLegajo') || document.getElementById('legajo') || inputs[5];
-    const inputCalificaciones = document.getElementById('inputCalificacion') || document.getElementById('calificacion') || inputs[6];
-    const inputObservaciones = document.getElementById('inputObservaciones') || document.getElementById('observaciones') || inputs[7];
+    const inputLegajo = document.getElementById('inputLegajo') || document.getElementById('legajo') || inputs[6];
+    const inputCalificaciones = document.getElementById('inputCalificacion') || document.getElementById('calificacion') || inputs[7];
+    const inputObservaciones = document.getElementById('inputObservaciones') || document.getElementById('observaciones') || inputs[8];
 
     const idCap = obtenerIdCapActual();
     const legajoVal = inputLegajo?.value.trim();
@@ -219,7 +226,7 @@ window.quitarParticipante = function(index) {
     renderizarGrilla();
 };
 
-// 3. GUARDAR EN SUPABASE Y CERRAR REGISTRO
+// 3. GUARDAR EN SUPABASE Y CERRAR REGISTRO CON REGLA MATEMÁTICA
 async function cerrarRegistro() {
     const idCap = obtenerIdCapActual();
 
@@ -231,6 +238,16 @@ async function cerrarRegistro() {
     const confirmacion = confirm(`¿Desea cerrar el registro de la capacitación?\n\nID: ${idCap}\nTotal de asistentes: ${listaAsistentes.length}`);
     if (!confirmacion) return;
 
+    // Evaluación matemática para definir el estado de la serie de la capacitación
+    const capActivaRaw = localStorage.getItem("capacitacion_activa");
+    let capData = capActivaRaw ? JSON.parse(capActivaRaw) : {};
+
+    const claseActual = parseInt(capData.clase_nro || "1", 10);
+    const totalClases = parseInt(capData.total_clases || "1", 10);
+
+    // Si la clase actual es menor al total, la serie continúa 'En curso'. De lo contrario, 'Finalizado'.
+    const estadoFinal = (claseActual < totalClases) ? "En curso" : "Finalizado";
+
     const db = obtenerDB();
     if (db) {
         try {
@@ -241,7 +258,7 @@ async function cerrarRegistro() {
                 if (errInsert) throw errInsert;
             }
 
-            await db.from('capacitaciones').update({ estado: 'Finalizado' }).eq('id_cap', idCap);
+            await db.from('capacitaciones').update({ estado: estadoFinal }).eq('id_cap', idCap);
 
         } catch (err) {
             console.error("Error guardando en Supabase:", err);
@@ -253,14 +270,14 @@ async function cerrarRegistro() {
     localStorage.removeItem("capacitacion_activa");
     localStorage.removeItem("id_cap_asistencia");
 
-    alert(`Registro cerrado con éxito. La capacitación ${idCap} pasó a estado Finalizado.`);
+    alert(`Registro cerrado con éxito. Estado asignado a la serie: ${estadoFinal}.`);
     window.location.href = "actividades.html";
 }
 
 function configurarEventos() {
     const botones = document.querySelectorAll('button');
     
-    const btnAgregar = document.getElementById('btnAgregarParticipante') || Array.from(botones).find(b => b.textContent.includes('Agregar'));
+    const btnAgregar = document.getElementById('btnAgregarParticipante') || document.getElementById('btnAgregar') || Array.from(botones).find(b => b.textContent.includes('Agregar'));
     if (btnAgregar) btnAgregar.onclick = (e) => { e.preventDefault(); agregarParticipante(); };
 
     const btnCerrar = document.getElementById('btnCerrarRegistro') || Array.from(botones).find(b => b.textContent.includes('Cerrar'));

@@ -1,5 +1,5 @@
 // ===================================================
-// 10/08/2026 - V0.2 - SIGA_APP - REGISTRO DE ASISTENTES
+// 10/08/2026 - V0.3 - SIGA_APP - REGISTRO DE ASISTENTES
 // ===================================================
 
 let listaAsistentes = [];
@@ -13,7 +13,34 @@ function obtenerDB() {
     return window.supabaseClient || window.supabase || null;
 }
 
-// 1. POBLAR CABECERA VISIBLE (ID_CAP, Curso, Clase Nº, Fecha, Instructor)
+// Función central para recuperar el ID_CAP actual sin importar el formato de origen
+function obtenerIdCapActual(capData) {
+    if (capData) {
+        const idEncontrado = capData.id_cap || capData.idCap || capData.id;
+        if (idEncontrado) return idEncontrado;
+    }
+
+    // Intento por selector en HTML
+    const inputId = document.getElementById('resumenIdCap') || 
+                    document.getElementById('idCap') || 
+                    document.getElementById('id_cap') || 
+                    document.querySelector("input[placeholder*='CAP']");
+    if (inputId && inputId.value.trim()) return inputId.value.trim();
+
+    // Intento por localStorage directo
+    const capActivaRaw = localStorage.getItem("capacitacion_activa");
+    if (capActivaRaw) {
+        try {
+            const parsed = JSON.parse(capActivaRaw);
+            const idParsed = parsed.id_cap || parsed.idCap || parsed.id;
+            if (idParsed) return idParsed;
+        } catch (e) { console.error(e); }
+    }
+
+    return localStorage.getItem("id_cap_asistencia") || '';
+}
+
+// 1. CARGA DE CABECERA Y ASISTENTES
 async function inicializarPantallaAsistentes() {
     const capActivaRaw = localStorage.getItem("capacitacion_activa");
     let capData = null;
@@ -23,7 +50,7 @@ async function inicializarPantallaAsistentes() {
     }
 
     const urlParams = new URLSearchParams(window.location.search);
-    const idCapTarget = capData?.id_cap || urlParams.get('id_cap') || localStorage.getItem("id_cap_asistencia");
+    const idCapTarget = obtenerIdCapActual(capData) || urlParams.get('id_cap');
 
     // Consultar a Supabase si falta información del curso
     const db = obtenerDB();
@@ -41,55 +68,43 @@ async function inicializarPantallaAsistentes() {
         }
     }
 
-    if (capData || idCapTarget) {
-        poblarCabeceraVisible(capData || { id_cap: idCapTarget });
-    }
+    poblarCabeceraVisible(capData, idCapTarget);
 
     if (idCapTarget) {
         await cargarAsistentesSupabase(idCapTarget);
     }
 }
 
-function poblarCabeceraVisible(cap) {
+function poblarCabeceraVisible(cap, idFallback) {
     const datos = {
-        id: cap.id_cap || '',
-        curso: cap.nombre_curso || cap.curso || '',
-        clase: cap.clase_nro || cap.clase || '1',
-        fecha: cap.fecha || '',
-        instructor: cap.instructor_1 || cap.instructor1 || cap.instructor || ''
+        id: obtenerIdCapActual(cap) || idFallback || '',
+        curso: cap?.nombre_curso || cap?.curso || '',
+        clase: cap?.clase_nro || cap?.clase || '1',
+        fecha: cap?.fecha || '',
+        instructor: cap?.instructor_1 || cap?.instructor1 || cap?.instructor || ''
     };
 
-    // Intento 1: Asignación por IDs probables
-    let asignados = 0;
-    const mapaIDs = [
-        { ids: ['resumenIdCap', 'idCap', 'id_cap'], val: datos.id },
-        { ids: ['resumenCurso', 'curso', 'nombre_curso'], val: datos.curso },
-        { ids: ['resumenClase', 'clase', 'clase_nro'], val: datos.clase },
-        { ids: ['resumenFecha', 'fecha'], val: datos.fecha },
-        { ids: ['resumenInstructor', 'instructor', 'instructor_1', 'instructor1'], val: datos.instructor }
-    ];
+    // 1. Asignación por selector o ID explícito
+    const inputId = document.getElementById('resumenIdCap') || document.getElementById('idCap') || document.getElementById('id_cap');
+    const inputCurso = document.getElementById('resumenCurso') || document.getElementById('curso') || document.getElementById('nombre_curso');
+    const inputClase = document.getElementById('resumenClase') || document.getElementById('clase') || document.getElementById('clase_nro');
+    const inputFecha = document.getElementById('resumenFecha') || document.getElementById('fecha');
+    const inputInst = document.getElementById('resumenInstructor') || document.getElementById('instructor') || document.getElementById('instructor_1');
 
-    mapaIDs.forEach(item => {
-        for (const id of item.ids) {
-            const elem = document.getElementById(id);
-            if (elem) {
-                elem.value = item.val;
-                asignados++;
-                break;
-            }
-        }
-    });
+    if (inputId) inputId.value = datos.id;
+    if (inputCurso) inputCurso.value = datos.curso;
+    if (inputClase) inputClase.value = datos.clase;
+    if (inputFecha) inputFecha.value = datos.fecha;
+    if (inputInst) inputInst.value = datos.instructor;
 
-    // Intento 2 (Respaldo por orden de inputs en la tarjeta superior si fallan los IDs)
-    if (asignados < 3) {
-        const inputsTarjeta = document.querySelectorAll('main input, .card input, .container input');
-        if (inputsTarjeta.length >= 5) {
-            inputsTarjeta[0].value = datos.id;
-            inputsTarjeta[1].value = datos.curso;
-            inputsTarjeta[2].value = datos.clase;
-            inputsTarjeta[3].value = datos.fecha;
-            inputsTarjeta[4].value = datos.instructor;
-        }
+    // 2. Respaldo directo por posición de inputs en el bloque superior
+    const todosInputs = document.querySelectorAll('main input, form input, .card input, input');
+    if (todosInputs.length >= 5) {
+        if (!inputId || !inputId.value) todosInputs[0].value = datos.id;
+        if (!inputCurso || !inputCurso.value) todosInputs[1].value = datos.curso;
+        if (!inputClase || !inputClase.value) todosInputs[2].value = datos.clase;
+        if (!inputFecha || !inputFecha.value) todosInputs[3].value = datos.fecha;
+        if (!inputInst || !inputInst.value) todosInputs[4].value = datos.instructor;
     }
 }
 
@@ -110,15 +125,14 @@ async function cargarAsistentesSupabase(idCap) {
     }
 }
 
-// 2. AGREGAR PARTICIPANTE (Carga datos extendidos en segundo plano)
+// 2. AGREGAR PARTICIPANTE
 function agregarParticipante() {
     const inputs = document.querySelectorAll('input');
-    // Buscamos los inputs del bloque de ingreso (Legajo, Calificación, Observaciones)
     const inputLegajo = document.getElementById('inputLegajo') || document.getElementById('legajo') || inputs[5];
     const inputCalificaciones = document.getElementById('inputCalificacion') || document.getElementById('calificacion') || inputs[6];
     const inputObservaciones = document.getElementById('inputObservaciones') || document.getElementById('observaciones') || inputs[7];
 
-    const idCap = document.querySelectorAll('input')[0]?.value || '';
+    const idCap = obtenerIdCapActual();
     const legajoVal = inputLegajo?.value.trim();
 
     if (!legajoVal) {
@@ -139,7 +153,6 @@ function agregarParticipante() {
         return;
     }
 
-    // Objeto completo para guardar en Supabase
     const nuevoAsistente = {
         id_cap: idCap,
         legajo: String(emp.legajo).trim(),
@@ -208,7 +221,7 @@ window.quitarParticipante = function(index) {
 
 // 3. GUARDAR EN SUPABASE Y CERRAR REGISTRO
 async function cerrarRegistro() {
-    const idCap = document.querySelectorAll('input')[0]?.value;
+    const idCap = obtenerIdCapActual();
 
     if (!idCap) {
         alert("No hay un ID_CAP válido asignado.");
@@ -247,7 +260,6 @@ async function cerrarRegistro() {
 function configurarEventos() {
     const botones = document.querySelectorAll('button');
     
-    // Asignación flexible de botones
     const btnAgregar = document.getElementById('btnAgregarParticipante') || Array.from(botones).find(b => b.textContent.includes('Agregar'));
     if (btnAgregar) btnAgregar.onclick = (e) => { e.preventDefault(); agregarParticipante(); };
 

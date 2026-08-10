@@ -76,17 +76,32 @@
                 </select>
             </div>
 
-            <!-- CLASE Nº -->
-            <div class="grupo">
-                <label>Clase Nº</label>
-                <input 
-                    type="number"
-                    id="clase"
-                    class="numero"
-                    min="1"
-                    max="99"
-                    placeholder="01">
-            </div>
+          <!-- CLASE Nº y TOTAL CLASES -->
+<div class="grupo" style="display: flex; gap: 10px; align-items: flex-end;">
+    <div style="flex: 1;">
+        <label>Clase Nº</label>
+        <input 
+            type="number"
+            id="clase"
+            class="numero"
+            min="1"
+            max="99"
+            value="1"
+            placeholder="01">
+    </div>
+    <div style="align-self: center; font-weight: bold; padding-bottom: 8px;">de</div>
+    <div style="flex: 1;">
+        <label>Total Clases</label>
+        <input 
+            type="number"
+            id="totalClases"
+            class="numero"
+            min="1"
+            max="99"
+            value="1"
+            placeholder="01">
+    </div>
+</div>
 
             <!-- ESTADO -->
             <div class="grupo">

@@ -1,5 +1,5 @@
 // ===================================================
-// 10/08/2026 - V11.0 - SIGA_APP - REGISTRO Y CICLO DE VIDA DE ASISTENTES
+// 10/08/2026 - V11.1 - SIGA_APP - ASISTENTES Y NÓMINA LOCAL
 // ===================================================
 
 let listaAsistentes = [];
@@ -15,7 +15,8 @@ function obtenerDB() {
 
 function obtenerIdCapActual(capData) {
     if (capData?.id_cap) return capData.id_cap;
-    const inputId = document.getElementById('resumenIdCap') || document.getElementById('idCap') || document.getElementById('id_cap');
+    
+    const inputId = document.getElementById('resumenIdCap');
     if (inputId && inputId.value.trim()) return inputId.value.trim();
 
     const capActivaRaw = localStorage.getItem("capacitacion_activa");
@@ -31,7 +32,8 @@ function obtenerIdCapActual(capData) {
 async function inicializarPantallaAsistentes() {
     const capActivaRaw = localStorage.getItem("capacitacion_activa");
     let capData = capActivaRaw ? JSON.parse(capActivaRaw) : null;
-    const idCapTarget = capData?.id_cap || new URLSearchParams(window.location.search).get('id_cap');
+    const urlParams = new URLSearchParams(window.location.search);
+    const idCapTarget = capData?.id_cap || urlParams.get('id_cap') || localStorage.getItem("id_cap_asistencia");
 
     poblarCabeceraVisible(capData, idCapTarget);
 
@@ -39,7 +41,10 @@ async function inicializarPantallaAsistentes() {
     if (db && idCapTarget) {
         try {
             const { data } = await db.from('capacitaciones').select('*').eq('id_cap', idCapTarget).maybeSingle();
-            if (data) poblarCabeceraVisible(data, idCapTarget);
+            if (data) {
+                capData = data;
+                poblarCabeceraVisible(data, idCapTarget);
+            }
         } catch (err) {
             console.error("Error consultando capacitación:", err);
         }
@@ -48,24 +53,24 @@ async function inicializarPantallaAsistentes() {
 }
 
 function poblarCabeceraVisible(cap, idFallback) {
-    const idFinal = cap?.id_cap || idFallback || '';
-    const instructores = [cap?.instructor_1, cap?.instructor_2].filter(Boolean).join(', ');
+    const idFinal = cap?.id_cap || cap?.idCap || idFallback || '';
+    const instructores = [cap?.instructor_1, cap?.instructor_2, cap?.instructor].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(', ');
 
     const datos = {
         id: idFinal,
-        curso: cap?.nombre_curso || '',
-        clase: cap?.clase_nro || '1',
+        curso: cap?.nombre_curso || cap?.curso || '',
+        clase: cap?.clase_nro || cap?.clase || '1',
         fecha: cap?.fecha || new Date().toISOString().split('T')[0],
         instructor: instructores || '-',
         estado: cap?.estado || 'En curso'
     };
 
-    const inputId = document.getElementById('resumenIdCap') || document.getElementById('idCap') || document.getElementById('id_cap');
-    const inputCurso = document.getElementById('resumenCurso') || document.getElementById('curso') || document.getElementById('nombre_curso');
-    const inputClase = document.getElementById('resumenClase') || document.getElementById('clase') || document.getElementById('clase_nro');
-    const inputFecha = document.getElementById('resumenFecha') || document.getElementById('fecha');
-    const inputInst = document.getElementById('resumenInstructor') || document.getElementById('instructor') || document.getElementById('instructor_1');
-    const inputEstado = document.getElementById('resumenEstado') || document.getElementById('estado');
+    const inputId = document.getElementById('resumenIdCap');
+    const inputCurso = document.getElementById('resumenCurso');
+    const inputClase = document.getElementById('resumenClase');
+    const inputFecha = document.getElementById('resumenFecha');
+    const inputInst = document.getElementById('resumenInstructor');
+    const inputEstado = document.getElementById('resumenEstado');
 
     if (inputId) inputId.value = datos.id;
     if (inputCurso) inputCurso.value = datos.curso;
@@ -77,7 +82,7 @@ function poblarCabeceraVisible(cap, idFallback) {
 
 async function cargarAsistentesSupabase(idCap) {
     const db = obtenerDB();
-    if (!db) return;
+    if (!db || !idCap) return;
 
     try {
         const { data, error } = await db.from('asistentes').select('*').eq('id_cap', idCap);
@@ -89,10 +94,9 @@ async function cargarAsistentesSupabase(idCap) {
 }
 
 function agregarParticipante() {
-    const inputs = document.querySelectorAll('input');
-    const inputLegajo = document.getElementById('inputLegajo') || document.getElementById('legajo') || inputs[5];
-    const inputCalificaciones = document.getElementById('inputCalificacion') || document.getElementById('calificacion') || inputs[6];
-    const inputObservaciones = document.getElementById('inputObservaciones') || document.getElementById('observaciones') || inputs[7];
+    const inputLegajo = document.getElementById('inputLegajo') || document.getElementById('legajo');
+    const inputCalificaciones = document.getElementById('inputCalificacion') || document.getElementById('calificacion');
+    const inputObservaciones = document.getElementById('inputObservaciones') || document.getElementById('observaciones');
 
     const idCap = obtenerIdCapActual();
     const legajoVal = inputLegajo?.value.trim();
@@ -102,16 +106,17 @@ function agregarParticipante() {
         return;
     }
 
-    const nomina = window.empleados || window.dotacion || [];
+    // Búsqueda en Nómina Local (dotacion)
+    const nomina = window.dotacion || (typeof dotacion !== 'undefined' ? dotacion : []) || window.empleados || [];
     const emp = nomina.find(e => e.legajo && String(e.legajo).trim().toLowerCase() === legajoVal.toLowerCase());
 
     if (!emp) {
-        alert(`El legajo ${legajoVal} no existe en la nómina.`);
+        alert(`El legajo ${legajoVal} no existe en la nómina local.`);
         return;
     }
 
     if (listaAsistentes.some(a => String(a.legajo).trim() === String(emp.legajo).trim())) {
-        alert("El empleado ya está en la lista.");
+        alert("El empleado ya está agregado en la lista.");
         return;
     }
 
@@ -120,6 +125,8 @@ function agregarParticipante() {
         legajo: String(emp.legajo).trim(),
         apellido: emp.apellido || '',
         nombre: emp.nombre || '',
+        puesto: emp.puesto || '',
+        categoria: emp.categoria || '',
         calificacion: inputCalificaciones?.value.trim() || '-',
         observaciones: inputObservaciones?.value.trim() || '-'
     });
@@ -131,7 +138,7 @@ function agregarParticipante() {
 }
 
 function renderizarGrilla() {
-    const tbody = document.querySelector('tbody');
+    const tbody = document.getElementById('tbodyAsistentes') || document.querySelector('tbody');
     if (!tbody) return;
 
     tbody.innerHTML = '';
@@ -149,7 +156,7 @@ function renderizarGrilla() {
             <td style="padding:12px 15px;">${item.nombre}</td>
             <td style="padding:12px 15px;">${item.calificacion}</td>
             <td style="padding:12px 15px;">${item.observaciones}</td>
-            <td style="padding:12px 15px; color:#64748b;">Pendiente</td>
+            <td style="padding:12px 15px; color:#64748b;">Guardado</td>
             <td style="padding:12px 15px; text-align:center;">
                 <button onclick="quitarParticipante(${idx})" style="background:#ef4444; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Quitar</button>
             </td>

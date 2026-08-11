@@ -1,16 +1,20 @@
 // ===================================================
-// SIGA_APP - LÓGICA DE ADMINISTRACIÓN Y CATÁLOGOS UNIFICADA
+// SIGA_APP V0.2 - LÓGICA DE ADMINISTRACIÓN Y CATÁLOGOS UNIFICADA
 // ===================================================
 
 let catalogoActual = 'programas';
-let idSeleccionado = null; // Almacena el UUID del registro seleccionado para editar o eliminar
+let idSeleccionado = null; // Almacena el código PK seleccionado (ej: PRO-2026-001, INS-2026-001)
 
 document.addEventListener('DOMContentLoaded', () => {
     conectarEventosMenu();
     cambiarCatalogo('programas');
 });
 
-// 1. ASIGNACIÓN DE EVENTOS EN EL MENÚ LATERAL DE CATÁLOGOS
+function obtenerDB() {
+    return window.supabaseClient || window.supabase || null;
+}
+
+// 1. ASIGNACIÓN DE EVENTOS EN EL MENÚ LATERAL
 function conectarEventosMenu() {
     const mapaBotones = {
         'btn-cat-programas': 'programas',
@@ -36,12 +40,10 @@ async function cambiarCatalogo(catalogo) {
     catalogoActual = catalogo;
     idSeleccionado = null;
 
-    // Resaltar opción seleccionada en el menú
     document.querySelectorAll('.menu-admin ul li').forEach(li => li.classList.remove('activo'));
     const btnActivo = document.getElementById(`btn-cat-${catalogo}`);
     if (btnActivo) btnActivo.classList.add('activo');
 
-    // Paneles principales
     const panelGenerico = document.getElementById('panelGenerico');
     const panelDotacion = document.getElementById('panelDotacion');
     const panelBases = document.getElementById('panelBases');
@@ -50,7 +52,6 @@ async function cambiarCatalogo(catalogo) {
     if (panelDotacion) panelDotacion.style.display = 'none';
     if (panelBases) panelBases.style.display = 'none';
 
-    // Vistas especiales
     if (catalogo === 'dotacion') {
         if (panelDotacion) panelDotacion.style.display = 'block';
         return;
@@ -60,7 +61,6 @@ async function cambiarCatalogo(catalogo) {
         return;
     }
 
-    // Panel genérico
     if (panelGenerico) panelGenerico.style.display = 'block';
 
     const tituloCatalogo = document.getElementById('tituloCatalogo');
@@ -69,12 +69,10 @@ async function cambiarCatalogo(catalogo) {
     const formCursos = document.getElementById('form-cursos');
     const formInstructores = document.getElementById('form-instructores');
 
-    // Ocultar todos los formularios específicos
     if (formProgramas) formProgramas.style.display = 'none';
     if (formCursos) formCursos.style.display = 'none';
     if (formInstructores) formInstructores.style.display = 'none';
 
-    // Activar formulario y cargar grilla según catálogo
     if (catalogo === 'programas') {
         if (tituloCatalogo) tituloCatalogo.textContent = 'Programas';
         if (colNombre) colNombre.textContent = 'Programa';
@@ -103,51 +101,56 @@ function sumarHorasCurso() {
     if (inputCarga) inputCarga.value = teoria + practica;
 }
 
-// 4. PREDECIR PRÓXIMOS CÓDIGOS CORRELATIVOS
-async function obtenerProximoCodigo(tabla, prefijo, numPartes = 3) {
-    if (typeof window.supabaseClient === 'undefined') return `${prefijo}-001`;
+// 4. PREDECIR CÓDIGOS CORRELATIVOS UNIFORMES (PREFIJO-AAAA-XXX)
+async function obtenerProximoCodigo(tabla, columnaPK, prefijo) {
+    const db = obtenerDB();
+    const anioActual = new Date().getFullYear();
+    const formatoPrefijo = `${prefijo}-${anioActual}`;
 
-    const { data, error } = await window.supabaseClient
-        .from(tabla)
-        .select('codigo, codigo_curso')
-        .order('created_at', { ascending: false })
-        .limit(1);
+    if (!db) return `${formatoPrefijo}-001`;
 
-    if (error || !data || data.length === 0) return `${prefijo}-001`;
+    try {
+        const { data, error } = await db.from(tabla).select(columnaPK);
+        if (error || !data || data.length === 0) return `${formatoPrefijo}-001`;
 
-    const ultimoObj = data[0];
-    const ultimoCodigo = ultimoObj.codigo || ultimoObj.codigo_curso;
-    if (!ultimoCodigo) return `${prefijo}-001`;
+        let maxNum = 0;
+        data.forEach(item => {
+            const val = item[columnaPK];
+            if (val) {
+                const partes = val.split('-');
+                if (partes.length >= 3) {
+                    const num = parseInt(partes[2], 10);
+                    if (!isNaN(num) && num > maxNum) maxNum = num;
+                }
+            }
+        });
 
-    const partes = ultimoCodigo.split('-');
-    const num = parseInt(partes[partes.length - 1], 10) || 0;
-    const proximoNum = String(num + 1).padStart(3, '0');
-
-    return numPartes === 3 ? `${partes[0]}-${partes[1]}-${proximoNum}` : `${partes[0]}-${proximoNum}`;
+        const siguiente = String(maxNum + 1).padStart(3, '0');
+        return `${formatoPrefijo}-${siguiente}`;
+    } catch (e) {
+        return `${formatoPrefijo}-001`;
+    }
 }
 
-// 5. CONSULTA Y CONSULTA DE DATOS (READ)
+// 5. CONSULTAS Y CARGA DE GRILLAS
 async function cargarProgramas() {
     const tbody = document.getElementById('tablaCatalogo');
-    if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="3">Cargando programas...</td></tr>';
+    const db = obtenerDB();
+    if (!tbody || !db) return;
 
-    if (typeof window.supabaseClient === 'undefined') return;
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Cargando programas...</td></tr>';
 
-    const { data, error } = await window.supabaseClient
-        .from('programas')
-        .select('*')
-        .order('created_at', { ascending: true });
+    const { data, error } = await db.from('programas').select('*').order('codigo_programa', { ascending: true });
 
     if (error || !data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3">No hay programas registrados.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay programas registrados.</td></tr>';
         return;
     }
 
     tbody.innerHTML = data.map(p => `
-        <tr onclick="seleccionarPrograma('${p.id}')" style="cursor: pointer;" id="fila-${p.id}">
-            <td><strong>${p.codigo || '-'}</strong></td>
-            <td>${p.nombre}</td>
+        <tr onclick="seleccionarPrograma('${p.codigo_programa}')" style="cursor: pointer;" id="fila-${p.codigo_programa}">
+            <td><strong>${p.codigo_programa}</strong></td>
+            <td>${p.nombre || '-'}</td>
             <td>${p.estado || 'Activo'}</td>
         </tr>
     `).join('');
@@ -155,25 +158,22 @@ async function cargarProgramas() {
 
 async function cargarCursos() {
     const tbody = document.getElementById('tablaCatalogo');
-    if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="3">Cargando cursos...</td></tr>';
+    const db = obtenerDB();
+    if (!tbody || !db) return;
 
-    if (typeof window.supabaseClient === 'undefined') return;
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Cargando cursos...</td></tr>';
 
-    const { data, error } = await window.supabaseClient
-        .from('cursos')
-        .select('*')
-        .order('created_at', { ascending: true });
+    const { data, error } = await db.from('cursos').select('*').order('codigo_curso', { ascending: true });
 
     if (error || !data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3">No hay cursos registrados.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay cursos registrados.</td></tr>';
         return;
     }
 
     tbody.innerHTML = data.map(c => `
-        <tr onclick="seleccionarCurso('${c.id}')" style="cursor: pointer;" id="fila-${c.id}">
-            <td><strong>${c.codigo_curso || '-'}</strong></td>
-            <td>${c.nombre}</td>
+        <tr onclick="seleccionarCurso('${c.codigo_curso}')" style="cursor: pointer;" id="fila-${c.codigo_curso}">
+            <td><strong>${c.codigo_curso}</strong></td>
+            <td>${c.nombre || '-'}</td>
             <td>${c.estado || 'Activo'}</td>
         </tr>
     `).join('');
@@ -181,49 +181,48 @@ async function cargarCursos() {
 
 async function cargarInstructores() {
     const tbody = document.getElementById('tablaCatalogo');
-    if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="3">Cargando instructores...</td></tr>';
+    const db = obtenerDB();
+    if (!tbody || !db) return;
 
-    if (typeof window.supabaseClient === 'undefined') return;
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Cargando instructores...</td></tr>';
 
-    const { data, error } = await window.supabaseClient
-        .from('instructores')
-        .select('*')
-        .order('created_at', { ascending: true });
+    const { data, error } = await db.from('instructores').select('*').order('codigo_instructor', { ascending: true });
 
     if (error || !data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3">No hay instructores registrados.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay instructores registrados.</td></tr>';
         return;
     }
 
     tbody.innerHTML = data.map(i => `
-        <tr onclick="seleccionarInstructor('${i.id}')" style="cursor: pointer;" id="fila-${i.id}">
-            <td><strong>${i.codigo || '-'}</strong></td>
-            <td>${i.apellido}, ${i.nombre}</td>
+        <tr onclick="seleccionarInstructor('${i.codigo_instructor}')" style="cursor: pointer;" id="fila-${i.codigo_instructor}">
+            <td><strong>${i.codigo_instructor}</strong></td>
+            <td>${i.apellido || ''}, ${i.nombre || ''}</td>
             <td>${i.estado || 'Activo'}</td>
         </tr>
     `).join('');
 }
 
-// 6. SELECCIÓN DE FILAS EN LA GRILLA
-async function seleccionarPrograma(id) {
-    idSeleccionado = id;
-    marcarFilaSeleccionada(id);
+// 6. SELECCIÓN DE FILAS
+async function seleccionarPrograma(codigo) {
+    idSeleccionado = codigo;
+    marcarFilaSeleccionada(codigo);
+    const db = obtenerDB();
 
-    const { data } = await window.supabaseClient.from('programas').select('*').eq('id', id).single();
+    const { data } = await db.from('programas').select('*').eq('codigo_programa', codigo).single();
     if (!data) return;
 
-    document.getElementById('pro_codigo').value = data.codigo || '';
+    document.getElementById('pro_codigo').value = data.codigo_programa || '';
     document.getElementById('pro_nombre').value = data.nombre || '';
     document.getElementById('pro_descripcion').value = data.descripcion || '';
     document.getElementById('pro_estado').value = data.estado || 'Activo';
 }
 
-async function seleccionarCurso(id) {
-    idSeleccionado = id;
-    marcarFilaSeleccionada(id);
+async function seleccionarCurso(codigo) {
+    idSeleccionado = codigo;
+    marcarFilaSeleccionada(codigo);
+    const db = obtenerDB();
 
-    const { data } = await window.supabaseClient.from('cursos').select('*').eq('id', id).single();
+    const { data } = await db.from('cursos').select('*').eq('codigo_curso', codigo).single();
     if (!data) return;
 
     document.getElementById('curso_codigo').value = data.codigo_curso || '';
@@ -231,19 +230,20 @@ async function seleccionarCurso(id) {
     document.getElementById('curso_modalidad').value = data.modalidad || 'Presencial';
     document.getElementById('curso_teoria').value = data.hs_teoria || 0;
     document.getElementById('curso_practica').value = data.hs_practica || 0;
-    document.getElementById('curso_carga').value = data.carga_horaria || 0;
+    document.getElementById('curso_carga').value = data.hs_totales || data.carga_horaria || 0;
     document.getElementById('curso_contenido').value = data.contenido || '';
     document.getElementById('curso_estado').value = data.estado || 'Activo';
 }
 
-async function seleccionarInstructor(id) {
-    idSeleccionado = id;
-    marcarFilaSeleccionada(id);
+async function seleccionarInstructor(codigo) {
+    idSeleccionado = codigo;
+    marcarFilaSeleccionada(codigo);
+    const db = obtenerDB();
 
-    const { data } = await window.supabaseClient.from('instructores').select('*').eq('id', id).single();
+    const { data } = await db.from('instructores').select('*').eq('codigo_instructor', codigo).single();
     if (!data) return;
 
-    document.getElementById('ins_codigo').value = data.codigo || '';
+    document.getElementById('ins_codigo').value = data.codigo_instructor || '';
     document.getElementById('ins_nombre').value = data.nombre || '';
     document.getElementById('ins_apellido').value = data.apellido || '';
     document.getElementById('ins_dni').value = data.dni || '';
@@ -253,25 +253,25 @@ async function seleccionarInstructor(id) {
     document.getElementById('ins_estado').value = data.estado || 'Activo';
 }
 
-function marcarFilaSeleccionada(id) {
+function marcarFilaSeleccionada(codigo) {
     document.querySelectorAll('#tablaCatalogo tr').forEach(tr => tr.style.backgroundColor = '');
-    const fila = document.getElementById(`fila-${id}`);
+    const fila = document.getElementById(`fila-${codigo}`);
     if (fila) fila.style.backgroundColor = '#d1e7dd';
 }
 
-// 7. LIMPIAR FORMULARIO (AGREGAR / CANCELAR)
+// 7. LIMPIAR FORMULARIO / NUEVO REGISTRO
 async function nuevoRegistro() {
     idSeleccionado = null;
     document.querySelectorAll('#tablaCatalogo tr').forEach(tr => tr.style.backgroundColor = '');
 
     if (catalogoActual === 'programas') {
-        const codigo = await obtenerProximoCodigo('programas', 'PRO-2026', 3);
+        const codigo = await obtenerProximoCodigo('programas', 'codigo_programa', 'PRO');
         document.getElementById('pro_codigo').value = codigo;
         document.getElementById('pro_nombre').value = '';
         document.getElementById('pro_descripcion').value = '';
         document.getElementById('pro_estado').value = 'Activo';
     } else if (catalogoActual === 'cursos') {
-        const codigo = await obtenerProximoCodigo('cursos', 'CUR', 2);
+        const codigo = await obtenerProximoCodigo('cursos', 'codigo_curso', 'CUR');
         document.getElementById('curso_codigo').value = codigo;
         document.getElementById('curso_nombre').value = '';
         document.getElementById('curso_teoria').value = 0;
@@ -280,7 +280,7 @@ async function nuevoRegistro() {
         document.getElementById('curso_contenido').value = '';
         document.getElementById('curso_estado').value = 'Activo';
     } else if (catalogoActual === 'instructores') {
-        const codigo = await obtenerProximoCodigo('instructores', 'INS-2026', 3);
+        const codigo = await obtenerProximoCodigo('instructores', 'codigo_instructor', 'INS');
         document.getElementById('ins_codigo').value = codigo;
         document.getElementById('ins_nombre').value = '';
         document.getElementById('ins_apellido').value = '';
@@ -292,42 +292,50 @@ async function nuevoRegistro() {
     }
 }
 
-// 8. GUARDAR O EDITAR REGISTRO
+// 8. GUARDAR O EDITAR REGISTRO (UPSERT)
 async function guardarRegistro() {
+    const db = obtenerDB();
+    if (!db) return;
+
     if (catalogoActual === 'programas') {
+        const codigo = document.getElementById('pro_codigo').value;
         const nombre = document.getElementById('pro_nombre').value.trim();
         if (!nombre) return alert('Ingresá el nombre del programa.');
 
         const payload = {
+            codigo_programa: codigo,
             nombre: nombre,
             descripcion: document.getElementById('pro_descripcion').value,
             estado: document.getElementById('pro_estado').value
         };
 
-        await procesarGuardado('programas', payload, cargarProgramas);
+        await procesarGuardado('programas', 'codigo_programa', payload, cargarProgramas);
 
     } else if (catalogoActual === 'cursos') {
+        const codigo = document.getElementById('curso_codigo').value;
         const nombre = document.getElementById('curso_nombre').value.trim();
         if (!nombre) return alert('Ingresá el nombre del curso.');
 
         const payload = {
+            codigo_curso: codigo,
             nombre: nombre,
             modalidad: document.getElementById('curso_modalidad').value,
             hs_teoria: parseFloat(document.getElementById('curso_teoria').value) || 0,
             hs_practica: parseFloat(document.getElementById('curso_practica').value) || 0,
-            carga_horaria: parseFloat(document.getElementById('curso_carga').value) || 0,
-            contenido: document.getElementById('curso_contenido').value,
+            hs_totales: parseFloat(document.getElementById('curso_carga').value) || 0,
             estado: document.getElementById('curso_estado').value
         };
 
-        await procesarGuardado('cursos', payload, cargarCursos);
+        await procesarGuardado('cursos', 'codigo_curso', payload, cargarCursos);
 
     } else if (catalogoActual === 'instructores') {
+        const codigo = document.getElementById('ins_codigo').value;
         const nombre = document.getElementById('ins_nombre').value.trim();
         const apellido = document.getElementById('ins_apellido').value.trim();
         if (!nombre || !apellido) return alert('Ingresá nombre y apellido del instructor.');
 
         const payload = {
+            codigo_instructor: codigo,
             nombre: nombre,
             apellido: apellido,
             dni: document.getElementById('ins_dni').value,
@@ -337,38 +345,34 @@ async function guardarRegistro() {
             estado: document.getElementById('ins_estado').value
         };
 
-        await procesarGuardado('instructores', payload, cargarInstructores);
+        await procesarGuardado('instructores', 'codigo_instructor', payload, cargarInstructores);
     }
 }
 
-async function procesarGuardado(tabla, payload, funcionRecargar) {
-    if (idSeleccionado) {
-        const { error } = await window.supabaseClient.from(tabla).update(payload).eq('id', idSeleccionado);
-        if (error) alert('Error al actualizar: ' + error.message);
-        else alert('Registro actualizado con éxito.');
-    } else {
-        const { data, error } = await window.supabaseClient.from(tabla).insert([payload]).select();
-        if (error) alert('Error al guardar: ' + error.message);
-        else alert('Registro guardado exitosamente.');
-    }
+async function procesarGuardado(tabla, columnaPK, payload, funcionRecargar) {
+    const db = obtenerDB();
+    const { error } = await db.from(tabla).upsert(payload, { onConflict: columnaPK });
 
-    await funcionRecargar();
-    await nuevoRegistro();
+    if (error) {
+        alert('Error al guardar: ' + error.message);
+    } else {
+        alert('Registro guardado exitosamente.');
+        await funcionRecargar();
+        await nuevoRegistro();
+    }
 }
 
 // 9. ELIMINAR REGISTRO
 async function eliminarRegistro() {
-    if (!idSeleccionado) {
-        alert('Seleccioná un registro de la lista para eliminar.');
-        return;
-    }
+    if (!idSeleccionado) return alert('Seleccioná un registro de la lista para eliminar.');
+    if (!confirm(`¿Estás seguro de eliminar el registro ${idSeleccionado}?`)) return;
 
-    if (!confirm('¿Estás seguro de eliminar el registro seleccionado?')) return;
+    const db = obtenerDB();
+    let columnaPK = 'codigo_programa';
+    if (catalogoActual === 'cursos') columnaPK = 'codigo_curso';
+    if (catalogoActual === 'instructores') columnaPK = 'codigo_instructor';
 
-    const { error } = await window.supabaseClient
-        .from(catalogoActual)
-        .delete()
-        .eq('id', idSeleccionado);
+    const { error } = await db.from(catalogoActual).delete().eq(columnaPK, idSeleccionado);
 
     if (error) {
         alert('Error al eliminar: ' + error.message);
@@ -383,41 +387,4 @@ async function eliminarRegistro() {
 
 function cancelarEdicion() {
     nuevoRegistro();
-}
-
-// Función para descargar un Backup Completo en Excel
-async function descargarBackupExcel() {
-    if (typeof XLSX === 'undefined') {
-        alert('La librería de Excel no se ha cargado correctamente.');
-        return;
-    }
-
-    try {
-        // 1. Obtener datos de Supabase
-        const [prog, inst, cur, cap, asis] = await Promise.all([
-            window.supabaseClient.from('programas').select('*'),
-            window.supabaseClient.from('instructores').select('*'),
-            window.supabaseClient.from('cursos').select('*'),
-            window.supabaseClient.from('capacitaciones').select('*'),
-            window.supabaseClient.from('asistentes').select('*')
-        ]);
-
-        // 2. Crear libro de trabajo
-        const wb = XLSX.utils.book_new();
-
-        // 3. Convertir y agregar cada tabla como pestaña
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cap.data || []), 'Capacitaciones');
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(asis.data || []), 'Asistentes');
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cur.data || []), 'Cursos');
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(inst.data || []), 'Instructores');
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(prog.data || []), 'Programas');
-
-        // 4. Descargar archivo
-        const fecha = new Date().toISOString().split('T')[0];
-        XLSX.writeFile(wb, `SIGA_Backup_Bases_${fecha}.xlsx`);
-
-    } catch (error) {
-        console.error('Error al generar backup:', error);
-        alert('Ocurrió un error al exportar la base de datos.');
-    }
 }

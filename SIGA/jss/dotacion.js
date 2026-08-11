@@ -1,237 +1,94 @@
 // ===================================================
-// 10/08/2026 - V0.1 - SIGA_APP - LÓGICA DE REGISTRO DE ASISTENTES
+// SIGA_APP - LÓGICA DE BÚSQUEDA DE DOTACIÓN
 // ===================================================
 
-let listaAsistentes = [];
-
-document.addEventListener('DOMContentLoaded', async () => {
-    await inicializarPantallaAsistentes();
-    configurarEventos();
+document.addEventListener('DOMContentLoaded', () => {
+    inicializarEventosDotacion();
 });
 
-function obtenerDB() {
-    return window.supabaseClient || window.supabase || null;
-}
+function inicializarEventosDotacion() {
+    const inputLegajo = document.getElementById('legajo');
+    if (!inputLegajo) return;
 
-// 1. CARGA DE CABECERA Y ASISTENTES
-async function inicializarPantallaAsistentes() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const idCapUrl = urlParams.get('id_cap');
-    const idCapLocal = localStorage.getItem("id_cap_asistencia");
-    const idCapTarget = idCapUrl || idCapLocal;
+    // Detección en tiempo real de tipeo
+    inputLegajo.addEventListener('input', (e) => {
+        let val = e.target.value.replace(/\D/g, ''); // Solo números
+        e.target.value = val;
 
-    let capData = null;
-
-    // Intentar leer datos inmediatos desde localStorage
-    const localCap = localStorage.getItem("capacitacion_activa");
-    if (localCap) {
-        try { capData = JSON.parse(localCap); } catch (e) { console.error(e); }
-    }
-
-    // Consultar a Supabase para obtener datos frescos de la capacitación
-    const db = obtenerDB();
-    if (db && idCapTarget) {
-        try {
-            const { data } = await db
-                .from('capacitaciones')
-                .select('*')
-                .eq('id_cap', idCapTarget)
-                .maybeSingle();
-
-            if (data) capData = data;
-        } catch (err) {
-            console.error("Error consultando capacitación en Supabase:", err);
+        // Disparo automático al completar los 5 dígitos
+        if (val.length === 5) {
+            ejecutarBusquedaLegajo();
+            inputLegajo.blur(); // Oculta el teclado táctil en tablets tras encontrar los datos
         }
-    }
-
-    // Poblar los campos de la cabecera superior
-    if (capData) {
-        setVal('resumenIdCap', capData.id_cap || idCapTarget || '');
-        setVal('resumenCurso', capData.nombre_curso || capData.curso || '');
-        setVal('resumenClase', capData.clase_nro || capData.clase || '1');
-        setVal('resumenFecha', capData.fecha || '');
-        setVal('resumenInstructor', capData.instructor_1 || capData.instructor1 || '');
-    } else if (idCapTarget) {
-        setVal('resumenIdCap', idCapTarget);
-    }
-
-    // Cargar los participantes previamente guardados en Supabase
-    if (idCapTarget) {
-        await cargarAsistentesSupabase(idCapTarget);
-    }
-}
-
-async function cargarAsistentesSupabase(idCap) {
-    const db = obtenerDB();
-    if (!db) return;
-
-    try {
-        const { data, error } = await db
-            .from('asistencias')
-            .select('asistentes')
-            .eq('id_cap', idCap)
-            .maybeSingle();
-
-        if (!error && data && Array.isArray(data.asistentes)) {
-            listaAsistentes = data.asistentes;
-        } else {
-            listaAsistentes = [];
-        }
-        renderizarGrilla();
-    } catch (err) {
-        console.error("Error leyendo asistencias de Supabase:", err);
-    }
-}
-
-// 2. SUMAR Y QUITAR PARTICIPANTES (Búsqueda en dotación local)
-function agregarParticipante() {
-    const inputLegajo = document.getElementById('inputLegajo');
-    const inputCalificacion = document.getElementById('inputCalificacion');
-    const inputObservaciones = document.getElementById('inputObservaciones');
-
-    const legajoVal = inputLegajo?.value.trim();
-    if (!legajoVal) {
-        alert("Por favor, ingrese un número de legajo.");
-        return;
-    }
-
-    // Compatibilidad multi-origen con dotacion.js / empleados
-    const nomina = window.dotacion || window.DOTACION || window.empleados || (typeof empleados !== 'undefined' ? empleados : []);
-    
-    const emp = nomina.find(e => e.legajo && String(e.legajo).trim().toLowerCase() === legajoVal.toLowerCase());
-
-    if (!emp) {
-        alert(`El legajo ${legajoVal} no se encuentra en la base de dotación.`);
-        return;
-    }
-
-    if (listaAsistentes.some(a => String(a.legajo).trim() === String(emp.legajo).trim())) {
-        alert("El empleado ya está agregado en la grilla.");
-        return;
-    }
-
-    const nuevo = {
-        legajo: emp.legajo,
-        apellido: emp.apellido || emp.Apellido || '-',
-        nombre: emp.nombre || emp.Nombre || '-',
-        calificacion: inputCalificacion?.value.trim() || '-',
-        observaciones: inputObservaciones?.value.trim() || '-',
-        firma: 'Pendiente'
-    };
-
-    listaAsistentes.push(nuevo);
-    renderizarGrilla();
-
-    if (inputLegajo) inputLegajo.value = '';
-    if (inputCalificacion) inputCalificacion.value = '';
-    if (inputObservaciones) inputObservaciones.value = '';
-}
-
-function renderizarGrilla() {
-    const tbody = document.getElementById('tbodyAsistentes');
-    if (!tbody) return;
-
-    tbody.innerHTML = '';
-
-    if (listaAsistentes.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="7" style="text-align:center; padding:20px; color:#94a3b8;">
-                    No hay participantes registrados para esta clase aún.
-                </td>
-            </tr>
-        `;
-        return;
-    }
-
-    listaAsistentes.forEach((item, idx) => {
-        const tr = document.createElement('tr');
-        tr.style.borderBottom = '1px solid #e2e8f0';
-
-        tr.innerHTML = `
-            <td style="padding:12px 15px; font-weight:bold;">${item.legajo}</td>
-            <td style="padding:12px 15px;">${item.apellido}</td>
-            <td style="padding:12px 15px;">${item.nombre}</td>
-            <td style="padding:12px 15px;">${item.calificacion}</td>
-            <td style="padding:12px 15px;">${item.observaciones}</td>
-            <td style="padding:12px 15px; color:#64748b;">${item.firma}</td>
-            <td style="padding:12px 15px; text-align:center;">
-                <button onclick="quitarParticipante(${idx})" style="background:#ef4444; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">
-                    Quitar
-                </button>
-            </td>
-        `;
-        tbody.appendChild(tr);
     });
 }
 
-window.quitarParticipante = function(index) {
-    listaAsistentes.splice(index, 1);
-    renderizarGrilla();
-};
+async function ejecutarBusquedaLegajo() {
+    const inputLegajo = document.getElementById('legajo');
+    if (!inputLegajo) return;
 
-// 3. CERRAR REGISTRO CON POPUP Y GUARDADO
-async function cerrarRegistro() {
-    const idCap = document.getElementById('resumenIdCap')?.value;
-    if (!idCap) {
-        alert("No hay un ID_CAP válido asignado.");
-        return;
-    }
+    let valor = inputLegajo.value.trim();
+    if (!valor) return;
 
-    const totalAsistentes = listaAsistentes.length;
-    const confirmacion = confirm(`¿Desea cerrar el registro de la capacitación?\n\nID: ${idCap}\nTotal de asistentes: ${totalAsistentes}`);
+    // Rellena con ceros a la izquierda para legajos cortos (ej: 102 -> 00102)
+    const legajoBuscado = valor.padStart(5, '0');
+    inputLegajo.value = legajoBuscado;
 
-    if (!confirmacion) return;
+    const db = window.supabaseClient || window.supabase;
+    let empleado = null;
 
-    const db = obtenerDB();
     if (db) {
         try {
-            await db
-                .from('asistencias')
-                .upsert([{
-                    id_cap: idCap,
-                    asistentes: listaAsistentes,
-                    fecha_registro: new Date().toISOString()
-                }], { onConflict: 'id_cap' });
+            const { data } = await db
+                .from('asistentes')
+                .select('*')
+                .eq('legajo', legajoBuscado)
+                .maybeSingle();
 
-            await db
-                .from('capacitaciones')
-                .update({ estado: 'Finalizado' })
-                .eq('id_cap', idCap);
-
-        } catch (err) {
-            console.error("Error guardando en Supabase:", err);
-            alert("Ocurrió un error al guardar los asistentes.");
-            return;
+            if (data) empleado = data;
+        } catch (e) {
+            console.warn('Error al consultar Supabase:', e);
         }
     }
 
-    localStorage.removeItem("capacitacion_activa");
-    localStorage.removeItem("id_cap_asistencia");
+    // Fallback a memoria local si existiera
+    if (!empleado && typeof empleadosData !== 'undefined' && Array.isArray(empleadosData)) {
+        empleado = empleadosData.find(emp => String(emp.legajo).padStart(5, '0') === legajoBuscado);
+    }
 
-    alert(`Registro cerrado con éxito. La capacitación ${idCap} pasó a estado Finalizado.`);
-    window.location.href = "actividades.html";
+    if (empleado) {
+        completarCamposDotacion(empleado);
+        inputLegajo.blur(); // Cierra teclado táctil
+    } else {
+        alert(`No se encontró ningún empleado con el legajo ${legajoBuscado}`);
+        limpiarCamposDotacion(false);
+    }
 }
 
-function configurarEventos() {
-    const btnAgregar = document.getElementById('btnAgregarParticipante');
-    if (btnAgregar) btnAgregar.onclick = (e) => { e.preventDefault(); agregarParticipante(); };
-
-    const btnCerrar = document.getElementById('btnCerrarRegistro');
-    if (btnCerrar) btnCerrar.onclick = (e) => { e.preventDefault(); cerrarRegistro(); };
-
-    const btnCancelar = document.getElementById('btnCancelar');
-    if (btnCancelar) btnCancelar.onclick = (e) => {
-        e.preventDefault();
-        localStorage.removeItem("capacitacion_activa");
-        window.location.href = "actividades.html";
-    };
-
-    const btnImprimir = document.getElementById('btnImprimir');
-    if (btnImprimir) btnImprimir.onclick = (e) => { e.preventDefault(); window.print(); };
+function completarCamposDotacion(e) {
+    document.getElementById('apellido').value = e.apellido || e.Apellido || '';
+    document.getElementById('nombreEmpleado').value = e.nombre || e.Nombre || '';
+    document.getElementById('puesto').value = e.puesto || e.Puesto || '';
+    document.getElementById('categoria').value = e.categoria || e.Categoria || '';
+    document.getElementById('direccion').value = e.direccion || e.Direccion || '';
+    document.getElementById('gerencia').value = e.gerencia || e.Gerencia || '';
+    document.getElementById('jefatura').value = e.jefatura || e.Jefatura || '';
+    document.getElementById('manager').value = e.manager || e.Manager || '';
+    document.getElementById('email').value = e.email || e.Email || '';
 }
 
-function setVal(id, valor) {
-    const elem = document.getElementById(id);
-    if (elem) elem.value = valor || '';
+function limpiarCamposDotacion(limpiarLegajo = true) {
+    if (limpiarLegajo) {
+        const inputLegajo = document.getElementById('legajo');
+        if (inputLegajo) {
+            inputLegajo.value = '';
+            inputLegajo.focus();
+        }
+    }
+
+    const campos = ['apellido', 'nombreEmpleado', 'puesto', 'categoria', 'direccion', 'gerencia', 'jefatura', 'manager', 'email'];
+    campos.forEach(id => {
+        const elem = document.getElementById(id);
+        if (elem) elem.value = '';
+    });
 }

@@ -113,6 +113,10 @@ async function abrirModalPorEstado(estadoFiltro, titulo) {
     const txtTitulo = document.getElementById("tituloModal");
     const tbody = document.getElementById("tbodyCapacitaciones");
 
+    // 🧹 LIMPIAR EL BUSCADOR AL ABRIR EL MODAL
+    const inputBuscar = document.getElementById('inputBuscarModal');
+    if (inputBuscar) inputBuscar.value = '';
+
     if (txtTitulo) txtTitulo.textContent = titulo;
     if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Cargando datos...</td></tr>';
     if (modal) modal.style.display = "flex";
@@ -237,3 +241,20 @@ window.verFinalizada = function(idCap) {
     localStorage.setItem("capacitacion_activa", JSON.stringify(cap));
     window.location.href = "capacitaciones.html";
 };
+
+// --- BÚSQUEDA EN TIEMPO REAL (MODAL ACTIVIDADES) ---
+function filtrarModal() {
+    const input = document.getElementById('inputBuscarModal');
+    if (!input) return;
+
+    const termino = input.value.toLowerCase().trim();
+    const filas = document.querySelectorAll('#tbodyCapacitaciones tr');
+
+    filas.forEach(fila => {
+        // Ignora filas de carga o mensajes sin columnas completas
+        if (fila.children.length <= 1) return; 
+
+        const textoFila = fila.textContent.toLowerCase();
+        fila.style.display = textoFila.includes(termino) ? '' : 'none';
+    });
+}

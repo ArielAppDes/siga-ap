@@ -1,9 +1,10 @@
 // ===================================================
-// SIGA_APP V0.2 - LÓGICA DE ADMINISTRACIÓN Y CATÁLOGOS UNIFICADA
+// SIGA_APP V0.3 - LÓGICA DE ADMINISTRACIÓN CON UX OPTIMIZADA
 // ===================================================
 
 let catalogoActual = 'programas';
-let idSeleccionado = null; // Almacena el código PK seleccionado (ej: PRO-2026-001, INS-2026-001)
+let idSeleccionado = null; 
+let datosCatalogoActual = []; // Cache local para el buscador dinámico
 
 document.addEventListener('DOMContentLoaded', () => {
     conectarEventosMenu();
@@ -14,7 +15,7 @@ function obtenerDB() {
     return window.supabaseClient || window.supabase || null;
 }
 
-// 1. ASIGNACIÓN DE EVENTOS EN EL MENÚ LATERAL
+// 1. EVENTOS MENÚ LATERAL
 function conectarEventosMenu() {
     const mapaBotones = {
         'btn-cat-programas': 'programas',
@@ -35,10 +36,14 @@ function conectarEventosMenu() {
     });
 }
 
-// 2. CONMUTADOR DE PANELES Y FORMULARIOS
+// 2. CONMUTADOR DE PANELES
 async function cambiarCatalogo(catalogo) {
     catalogoActual = catalogo;
     idSeleccionado = null;
+    ocultarFormulario();
+
+    const inputBusqueda = document.getElementById('inputBuscarCatalogo');
+    if (inputBusqueda) inputBusqueda.value = '';
 
     document.querySelectorAll('.menu-admin ul li').forEach(li => li.classList.remove('activo'));
     const btnActivo = document.getElementById(`btn-cat-${catalogo}`);
@@ -89,168 +94,87 @@ async function cambiarCatalogo(catalogo) {
         if (formInstructores) formInstructores.style.display = 'block';
         await cargarInstructores();
     }
-
-    await nuevoRegistro();
 }
 
-// 3. SUMA AUTOMÁTICA DE HORAS PARA CURSOS
-function sumarHorasCurso() {
-    const teoria = parseFloat(document.getElementById('curso_teoria')?.value) || 0;
-    const practica = parseFloat(document.getElementById('curso_practica')?.value) || 0;
-    const inputCarga = document.getElementById('curso_carga');
-    if (inputCarga) inputCarga.value = teoria + practica;
-}
-
-// 4. PREDECIR CÓDIGOS CORRELATIVOS UNIFORMES (PREFIJO-AAAA-XXX)
-async function obtenerProximoCodigo(tabla, columnaPK, prefijo) {
-    const db = obtenerDB();
-    const anioActual = new Date().getFullYear();
-    const formatoPrefijo = `${prefijo}-${anioActual}`;
-
-    if (!db) return `${formatoPrefijo}-001`;
-
-    try {
-        const { data, error } = await db.from(tabla).select(columnaPK);
-        if (error || !data || data.length === 0) return `${formatoPrefijo}-001`;
-
-        let maxNum = 0;
-        data.forEach(item => {
-            const val = item[columnaPK];
-            if (val) {
-                const partes = val.split('-');
-                if (partes.length >= 3) {
-                    const num = parseInt(partes[2], 10);
-                    if (!isNaN(num) && num > maxNum) maxNum = num;
-                }
-            }
-        });
-
-        const siguiente = String(maxNum + 1).padStart(3, '0');
-        return `${formatoPrefijo}-${siguiente}`;
-    } catch (e) {
-        return `${formatoPrefijo}-001`;
-    }
-}
-
-// 5. CONSULTAS Y CARGA DE GRILLAS
+// 3. CONSULTAS Y CARGA CON MEMORIA
 async function cargarProgramas() {
-    const tbody = document.getElementById('tablaCatalogo');
     const db = obtenerDB();
-    if (!tbody || !db) return;
-
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Cargando programas...</td></tr>';
-
-    const { data, error } = await db.from('programas').select('*').order('codigo_programa', { ascending: true });
-
-    if (error || !data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay programas registrados.</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = data.map(p => `
-        <tr onclick="seleccionarPrograma('${p.codigo_programa}')" style="cursor: pointer;" id="fila-${p.codigo_programa}">
-            <td><strong>${p.codigo_programa}</strong></td>
-            <td>${p.nombre || '-'}</td>
-            <td>${p.estado || 'Activo'}</td>
-        </tr>
-    `).join('');
+    if (!db) return;
+    const { data } = await db.from('programas').select('*').order('codigo_programa', { ascending: true });
+    datosCatalogoActual = data || [];
+    renderizarTabla(datosCatalogoActual);
 }
 
 async function cargarCursos() {
-    const tbody = document.getElementById('tablaCatalogo');
     const db = obtenerDB();
-    if (!tbody || !db) return;
-
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Cargando cursos...</td></tr>';
-
-    const { data, error } = await db.from('cursos').select('*').order('codigo_curso', { ascending: true });
-
-    if (error || !data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay cursos registrados.</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = data.map(c => `
-        <tr onclick="seleccionarCurso('${c.codigo_curso}')" style="cursor: pointer;" id="fila-${c.codigo_curso}">
-            <td><strong>${c.codigo_curso}</strong></td>
-            <td>${c.nombre || '-'}</td>
-            <td>${c.estado || 'Activo'}</td>
-        </tr>
-    `).join('');
+    if (!db) return;
+    const { data } = await db.from('cursos').select('*').order('codigo_curso', { ascending: true });
+    datosCatalogoActual = data || [];
+    renderizarTabla(datosCatalogoActual);
 }
 
 async function cargarInstructores() {
-    const tbody = document.getElementById('tablaCatalogo');
     const db = obtenerDB();
-    if (!tbody || !db) return;
+    if (!db) return;
+    const { data } = await db.from('instructores').select('*').order('codigo_instructor', { ascending: true });
+    datosCatalogoActual = data || [];
+    renderizarTabla(datosCatalogoActual);
+}
 
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Cargando instructores...</td></tr>';
+// 4. RENDERIZADO Y BUSCADOR EN TIEMPO REAL
+function renderizarTabla(lista) {
+    const tbody = document.getElementById('tablaCatalogo');
+    if (!tbody) return;
 
-    const { data, error } = await db.from('instructores').select('*').order('codigo_instructor', { ascending: true });
-
-    if (error || !data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay instructores registrados.</td></tr>';
+    if (!lista || lista.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 15px;">No se encontraron registros.</td></tr>';
         return;
     }
 
-    tbody.innerHTML = data.map(i => `
-        <tr onclick="seleccionarInstructor('${i.codigo_instructor}')" style="cursor: pointer;" id="fila-${i.codigo_instructor}">
-            <td><strong>${i.codigo_instructor}</strong></td>
-            <td>${i.apellido || ''}, ${i.nombre || ''}</td>
-            <td>${i.estado || 'Activo'}</td>
-        </tr>
-    `).join('');
+    tbody.innerHTML = lista.map(item => {
+        let codigo = item.codigo_programa || item.codigo_curso || item.codigo_instructor;
+        let nombre = item.nombre;
+        if (catalogoActual === 'instructores') {
+            nombre = `${item.apellido || ''}, ${item.nombre || ''}`;
+        }
+
+        return `
+            <tr onclick="seleccionarFila('${codigo}')" style="cursor: pointer;" id="fila-${codigo}">
+                <td><strong>${codigo}</strong></td>
+                <td>${nombre || '-'}</td>
+                <td>
+                    <span style="background:${item.estado === 'Activo' ? '#27ae60' : '#e74c3c'}; color:#fff; padding:2px 8px; border-radius:10px; font-size:0.8rem;">
+                        ${item.estado || 'Activo'}
+                    </span>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    if (idSeleccionado) marcarFilaSeleccionada(idSeleccionado);
 }
 
-// 6. SELECCIÓN DE FILAS
-async function seleccionarPrograma(codigo) {
-    idSeleccionado = codigo;
-    marcarFilaSeleccionada(codigo);
-    const db = obtenerDB();
+function filtrarTablaCatalogo() {
+    const texto = document.getElementById('inputBuscarCatalogo')?.value.toLowerCase().trim() || '';
+    if (!texto) {
+        renderizarTabla(datosCatalogoActual);
+        return;
+    }
 
-    const { data } = await db.from('programas').select('*').eq('codigo_programa', codigo).single();
-    if (!data) return;
+    const filtrados = datosCatalogoActual.filter(item => {
+        const cod = (item.codigo_programa || item.codigo_curso || item.codigo_instructor || '').toLowerCase();
+        const nom = (item.nombre || '').toLowerCase();
+        const ape = (item.apellido || '').toLowerCase();
+        return cod.includes(texto) || nom.includes(texto) || ape.includes(texto);
+    });
 
-    document.getElementById('pro_codigo').value = data.codigo_programa || '';
-    document.getElementById('pro_nombre').value = data.nombre || '';
-    document.getElementById('pro_descripcion').value = data.descripcion || '';
-    document.getElementById('pro_estado').value = data.estado || 'Activo';
+    renderizarTabla(filtrados);
 }
 
-async function seleccionarCurso(codigo) {
+// 5. MANEJO DE SELECCIÓN Y FORMULARIO OCULTO/DESPLEGABLE
+async function seleccionarFila(codigo) {
     idSeleccionado = codigo;
     marcarFilaSeleccionada(codigo);
-    const db = obtenerDB();
-
-    const { data } = await db.from('cursos').select('*').eq('codigo_curso', codigo).single();
-    if (!data) return;
-
-    document.getElementById('curso_codigo').value = data.codigo_curso || '';
-    document.getElementById('curso_nombre').value = data.nombre || '';
-    document.getElementById('curso_modalidad').value = data.modalidad || 'Presencial';
-    document.getElementById('curso_teoria').value = data.hs_teoria || 0;
-    document.getElementById('curso_practica').value = data.hs_practica || 0;
-    document.getElementById('curso_carga').value = data.hs_totales || data.carga_horaria || 0;
-    document.getElementById('curso_contenido').value = data.contenido || '';
-    document.getElementById('curso_estado').value = data.estado || 'Activo';
-}
-
-async function seleccionarInstructor(codigo) {
-    idSeleccionado = codigo;
-    marcarFilaSeleccionada(codigo);
-    const db = obtenerDB();
-
-    const { data } = await db.from('instructores').select('*').eq('codigo_instructor', codigo).single();
-    if (!data) return;
-
-    document.getElementById('ins_codigo').value = data.codigo_instructor || '';
-    document.getElementById('ins_nombre').value = data.nombre || '';
-    document.getElementById('ins_apellido').value = data.apellido || '';
-    document.getElementById('ins_dni').value = data.dni || '';
-    document.getElementById('ins_email').value = data.email || '';
-    document.getElementById('ins_especialidad').value = data.especialidad || '';
-    document.getElementById('ins_tipo').value = data.tipo || 'Interno';
-    document.getElementById('ins_estado').value = data.estado || 'Activo';
 }
 
 function marcarFilaSeleccionada(codigo) {
@@ -259,10 +183,12 @@ function marcarFilaSeleccionada(codigo) {
     if (fila) fila.style.backgroundColor = '#d1e7dd';
 }
 
-// 7. LIMPIAR FORMULARIO / NUEVO REGISTRO
-async function nuevoRegistro() {
+async function abrirFormularioNuevo() {
     idSeleccionado = null;
     document.querySelectorAll('#tablaCatalogo tr').forEach(tr => tr.style.backgroundColor = '');
+    
+    document.getElementById('contenedorFormulario').style.display = 'block';
+    document.getElementById('tituloFormulario').textContent = `Nuevo Registro en ${catalogoActual.toUpperCase()}`;
 
     if (catalogoActual === 'programas') {
         const codigo = await obtenerProximoCodigo('programas', 'codigo_programa', 'PRO');
@@ -290,9 +216,95 @@ async function nuevoRegistro() {
         document.getElementById('ins_tipo').value = 'Interno';
         document.getElementById('ins_estado').value = 'Activo';
     }
+
+    document.getElementById('contenedorFormulario').scrollIntoView({ behavior: 'smooth' });
 }
 
-// 8. GUARDAR O EDITAR REGISTRO (UPSERT)
+async function abrirFormularioEditar() {
+    if (!idSeleccionado) return alert('Por favor, hacé clic sobre un registro de la lista para editar.');
+
+    document.getElementById('contenedorFormulario').style.display = 'block';
+    document.getElementById('tituloFormulario').textContent = `Editar Registro: ${idSeleccionado}`;
+
+    const db = obtenerDB();
+    if (catalogoActual === 'programas') {
+        const { data } = await db.from('programas').select('*').eq('codigo_programa', idSeleccionado).single();
+        if (!data) return;
+        document.getElementById('pro_codigo').value = data.codigo_programa || '';
+        document.getElementById('pro_nombre').value = data.nombre || '';
+        document.getElementById('pro_descripcion').value = data.descripcion || '';
+        document.getElementById('pro_estado').value = data.estado || 'Activo';
+    } else if (catalogoActual === 'cursos') {
+        const { data } = await db.from('cursos').select('*').eq('codigo_curso', idSeleccionado).single();
+        if (!data) return;
+        document.getElementById('curso_codigo').value = data.codigo_curso || '';
+        document.getElementById('curso_nombre').value = data.nombre || '';
+        document.getElementById('curso_modalidad').value = data.modalidad || 'Presencial';
+        document.getElementById('curso_teoria').value = data.hs_teoria || 0;
+        document.getElementById('curso_practica').value = data.hs_practica || 0;
+        document.getElementById('curso_carga').value = data.hs_totales || 0;
+        document.getElementById('curso_contenido').value = data.contenido || '';
+        document.getElementById('curso_estado').value = data.estado || 'Activo';
+    } else if (catalogoActual === 'instructores') {
+        const { data } = await db.from('instructores').select('*').eq('codigo_instructor', idSeleccionado).single();
+        if (!data) return;
+        document.getElementById('ins_codigo').value = data.codigo_instructor || '';
+        document.getElementById('ins_nombre').value = data.nombre || '';
+        document.getElementById('ins_apellido').value = data.apellido || '';
+        document.getElementById('ins_dni').value = data.dni || '';
+        document.getElementById('ins_email').value = data.email || '';
+        document.getElementById('ins_especialidad').value = data.especialidad || '';
+        document.getElementById('ins_tipo').value = data.tipo || 'Interno';
+        document.getElementById('ins_estado').value = data.estado || 'Activo';
+    }
+
+    document.getElementById('contenedorFormulario').scrollIntoView({ behavior: 'smooth' });
+}
+
+function ocultarFormulario() {
+    const form = document.getElementById('contenedorFormulario');
+    if (form) form.style.display = 'none';
+}
+
+// 6. SUMA DE HORAS
+function sumarHorasCurso() {
+    const teoria = parseFloat(document.getElementById('curso_teoria')?.value) || 0;
+    const practica = parseFloat(document.getElementById('curso_practica')?.value) || 0;
+    const inputCarga = document.getElementById('curso_carga');
+    if (inputCarga) inputCarga.value = teoria + practica;
+}
+
+// 7. AUTOGENERADOR DE CÓDIGOS CORRELATIVOS
+async function obtenerProximoCodigo(tabla, columnaPK, prefijo) {
+    const db = obtenerDB();
+    const anioActual = new Date().getFullYear();
+    const formatoPrefijo = `${prefijo}-${anioActual}`;
+
+    if (!db) return `${formatoPrefijo}-001`;
+
+    try {
+        const { data, error } = await db.from(tabla).select(columnaPK);
+        if (error || !data || data.length === 0) return `${formatoPrefijo}-001`;
+
+        let maxNum = 0;
+        data.forEach(item => {
+            const val = item[columnaPK];
+            if (val) {
+                const partes = val.split('-');
+                if (partes.length >= 3) {
+                    const num = parseInt(partes[2], 10);
+                    if (!isNaN(num) && num > maxNum) maxNum = num;
+                }
+            }
+        });
+
+        return `${formatoPrefijo}-${String(maxNum + 1).padStart(3, '0')}`;
+    } catch (e) {
+        return `${formatoPrefijo}-001`;
+    }
+}
+
+// 8. GUARDAR O EDITAR
 async function guardarRegistro() {
     const db = obtenerDB();
     if (!db) return;
@@ -357,12 +369,12 @@ async function procesarGuardado(tabla, columnaPK, payload, funcionRecargar) {
         alert('Error al guardar: ' + error.message);
     } else {
         alert('Registro guardado exitosamente.');
+        ocultarFormulario();
         await funcionRecargar();
-        await nuevoRegistro();
     }
 }
 
-// 9. ELIMINAR REGISTRO
+// 9. ELIMINAR
 async function eliminarRegistro() {
     if (!idSeleccionado) return alert('Seleccioná un registro de la lista para eliminar.');
     if (!confirm(`¿Estás seguro de eliminar el registro ${idSeleccionado}?`)) return;
@@ -378,13 +390,10 @@ async function eliminarRegistro() {
         alert('Error al eliminar: ' + error.message);
     } else {
         alert('Registro eliminado correctamente.');
+        idSeleccionado = null;
+        ocultarFormulario();
         if (catalogoActual === 'programas') await cargarProgramas();
         if (catalogoActual === 'cursos') await cargarCursos();
         if (catalogoActual === 'instructores') await cargarInstructores();
-        await nuevoRegistro();
     }
-}
-
-function cancelarEdicion() {
-    nuevoRegistro();
 }

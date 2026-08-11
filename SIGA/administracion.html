@@ -234,34 +234,42 @@
                     </div>
                 </div>
 
-                <!-- PANEL DOTACIÓN -->
-                <div id="panelDotacion" style="display:none;">
-                    <div class="dotacion-header">
-                        <h2>Dotación</h2>
-                        <div class="fecha-dotacion">
-                            Última actualización: <span id="fechaDotacion">--/--/----</span>
-                        </div>
-                    </div>
-                    <div class="dotacion-card">
-                        <h3>Buscar Empleado</h3>
-                        <div class="grupo">
-                            <label>Legajo</label>
-                            <input type="text" id="legajo">
-                        </div>
-                        <div class="acciones-busqueda">
-                            <button id="btnNuevoEmpleado" class="btn cancelar">Nueva búsqueda</button>
-                        </div>
-                        <div class="grupo"><label>Apellido</label><input type="text" id="apellido" readonly></div>
-                        <div class="grupo"><label>Nombre</label><input type="text" id="nombreEmpleado" readonly></div>
-                        <div class="grupo"><label>Puesto</label><input type="text" id="puesto" readonly></div>
-                        <div class="grupo"><label>Categoría</label><input type="text" id="categoria" readonly></div>
-                        <div class="grupo"><label>Dirección</label><input type="text" id="direccion" readonly></div>
-                        <div class="grupo"><label>Gerencia</label><input type="text" id="gerencia" readonly></div>
-                        <div class="grupo"><label>Jefatura</label><input type="text" id="jefatura" readonly></div>
-                        <div class="grupo"><label>Manager</label><input type="text" id="manager" readonly></div>
-                        <div class="grupo"><label>Email</label><input type="text" id="email" readonly></div>
-                    </div>
-                </div>
+               <div id="panelDotacion" style="display:none;">
+    <div class="dotacion-header">
+        <h2>Dotación</h2>
+        <div class="fecha-dotacion">
+            Última actualización: <span id="fechaDotacion">--/--/----</span>
+        </div>
+    </div>
+    <div class="dotacion-card">
+        <h3>Buscar Empleado</h3>
+        
+        <!-- FORMULARIO DE BÚSQUEDA (Para activar la tecla Buscar/Ir en tablets) -->
+        <form onsubmit="event.preventDefault(); ejecutarBusquedaLegajo();" class="grupo">
+            <label>Legajo</label>
+            <div style="display: flex; gap: 10px;">
+                <input 
+                    type="search" 
+                    id="legajo" 
+                    inputmode="numeric" 
+                    maxlength="5" 
+                    placeholder="Ej: 102 o 01099" 
+                    style="flex: 1;">
+                <button type="button" id="btnNuevoEmpleado" class="btn cancelar" onclick="limpiarCamposDotacion()">Nueva búsqueda</button>
+            </div>
+        </form>
+
+        <div class="grupo"><label>Apellido</label><input type="text" id="apellido" readonly></div>
+        <div class="grupo"><label>Nombre</label><input type="text" id="nombreEmpleado" readonly></div>
+        <div class="grupo"><label>Puesto</label><input type="text" id="puesto" readonly></div>
+        <div class="grupo"><label>Categoría</label><input type="text" id="categoria" readonly></div>
+        <div class="grupo"><label>Dirección</label><input type="text" id="direccion" readonly></div>
+        <div class="grupo"><label>Gerencia</label><input type="text" id="gerencia" readonly></div>
+        <div class="grupo"><label>Jefatura</label><input type="text" id="jefatura" readonly></div>
+        <div class="grupo"><label>Manager</label><input type="text" id="manager" readonly></div>
+        <div class="grupo"><label>Email</label><input type="text" id="email" readonly></div>
+    </div>
+</div>
 
                 <!-- PANEL BASES -->
                 <div id="panelBases" style="display:none;">

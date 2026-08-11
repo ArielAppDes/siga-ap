@@ -1,5 +1,5 @@
 // ===================================================
-// SIGA_APP V0.3 - LÓGICA DE ADMINISTRACIÓN CON UX OPTIMIZADA
+// SIGA_APP V0.4 - LÓGICA DE ADMINISTRACIÓN Y CATÁLOGOS
 // ===================================================
 
 let catalogoActual = 'programas';
@@ -96,7 +96,7 @@ async function cambiarCatalogo(catalogo) {
     }
 }
 
-// 3. CONSULTAS Y CARGA CON MEMORIA
+// 3. CONSULTAS A SUPABASE
 async function cargarProgramas() {
     const db = obtenerDB();
     if (!db) return;
@@ -121,7 +121,7 @@ async function cargarInstructores() {
     renderizarTabla(datosCatalogoActual);
 }
 
-// 4. RENDERIZADO Y BUSCADOR EN TIEMPO REAL
+// 4. RENDERIZADO Y BÚSQUEDA DINÁMICA
 function renderizarTabla(lista) {
     const tbody = document.getElementById('tablaCatalogo');
     if (!tbody) return;
@@ -138,13 +138,18 @@ function renderizarTabla(lista) {
             nombre = `${item.apellido || ''}, ${item.nombre || ''}`;
         }
 
+        // Normalizar estado (limpia espacios y minúsculas para que no marque rojo por error)
+        const estadoTexto = (item.estado || 'Activo').trim();
+        const esActivo = estadoTexto.toLowerCase() === 'activo';
+        const colorBg = esActivo ? '#27ae60' : '#e74c3c';
+
         return `
             <tr onclick="seleccionarFila('${codigo}')" style="cursor: pointer;" id="fila-${codigo}">
-                <td><strong>${codigo}</strong></td>
-                <td>${nombre || '-'}</td>
-                <td>
-                    <span style="background:${item.estado === 'Activo' ? '#27ae60' : '#e74c3c'}; color:#fff; padding:2px 8px; border-radius:10px; font-size:0.8rem;">
-                        ${item.estado || 'Activo'}
+                <td style="padding: 10px;"><strong>${codigo}</strong></td>
+                <td style="padding: 10px;">${nombre || '-'}</td>
+                <td style="padding: 10px;">
+                    <span style="background:${colorBg}; color:#fff; padding:3px 10px; border-radius:12px; font-size:0.8rem; font-weight: 500;">
+                        ${estadoTexto}
                     </span>
                 </td>
             </tr>
@@ -171,7 +176,7 @@ function filtrarTablaCatalogo() {
     renderizarTabla(filtrados);
 }
 
-// 5. MANEJO DE SELECCIÓN Y FORMULARIO OCULTO/DESPLEGABLE
+// 5. SELECCIÓN DE FILAS Y MANEJO DEL FORMULARIO
 async function seleccionarFila(codigo) {
     idSeleccionado = codigo;
     marcarFilaSeleccionada(codigo);
@@ -266,7 +271,7 @@ function ocultarFormulario() {
     if (form) form.style.display = 'none';
 }
 
-// 6. SUMA DE HORAS
+// 6. CÁLCULO DE HORAS DE CURSOS
 function sumarHorasCurso() {
     const teoria = parseFloat(document.getElementById('curso_teoria')?.value) || 0;
     const practica = parseFloat(document.getElementById('curso_practica')?.value) || 0;
@@ -274,7 +279,7 @@ function sumarHorasCurso() {
     if (inputCarga) inputCarga.value = teoria + practica;
 }
 
-// 7. AUTOGENERADOR DE CÓDIGOS CORRELATIVOS
+// 7. CORRELATIVO AUTOMÁTICO
 async function obtenerProximoCodigo(tabla, columnaPK, prefijo) {
     const db = obtenerDB();
     const anioActual = new Date().getFullYear();
@@ -304,7 +309,7 @@ async function obtenerProximoCodigo(tabla, columnaPK, prefijo) {
     }
 }
 
-// 8. GUARDAR O EDITAR
+// 8. GUARDAR Y PROCESAR
 async function guardarRegistro() {
     const db = obtenerDB();
     if (!db) return;
@@ -374,7 +379,7 @@ async function procesarGuardado(tabla, columnaPK, payload, funcionRecargar) {
     }
 }
 
-// 9. ELIMINAR
+// 9. ELIMINAR REGISTRO
 async function eliminarRegistro() {
     if (!idSeleccionado) return alert('Seleccioná un registro de la lista para eliminar.');
     if (!confirm(`¿Estás seguro de eliminar el registro ${idSeleccionado}?`)) return;

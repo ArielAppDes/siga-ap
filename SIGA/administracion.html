@@ -70,168 +70,169 @@
             <!-- PANEL DERECHO -->
             <section class="contenido-admin">
 
-             <div id="panelGenerico">
-    <div class="cabecera-admin">
-        <h2 id="tituloCatalogo">Programas</h2>
-        <div class="acciones">
-            <button class="btn nuevo" onclick="abrirFormularioNuevo()">+ Agregar</button>
-            <button class="btn editar" onclick="abrirFormularioEditar()">✏️ Editar</button>
-            <button class="btn eliminar" onclick="eliminarRegistro()">🗑️ Eliminar</button>
-        </div>
-    </div>
+                <div id="panelGenerico">
+                    <div class="cabecera-admin">
+                        <h2 id="tituloCatalogo">Programas</h2>
+                        <div class="acciones">
+                            <button class="btn nuevo" onclick="abrirFormularioNuevo()">+ Agregar</button>
+                            <button class="btn editar" onclick="abrirFormularioEditar()">✏️ Editar</button>
+                            <button class="btn eliminar" onclick="eliminarRegistro()">🗑️ Eliminar</button>
+                        </div>
+                    </div>
 
-    <!-- BUSCADOR EN TIEMPO REAL -->
-    <div style="margin-bottom: 15px;">
-        <input type="text" id="inputBuscarCatalogo" placeholder="🔍 Buscar por código, nombre..." oninput="filtrarTablaCatalogo()" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.95rem;">
-    </div>
+                    <!-- BUSCADOR EN TIEMPO REAL -->
+                    <div style="margin-bottom: 15px;">
+                        <input type="text" id="inputBuscarCatalogo" placeholder="🔍 Buscar por código, nombre..." oninput="filtrarTablaCatalogo()" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.95rem;">
+                    </div>
 
-    <div class="grilla-admin">
-        <table>
-            <thead id="tablaHeader">
-                <tr>
-                    <th>Código</th>
-                    <th id="colNombre">Programa</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-            <tbody id="tablaCatalogo">
-                <!-- Se llena dinámicamente desde JS -->
-            </tbody>
-        </table>
-    </div>
+                    <!-- GRILLA CON ALTURA MÁXIMA Y DESPLAZAMIENTO -->
+                    <div class="grilla-admin" style="max-height: 320px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead id="tablaHeader" style="position: sticky; top: 0; background: #2c3e50; color: white; z-index: 10;">
+                                <tr>
+                                    <th style="padding: 10px; text-align: left; background: #2c3e50;">Código</th>
+                                    <th id="colNombre" style="padding: 10px; text-align: left; background: #2c3e50;">Programa</th>
+                                    <th style="padding: 10px; text-align: left; background: #2c3e50;">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaCatalogo">
+                                <!-- Se llena dinámicamente desde JS -->
+                            </tbody>
+                        </table>
+                    </div>
 
-    <!-- FORMULARIO OCULTO POR DEFECTO -->
-    <div class="formulario-admin" id="contenedorFormulario" style="display: none; margin-top: 25px; padding-top: 20px; border-top: 2px solid #27ae60;">
-        <h3 id="tituloFormulario">Datos del Registro</h3>
-        
-        <!-- 1. FORMULARIO PROGRAMAS -->
-        <div id="form-programas">
-            <div class="grupo">
-                <label>Código Programa</label>
-                <input type="text" id="pro_codigo" readonly placeholder="Autogenerado" style="background-color: #e9ecef;">
-            </div>
-            <div class="grupo">
-                <label>Nombre del Programa</label>
-                <input type="text" id="pro_nombre" required>
-            </div>
-            <div class="grupo">
-                <label>Descripción</label>
-                <textarea id="pro_descripcion" rows="3"></textarea>
-            </div>
-            <div class="grupo">
-                <label>Estado</label>
-                <select id="pro_estado">
-                    <option value="Activo">Activo</option>
-                    <option value="Inactivo">Inactivo</option>
-                    <option value="Baja">Baja</option>
-                </select>
-            </div>
-        </div>
+                    <!-- FORMULARIO OCULTO POR DEFECTO -->
+                    <div class="formulario-admin" id="contenedorFormulario" style="display: none; margin-top: 25px; padding-top: 20px; border-top: 2px solid #27ae60;">
+                        <h3 id="tituloFormulario">Datos del Registro</h3>
+                        
+                        <!-- 1. FORMULARIO PROGRAMAS -->
+                        <div id="form-programas">
+                            <div class="grupo">
+                                <label>Código Programa</label>
+                                <input type="text" id="pro_codigo" readonly placeholder="Autogenerado" style="background-color: #e9ecef;">
+                            </div>
+                            <div class="grupo">
+                                <label>Nombre del Programa</label>
+                                <input type="text" id="pro_nombre" required>
+                            </div>
+                            <div class="grupo">
+                                <label>Descripción</label>
+                                <textarea id="pro_descripcion" rows="3"></textarea>
+                            </div>
+                            <div class="grupo">
+                                <label>Estado</label>
+                                <select id="pro_estado">
+                                    <option value="Activo">Activo</option>
+                                    <option value="Inactivo">Inactivo</option>
+                                    <option value="Baja">Baja</option>
+                                </select>
+                            </div>
+                        </div>
 
-        <!-- 2. FORMULARIO CURSOS -->
-        <div id="form-cursos" style="display: none;">
-            <div class="grupo">
-                <label>Código Curso</label>
-                <input type="text" id="curso_codigo" readonly placeholder="Autogenerado" style="background-color: #e9ecef;">
-            </div>
-            <div class="grupo">
-                <label>Nombre del Curso</label>
-                <input type="text" id="curso_nombre" required>
-            </div>
-            <div class="grupo">
-                <label>Modalidad</label>
-                <select id="curso_modalidad">
-                    <option value="Presencial">Presencial</option>
-                    <option value="Virtual Sincrónico">Virtual Sincrónico</option>
-                    <option value="Virtual Asincrónico">Virtual Asincrónico</option>
-                    <option value="Híbrido">Híbrido</option>
-                </select>
-            </div>
-            <div style="display: flex; gap: 15px;">
-                <div class="grupo" style="flex: 1;">
-                    <label>Hs Teoría</label>
-                    <input type="number" id="curso_teoria" min="0" value="0" oninput="sumarHorasCurso()">
-                </div>
-                <div class="grupo" style="flex: 1;">
-                    <label>Hs Práctica</label>
-                    <input type="number" id="curso_practica" min="0" value="0" oninput="sumarHorasCurso()">
-                </div>
-                <div class="grupo" style="flex: 1;">
-                    <label>Carga Horaria Total</label>
-                    <input type="number" id="curso_carga" readonly value="0" style="background-color: #e9ecef; font-weight: bold;">
-                </div>
-            </div>
-            <div class="grupo">
-                <label>Contenido</label>
-                <textarea id="curso_contenido" rows="3"></textarea>
-            </div>
-            <div class="grupo">
-                <label>Estado</label>
-                <select id="curso_estado">
-                    <option value="Activo">Activo</option>
-                    <option value="Inactivo">Inactivo</option>
-                    <option value="Baja">Baja</option>
-                </select>
-            </div>
-        </div>
+                        <!-- 2. FORMULARIO CURSOS -->
+                        <div id="form-cursos" style="display: none;">
+                            <div class="grupo">
+                                <label>Código Curso</label>
+                                <input type="text" id="curso_codigo" readonly placeholder="Autogenerado" style="background-color: #e9ecef;">
+                            </div>
+                            <div class="grupo">
+                                <label>Nombre del Curso</label>
+                                <input type="text" id="curso_nombre" required>
+                            </div>
+                            <div class="grupo">
+                                <label>Modalidad</label>
+                                <select id="curso_modalidad">
+                                    <option value="Presencial">Presencial</option>
+                                    <option value="Virtual Sincrónico">Virtual Sincrónico</option>
+                                    <option value="Virtual Asincrónico">Virtual Asincrónico</option>
+                                    <option value="Híbrido">Híbrido</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; gap: 15px;">
+                                <div class="grupo" style="flex: 1;">
+                                    <label>Hs Teoría</label>
+                                    <input type="number" id="curso_teoria" min="0" value="0" oninput="sumarHorasCurso()">
+                                </div>
+                                <div class="grupo" style="flex: 1;">
+                                    <label>Hs Práctica</label>
+                                    <input type="number" id="curso_practica" min="0" value="0" oninput="sumarHorasCurso()">
+                                </div>
+                                <div class="grupo" style="flex: 1;">
+                                    <label>Carga Horaria Total</label>
+                                    <input type="number" id="curso_carga" readonly value="0" style="background-color: #e9ecef; font-weight: bold;">
+                                </div>
+                            </div>
+                            <div class="grupo">
+                                <label>Contenido</label>
+                                <textarea id="curso_contenido" rows="3"></textarea>
+                            </div>
+                            <div class="grupo">
+                                <label>Estado</label>
+                                <select id="curso_estado">
+                                    <option value="Activo">Activo</option>
+                                    <option value="Inactivo">Inactivo</option>
+                                    <option value="Baja">Baja</option>
+                                </select>
+                            </div>
+                        </div>
 
-        <!-- 3. FORMULARIO INSTRUCTORES -->
-        <div id="form-instructores" style="display: none;">
-            <div class="grupo">
-                <label>Código Instructor</label>
-                <input type="text" id="ins_codigo" readonly placeholder="Autogenerado" style="background-color: #e9ecef;">
-            </div>
-            <div style="display: flex; gap: 15px;">
-                <div class="grupo" style="flex: 1;">
-                    <label>Nombre</label>
-                    <input type="text" id="ins_nombre" required>
-                </div>
-                <div class="grupo" style="flex: 1;">
-                    <label>Apellido</label>
-                    <input type="text" id="ins_apellido" required>
-                </div>
-            </div>
-            <div style="display: flex; gap: 15px;">
-                <div class="grupo" style="flex: 1;">
-                    <label>DNI / Identificación</label>
-                    <input type="text" id="ins_dni">
-                </div>
-                <div class="grupo" style="flex: 1;">
-                    <label>Email</label>
-                    <input type="email" id="ins_email">
-                </div>
-            </div>
-            <div class="grupo">
-                <label>Especialidad / Temática</label>
-                <input type="text" id="ins_especialidad" placeholder="Ej: Seguridad, Liderazgo, Sistemas">
-            </div>
-            <div style="display: flex; gap: 15px;">
-                <div class="grupo" style="flex: 1;">
-                    <label>Tipo de Instructor</label>
-                    <select id="ins_tipo">
-                        <option value="Interno">Interno</option>
-                        <option value="Externo">Externo</option>
-                    </select>
-                </div>
-                <div class="grupo" style="flex: 1;">
-                    <label>Estado</label>
-                    <select id="ins_estado">
-                        <option value="Activo">Activo</option>
-                        <option value="Inactivo">Inactivo</option>
-                        <option value="Baja">Baja</option>
-                    </select>
-                </div>
-            </div>
-        </div>
+                        <!-- 3. FORMULARIO INSTRUCTORES -->
+                        <div id="form-instructores" style="display: none;">
+                            <div class="grupo">
+                                <label>Código Instructor</label>
+                                <input type="text" id="ins_codigo" readonly placeholder="Autogenerado" style="background-color: #e9ecef;">
+                            </div>
+                            <div style="display: flex; gap: 15px;">
+                                <div class="grupo" style="flex: 1;">
+                                    <label>Nombre</label>
+                                    <input type="text" id="ins_nombre" required>
+                                </div>
+                                <div class="grupo" style="flex: 1;">
+                                    <label>Apellido</label>
+                                    <input type="text" id="ins_apellido" required>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 15px;">
+                                <div class="grupo" style="flex: 1;">
+                                    <label>DNI / Identificación</label>
+                                    <input type="text" id="ins_dni">
+                                </div>
+                                <div class="grupo" style="flex: 1;">
+                                    <label>Email</label>
+                                    <input type="email" id="ins_email">
+                                </div>
+                            </div>
+                            <div class="grupo">
+                                <label>Especialidad / Temática</label>
+                                <input type="text" id="ins_especialidad" placeholder="Ej: Seguridad, Liderazgo, Sistemas">
+                            </div>
+                            <div style="display: flex; gap: 15px;">
+                                <div class="grupo" style="flex: 1;">
+                                    <label>Tipo de Instructor</label>
+                                    <select id="ins_tipo">
+                                        <option value="Interno">Interno</option>
+                                        <option value="Externo">Externo</option>
+                                    </select>
+                                </div>
+                                <div class="grupo" style="flex: 1;">
+                                    <label>Estado</label>
+                                    <select id="ins_estado">
+                                        <option value="Activo">Activo</option>
+                                        <option value="Inactivo">Inactivo</option>
+                                        <option value="Baja">Baja</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
 
-        <!-- ACCIONES AL PIE DEL FORMULARIO -->
-        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
-            <button class="btn cancelar" onclick="ocultarFormulario()">Cancelar</button>
-            <button class="btn guardar" onclick="guardarRegistro()">Guardar Registro</button>
-        </div>
+                        <!-- ACCIONES AL PIE DEL FORMULARIO -->
+                        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                            <button class="btn cancelar" onclick="ocultarFormulario()">Cancelar</button>
+                            <button class="btn guardar" onclick="guardarRegistro()">Guardar Registro</button>
+                        </div>
 
-    </div>
-</div>
+                    </div>
+                </div>
 
                 <!-- PANEL DOTACIÓN -->
                 <div id="panelDotacion" style="display:none;">
@@ -262,66 +263,66 @@
                     </div>
                 </div>
 
-          <!-- PANEL BASES -->
-              <div id="panelBases" style="display:none;">
-                  
-                  <!-- Tarjeta 1: Importar -->
-                  <h3>Administrador de Bases de Datos</h3>
-                  <div class="grupo">
-                      <label>Base de datos</label>
-                      <select id="baseDatos">
-                          <option value="empleados">Empleados</option>
-                      </select>
-                  </div>
-                  <div class="grupo">
-                      <label>Archivo Excel</label>
-                      <input type="file" id="archivoBase" accept=".xlsx,.xls">
-                  </div>
-                  <div class="grupo">
-                      <label>Estado</label>
-                      <input type="text" id="estadoBase" value="Esperando archivo..." readonly>
-                  </div>
-                  <div class="acciones">
-                      <button class="btn guardar" id="btnGenerarBase">Generar Base</button>
-                  </div>
+                <!-- PANEL BASES -->
+                <div id="panelBases" style="display:none;">
+                    
+                    <!-- Tarjeta 1: Importar -->
+                    <h3>Administrador de Bases de Datos</h3>
+                    <div class="grupo">
+                        <label>Base de datos</label>
+                        <select id="baseDatos">
+                            <option value="empleados">Empleados</option>
+                        </select>
+                    </div>
+                    <div class="grupo">
+                        <label>Archivo Excel</label>
+                        <input type="file" id="archivoBase" accept=".xlsx,.xls">
+                    </div>
+                    <div class="grupo">
+                        <label>Estado</label>
+                        <input type="text" id="estadoBase" value="Esperando archivo..." readonly>
+                    </div>
+                    <div class="acciones">
+                        <button class="btn guardar" id="btnGenerarBase">Generar Base</button>
+                    </div>
 
-                  <!-- Tarjeta 2: Exportar (AHORA DENTRO DEL CONTENEDOR) -->
-                  <div style="margin-top: 35px; border-top: 2px solid #eee; padding-top: 25px;">
-                      <h3>Exportar Bases de Datos (Backup)</h3>
-                      <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">
-                          Descargá la información almacenada en Supabase a un archivo Excel (.xlsx) en tu computadora.
-                      </p>
+                    <!-- Tarjeta 2: Exportar -->
+                    <div style="margin-top: 35px; border-top: 2px solid #eee; padding-top: 25px;">
+                        <h3>Exportar Bases de Datos (Backup)</h3>
+                        <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">
+                            Descargá la información almacenada en Supabase a un archivo Excel (.xlsx) en tu computadora.
+                        </p>
 
-                      <div class="grupo">
-                          <label for="selectTablaExportar">Seleccionar Base a Exportar</label>
-                          <select id="selectTablaExportar">
-                              <option value="TODAS">📦 Backup Completo (Todas las tablas)</option>
-                              <option value="asistentes">👥 Dotación de Empleados / Asistentes</option>
-                              <option value="capacitaciones">📚 Capacitaciones</option>
-                              <option value="cursos">🎓 Cursos</option>
-                              <option value="instructores">👨‍🏫 Instructores</option>
-                              <option value="programas">📋 Programas</option>
-                          </select>
-                      </div>
+                        <div class="grupo">
+                            <label for="selectTablaExportar">Seleccionar Base a Exportar</label>
+                            <select id="selectTablaExportar">
+                                <option value="TODAS">📦 Backup Completo (Todas las tablas)</option>
+                                <option value="asistentes">👥 Dotación de Empleados / Asistentes</option>
+                                <option value="capacitaciones">📚 Capacitaciones</option>
+                                <option value="cursos">🎓 Cursos</option>
+                                <option value="instructores">👨‍🏫 Instructores</option>
+                                <option value="programas">📋 Programas</option>
+                            </select>
+                        </div>
 
-                      <div class="grupo">
-                          <label for="estadoExportacion">Estado de Exportación</label>
-                          <input type="text" id="estadoExportacion" value="Listo para exportar..." readonly>
-                      </div>
+                        <div class="grupo">
+                            <label for="estadoExportacion">Estado de Exportación</label>
+                            <input type="text" id="estadoExportacion" value="Listo para exportar..." readonly>
+                        </div>
 
-                      <div class="acciones">
-                          <button class="btn guardar" id="btnExportarBase" onclick="exportarBaseExcel()">
-                              Exportar a Excel (.xlsx)
-                          </button>
-                      </div>
-                  </div>
+                        <div class="acciones">
+                            <button class="btn guardar" id="btnExportarBase" onclick="exportarBaseExcel()">
+                                Exportar a Excel (.xlsx)
+                            </button>
+                        </div>
+                    </div>
 
-              </div> <!-- FIN DE PANEL BASES -->
+                </div> <!-- FIN DE PANEL BASES -->
 
-          </section>
-      </section>
+            </section>
+        </section>
 
-  </main>
+    </main>
 
 </div>
 
@@ -339,7 +340,7 @@
 <script src="jss/supaBaseClient.js"></script>
 
 <!-- LÓGICA DE ADMINISTRACIÓN Y PANELES -->
-<script src="jss/administracion.js?v=2"></script>
+<script src="jss/administracion.js?v=3"></script>
 <script src="jss/dotacion.js"></script>
 <script src="jss/bases.js"></script>
 

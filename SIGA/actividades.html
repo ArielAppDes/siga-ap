@@ -73,20 +73,24 @@
 <!-- Modal -->
 <div id="modalCapacitaciones" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
     <div style="background:#fff; width:90%; max-width:900px; padding:25px; border-radius:12px; max-height:85vh; overflow-y:auto; box-shadow:0 10px 25px rgba(0,0,0,0.3);">
+        
+        <!-- CABECERA: TÍTULO Y BOTÓN CERRAR -->
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #eee; padding-bottom:10px;">
             <h3 id="tituloModal" style="margin:0; color:#1a252f;">Capacitaciones</h3>
             <button id="btnCerrarModal" style="background:none; border:none; font-size:24px; cursor:pointer; color:#888;">&times;</button>
         </div>
         
-        <!-- BUSCADOR RÁPIDO EN MODAL -->
+        <!-- BARRA DE BÚSQUEDA (UBICACIÓN CORRECTA) -->
         <div style="margin-bottom:15px;">
             <input 
                 type="text" 
                 id="inputBuscarModal" 
+                oninput="filtrarModal()"
                 placeholder="🔍 Buscar por ID, Curso o Instructor..." 
                 style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.95rem; box-sizing:border-box; outline:none;">
         </div>
 
+        <!-- TABLA DE RESULTADOS -->
         <div id="tablaContenedor">
             <table style="width:100%; border-collapse:collapse; text-align:left;">
                 <thead>

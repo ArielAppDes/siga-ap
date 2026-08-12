@@ -6,262 +6,255 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lista de Asistentes - SIGA</title>
     <style>
-        :root {
-            --azul: #1F2A44;
-            --verde: #18C48F;
-            --gris-claro: #f8fafc;
-            --borde-color: #cbd5e1;
-            --texto-oscuro: #0f172a;
-        }
+    :root {
+        --azul: #1F2A44;
+        --verde: #18C48F;
+        --gris-claro: #f8fafc;
+        --borde-color: #cbd5e1;
+        --texto-oscuro: #0f172a;
+    }
 
-        * {
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
+    * {
+        box-sizing: border-box;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
 
+    body {
+        background-color: #e2e8f0;
+        padding: 10px;
+        color: var(--texto-oscuro);
+    }
+
+    .no-print {
+        max-width: 800px;
+        margin: 0 auto 10px auto;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .btn-imprimir {
+        background-color: var(--verde);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    /* Hoja A4 con dimensiones de impresión exactas */
+    .hoja-a4 {
+        background: white;
+        width: 800px;
+        margin: 0 auto 15px auto;
+        padding: 25px 35px; /* Reducido para ganar altura */
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        page-break-after: always;
+        page-break-inside: avoid;
+    }
+
+    .hoja-a4:last-child {
+        page-break-after: auto;
+    }
+
+    /* ENCABEZADO */
+    .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+
+    .titulo-seccion h1 {
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--azul);
+        display: inline-block;
+    }
+
+    .titulo-seccion .subtitulo {
+        font-size: 10px;
+        font-weight: 700;
+        color: #64748b;
+        margin-left: 6px;
+    }
+
+    .logo-box {
+        background-color: var(--azul);
+        padding: 6px 16px;
+        border-radius: 8px;
+        text-align: center;
+        border-bottom: 3px solid var(--verde);
+    }
+
+    .logo-box h2 {
+        font-size: 22px;
+        font-weight: 900;
+        color: var(--verde);
+        line-height: 1;
+    }
+
+    .logo-box p {
+        font-size: 9px;
+        color: white;
+        margin-top: 2px;
+    }
+
+    /* METADATOS */
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 4px 20px;
+        margin-bottom: 10px;
+        font-size: 11px;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: baseline;
+    }
+
+    .info-item label {
+        font-weight: 700;
+        color: var(--azul);
+        width: 90px;
+        flex-shrink: 0;
+    }
+
+    .info-item .valor {
+        border-bottom: 1px dotted #94a3b8;
+        flex: 1;
+        min-height: 14px;
+    }
+
+    .hoja-num {
+        text-align: right;
+        font-size: 10px;
+        font-weight: 700;
+        color: #64748b;
+        margin-bottom: 4px;
+    }
+
+    .seccion-titulo-tabla {
+        font-size: 11px;
+        font-weight: 800;
+        color: var(--azul);
+        margin-bottom: 4px;
+    }
+
+    /* TABLA COMPACTA */
+    .tabla-contenedor {
+        border: 1px solid var(--borde-color);
+        border-top: 3px solid var(--verde);
+        border-radius: 6px;
+        overflow: hidden;
+        margin-bottom: 12px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 10.5px;
+    }
+
+    thead {
+        background-color: var(--azul);
+        color: white;
+    }
+
+    th {
+        padding: 5px 4px;
+        font-weight: 700;
+        text-align: center;
+        border-right: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    th:last-child {
+        border-right: none;
+    }
+
+    td {
+        padding: 3px 6px; /* Altura de celda reducida */
+        border-bottom: 1px solid var(--borde-color);
+        border-right: 1px solid var(--borde-color);
+        height: 22px; /* Forzar celdas más delgadas */
+    }
+
+    td:last-child {
+        border-right: none;
+    }
+
+    tbody tr:nth-child(even) {
+        background-color: var(--gris-claro);
+    }
+
+    .col-n { width: 28px; text-align: center; font-weight: bold; color: #64748b; }
+    .col-leg { width: 55px; text-align: center; }
+    .col-nombre { width: 270px; }
+    .col-sector { width: 110px; }
+    .col-linea { width: 85px; }
+    .col-firma { width: 110px; }
+
+    /* FIRMAS */
+    .footer-seccion {
+        margin-top: 10px;
+        font-size: 11px;
+    }
+
+    .linea-firma {
+        display: flex;
+        align-items: baseline;
+        margin-bottom: 10px;
+    }
+
+    .linea-firma label {
+        font-weight: 700;
+        color: var(--azul);
+        width: 140px;
+    }
+
+    .linea-firma .puntos {
+        border-bottom: 1px dotted #64748b;
+        flex: 1;
+    }
+
+    /* REGLAS STRICTAS DE IMPRESIÓN A4 */
+    @page {
+        size: A4 portrait;
+        margin: 10mm; /* Márgenes del papel controlados por CSS */
+    }
+
+    @media print {
         body {
-            background-color: #e2e8f0;
-            padding: 20px;
-            color: var(--texto-oscuro);
+            background: none;
+            padding: 0;
+            margin: 0;
         }
 
-        /* Botón de Impresión / Guardar PDF */
         .no-print {
-            max-width: 800px;
-            margin: 0 auto 15px auto;
-            display: flex;
-            justify-content: flex-end;
+            display: none !important;
         }
 
-        .btn-imprimir {
-            background-color: var(--verde);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: background 0.2s;
-        }
-
-        .btn-imprimir:hover {
-            background-color: #14a376;
-        }
-
-        /* Hoja Din A4 en Pantalla */
         .hoja-a4 {
-            background: white;
-            width: 800px;
-            margin: 0 auto;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-
-        /* ENCABEZADO Y LOGO */
-        .header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 25px;
-        }
-
-        .titulo-seccion h1 {
-            font-size: 24px;
-            font-weight: 800;
-            color: var(--azul);
-            display: inline-block;
-        }
-
-        .titulo-seccion .subtitulo {
-            font-size: 11px;
-            font-weight: 700;
-            color: #64748b;
-            margin-left: 8px;
-            letter-spacing: 0.5px;
-        }
-
-        /* Bloque del Logo SIGA */
-        .logo-box {
-            background-color: var(--azul);
-            padding: 12px 24px;
-            border-radius: 10px;
-            text-align: center;
-            border-bottom: 4px solid var(--verde);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.12);
-        }
-
-        .logo-box h2 {
-            font-size: 32px;
-            font-weight: 900;
-            color: var(--verde);
-            line-height: 1;
-            letter-spacing: 1px;
-        }
-
-        .logo-box p {
-            font-size: 10px;
-            color: white;
-            margin-top: 4px;
-            letter-spacing: 0.5px;
-        }
-
-        /* GRILLA DE METADATOS DE LA CAPACITACIÓN */
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1.2fr 1fr;
-            gap: 8px 30px;
-            margin-bottom: 20px;
-            font-size: 13px;
-        }
-
-        .info-item {
-            display: flex;
-            align-items: baseline;
-        }
-
-        .info-item label {
-            font-weight: 700;
-            color: var(--azul);
-            width: 110px;
-            flex-shrink: 0;
-        }
-
-        .info-item .valor {
-            border-bottom: 1px dotted #94a3b8;
-            flex: 1;
-            min-height: 18px;
-        }
-
-        .hoja-num {
-            text-align: right;
-            font-size: 11px;
-            font-weight: 700;
-            color: #64748b;
-            margin-bottom: 8px;
-        }
-
-        .seccion-titulo-tabla {
-            font-size: 12px;
-            font-weight: 800;
-            color: var(--azul);
-            margin-bottom: 8px;
-            letter-spacing: 0.5px;
-        }
-
-        /* TABLA MODERNA CON BORDES REDONDEADOS */
-        .tabla-contenedor {
-            border: 1px solid var(--borde-color);
-            border-top: 5px solid var(--verde); /* Vivo de color superior */
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 30px;
-        }
-
-        table {
             width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
+            box-shadow: none;
+            padding: 0;
+            margin: 0;
+            border-radius: 0;
+            page-break-inside: avoid;
         }
 
-        thead {
-            background-color: var(--azul);
-            color: white;
+        .tabla-contenedor, .logo-box, thead {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
-
-        th {
-            padding: 10px 8px;
-            font-weight: 700;
-            text-align: center;
-            border-right: 1px solid rgba(255, 255, 255, 0.15);
-        }
-
-        th:last-child {
-            border-right: none;
-        }
-
-        td {
-            padding: 9px 8px;
-            border-bottom: 1px solid var(--borde-color);
-            border-right: 1px solid var(--borde-color);
-            height: 32px;
-        }
-
-        td:last-child {
-            border-right: none;
-        }
-
-        tbody tr:nth-child(even) {
-            background-color: var(--gris-claro);
-        }
-
-        tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        .col-n { width: 35px; text-align: center; font-weight: bold; color: #64748b; }
-        .col-leg { width: 60px; text-align: center; }
-        .col-nombre { width: 300px; }
-        .col-sector { width: 120px; }
-        .col-linea { width: 100px; }
-        .col-firma { width: 125px; }
-
-        /* PIE DE PÁGINA Y FIRMAS */
-        .footer-seccion {
-            margin-top: 25px;
-            font-size: 13px;
-        }
-
-        .linea-firma {
-            display: flex;
-            align-items: baseline;
-            margin-bottom: 20px;
-        }
-
-        .linea-firma label {
-            font-weight: 700;
-            color: var(--azul);
-            width: 150px;
-        }
-
-        .linea-firma .puntos {
-            border-bottom: 1px dotted #64748b;
-            flex: 1;
-        }
-
-        /* REGLAS EXCLUSIVAS PARA IMPRESIÓN / PDF */
-        @media print {
-            body {
-                background: none;
-                padding: 0;
-            }
-
-            .no-print {
-                display: none;
-            }
-
-            .hoja-a4 {
-                width: 100%;
-                box-shadow: none;
-                padding: 0;
-                border-radius: 0;
-            }
-
-            .tabla-contenedor {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-
-            .logo-box, thead {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-        }
-    </style>
+    }
+</style>
 </head>
 
 <body>

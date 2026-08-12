@@ -340,67 +340,44 @@ grid-column:span 1;
 }
 
 /*-----------------------------
-MODAL CONFIRMACIÓN
+MODAL CONFIRMACIÓN Y OPCIÓN PDF
 ------------------------------*/
 
-.modal{
-
-    display:none;
-
-    position:fixed;
-
-    top:0;
-
-    left:0;
-
-    width:100%;
-
-    height:100%;
-
-    background:rgba(0,0,0,.4);
-
-    justify-content:center;
-
-    align-items:center;
-
-    z-index:999;
-
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.6); /* Fondo semi-oscuro */
+    justify-content: center;
+    align-items: center;
+    z-index: 99999; /* Por encima de todo */
 }
 
-
-.modal-contenido{
-
-    background:white;
-
-    padding:35px;
-
-    border-radius:18px;
-
-    width:350px;
-
-    text-align:center;
-
-    box-shadow:0 8px 18px rgba(0,0,0,.2);
-
+.modal-contenido {
+    background: white;
+    padding: 30px;
+    border-radius: 18px;
+    width: 480px; /* Ampliado para acomodar los 2 botones de acción */
+    max-width: 90%;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.25);
 }
 
+.modal-acciones {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 20px;
+}
 
-.modal-contenido button{
-
-    margin-top:20px;
-
-    width:140px;
-
-    height:45px;
-
-    border:none;
-
-    border-radius:10px;
-
-    background:#18C48F;
-
-    color:white;
-
-    font-weight:bold;
-
+.modal-acciones button {
+    height: 45px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
 }

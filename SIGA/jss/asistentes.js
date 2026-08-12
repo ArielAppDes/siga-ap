@@ -290,6 +290,4 @@ function configurarEventos() {
         window.location.href = "actividades.html";
     };
 
-    const btnImprimir = document.getElementById('btnImprimir') || Array.from(botones).find(b => b.textContent.includes('Imprimir'));
-    if (btnImprimir) btnImprimir.onclick = (e) => { e.preventDefault(); window.print(); };
-}
+  }

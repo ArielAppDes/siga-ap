@@ -1,5 +1,5 @@
 /* ===================================================
-   SIGA_APP - REPORTES CSS (TARJETAS INDIVIDUALES CLEAN)
+   SIGA_APP - REPORTES CSS (ALINEACIÓN EXACTA ALTO/ANCHO)
    =================================================== */
 
 /* CONTENEDOR SUPERIOR KPIS (70% / 30%) */
@@ -7,7 +7,7 @@
     display: flex;
     gap: 20px;
     margin-bottom: 25px;
-    align-items: flex-start;
+    align-items: stretch; /* Obliga a ambas columnas a tener la misma altura total */
 }
 
 .kpi-col-left {
@@ -24,12 +24,15 @@
     gap: 20px;
 }
 
-/* GRUPOS TRANSPARENTES (SIN BORDER NI PADDING CONTENEDOR) */
+/* GRUPOS TRANSPARENTES */
 .kpi-block {
     background: transparent;
     border: none;
     padding: 0;
     box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* Hace que cada bloque ocupe el mismo alto vertical */
 }
 
 .kpi-block-title {
@@ -40,11 +43,12 @@
     display: block;
 }
 
-/* GRILLAS Y TARJETAS INDIVIDUALES */
+/* GRILLAS Y TARJETAS IZQUIERDAS (70%) */
 .kpi-grid-2x2 {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
+    flex: 1;
 }
 
 .kpi-card-item {
@@ -54,9 +58,11 @@
     padding: 14px 16px;
     display: flex;
     flex-direction: column;
+    justify-content: center;
     box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
+/* TARJETAS HORIZONTALES DERECHAS (30%) - ALTURA DINÁMICA */
 .kpi-card-horizontal {
     background: #ffffff;
     border: 1px solid #e2e8f0;
@@ -67,12 +73,14 @@
     align-items: center;
     margin-bottom: 12px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    flex: 1; /* Estira la tarjeta para rellenar exactamente el alto de la izquierda */
 }
 
 .kpi-card-horizontal:last-child {
     margin-bottom: 0;
 }
 
+/* TEXTOS Y LABELS */
 .kpi-lbl-title {
     font-size: 0.72rem;
     font-weight: 700;

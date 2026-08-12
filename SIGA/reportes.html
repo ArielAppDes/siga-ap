@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIGA - Reportes</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
     <style>
         * {
             box-sizing: border-box;
@@ -20,7 +21,7 @@
             min-height: 100vh;
         }
 
-        /* --- BARRA LATERAL (SIDEBAR) --- */
+        /* BARRA LATERAL (SIDEBAR) */
         .sidebar {
             width: 240px;
             background-color: #1b2a47;
@@ -72,7 +73,7 @@
             border-left: 4px solid #10b981;
         }
 
-        /* --- CONTENIDO PRINCIPAL --- */
+        /* CONTENIDO PRINCIPAL */
         .main-wrapper {
             flex: 1;
             display: flex;
@@ -102,7 +103,7 @@
             padding: 0 30px 30px 30px;
         }
 
-        /* BANNER PROXIMAMENTE */
+        /* BANNER */
         .banner-proximamente {
             background: linear-gradient(135deg, #0ea5e9, #10b981);
             color: white;
@@ -133,7 +134,6 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 20px;
-            opacity: 0.9;
         }
 
         .card-grafico {
@@ -163,12 +163,13 @@
             <p>Empresa S.A</p>
         </div>
         <ul class="sidebar-menu">
-            <li><a href="inicio.html"><span>🏠</span> Inicio</a></li>
+            <li><a href="dashboard.html"><span>🏠</span> Inicio</a></li>
             <li><a href="actividades.html"><span>🎓</span> Actividades</a></li>
-            <li><a href="#"><span>📅</span> Agenda</a></li>
+            <li><a href="agenda.html"><span>📅</span> Agenda</a></li>
             <li><a href="#"><span>🏆</span> Certificaciones</a></li>
             <li><a href="reportes.html" class="active"><span>📊</span> Reportes</a></li>
-            <li><a href="#"><span>⚙️</span> Administración</a></li>
+            <li><a href="administracion.html"><span>⚙️</span> Administración</a></li>
+            <li><a href="index.html"><span>🚪</span> Salir</a></li>
         </ul>
     </aside>
 
@@ -179,7 +180,7 @@
         <header class="top-header">
             <div class="user-badge">
                 <span>👤</span>
-                <span>Ariel Pizzutto</span>
+                <span id="lblUsuario">Ariel Pizzutto</span>
             </div>
         </header>
 
@@ -190,62 +191,53 @@
             <div class="banner-proximamente">
                 <div>
                     <h2>📊 Módulo de Reportes & Analíticas</h2>
-                    <p>¡Próximamente...!!! Estamos trabajando en indicadores en tiempo real.</p>
+                    <p>Indicadores en tiempo real desde Supabase.</p>
                 </div>
-                <span class="banner-badge">v2.0 Preview</span>
+                <span class="banner-badge">v1.1 Live</span>
             </div>
 
-            <!-- MOCKUPS DE GRÁFICOS -->
+            <!-- GRILLA DE REPORTES -->
             <div class="grid-reportes">
                 
-                <!-- 1. TORTA (%) -->
+                <!-- 1. TORTA (%) CUMPLIMIENTO -->
                 <div class="card-grafico">
-                    <h3>Cumplimiento por Programa (%)</h3>
+                    <h3>Cumplimiento General (%)</h3>
                     <svg viewBox="0 0 36 36" style="width: 170px; height: 170px; margin: 10px 0;">
                         <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3.8"/>
-                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#10b981" stroke-width="3.8" stroke-dasharray="65, 100"/>
-                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" stroke-width="3.8" stroke-dasharray="20, 100" stroke-dashoffset="-65"/>
-                        <text x="18" y="20.35" font-size="7" text-anchor="middle" fill="#1e293b" font-weight="bold">85%</text>
+                        <path id="svgCircleCumplimiento" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#10b981" stroke-width="3.8" stroke-dasharray="0, 100"/>
+                        <text id="lblPorcentajeCumplimiento" x="18" y="20.35" font-size="7" text-anchor="middle" fill="#1e293b" font-weight="bold">0%</text>
                     </svg>
                     <div style="display: flex; gap: 15px; font-size: 0.85rem; color: #64748b; margin-top: 10px;">
-                        <span><strong style="color: #10b981;">●</strong> Completado (65%)</span>
-                        <span><strong style="color: #f59e0b;">●</strong> En curso (20%)</span>
+                        <span><strong style="color: #10b981;">●</strong> Finalizadas</span>
+                        <span><strong style="color: #f59e0b;">●</strong> Pendientes</span>
                     </div>
                 </div>
 
-                <!-- 2. BARRAS -->
+                <!-- 2. BARRAS DE ASISTENCIA -->
                 <div class="card-grafico">
-                    <h3>Asistencias por Mes</h3>
-                    <svg viewBox="0 0 200 120" style="width: 100%; height: 180px;">
-                        <line x1="20" y1="100" x2="190" y2="100" stroke="#cbd5e1" stroke-width="2"/>
-                        <rect x="35" y="40" width="20" height="60" rx="4" fill="#0ea5e9"/>
-                        <rect x="75" y="25" width="20" height="75" rx="4" fill="#10b981"/>
-                        <rect x="115" y="55" width="20" height="45" rx="4" fill="#0ea5e9"/>
-                        <rect x="155" y="15" width="20" height="85" rx="4" fill="#10b981"/>
-                        <text x="45" y="112" font-size="10" text-anchor="middle" fill="#64748b">Mayo</text>
-                        <text x="85" y="112" font-size="10" text-anchor="middle" fill="#64748b">Junio</text>
-                        <text x="125" y="112" font-size="10" text-anchor="middle" fill="#64748b">Julio</text>
-                        <text x="165" y="112" font-size="10" text-anchor="middle" fill="#64748b">Ago</text>
-                    </svg>
+                    <h3>Total de Asistentes Registrados</h3>
+                    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 180px; width: 100%;">
+                        <span id="lblTotalAsistentes" style="font-size: 3.5rem; font-weight: 800; color: #0ea5e9;">0</span>
+                        <p style="color: #64748b; font-weight: 600;">Participantes totales</p>
+                    </div>
                 </div>
 
-                <!-- 3. TENDENCIA LÍNEAS -->
+                <!-- 3. CAPACITACIONES TOTALES -->
                 <div class="card-grafico">
-                    <h3>Horas Capacitadas Acumuladas</h3>
-                    <svg viewBox="0 0 200 120" style="width: 100%; height: 180px;">
-                        <polygon points="20,90 60,65 100,75 140,35 180,20 180,100 20,100" fill="rgba(14, 165, 233, 0.15)"/>
-                        <polyline points="20,90 60,65 100,75 140,35 180,20" fill="none" stroke="#0ea5e9" stroke-width="3" stroke-linecap="round"/>
-                        <circle cx="20" cy="90" r="4" fill="#0ea5e9"/>
-                        <circle cx="60" cy="65" r="4" fill="#0ea5e9"/>
-                        <circle cx="100" cy="75" r="4" fill="#0ea5e9"/>
-                        <circle cx="140" cy="35" r="4" fill="#0ea5e9"/>
-                        <circle cx="180" cy="20" r="4" fill="#10b981"/>
-                    </svg>
+                    <h3>Capacitaciones Dictadas</h3>
+                    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 180px; width: 100%;">
+                        <span id="lblTotalCapacitaciones" style="font-size: 3.5rem; font-weight: 800; color: #10b981;">0</span>
+                        <p style="color: #64748b; font-weight: 600;">Cursos completados</p>
+                    </div>
                 </div>
 
             </div>
         </main>
     </div>
 
+    <!-- CONEXIÓN Y LÓGICA DE REPORTES -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="jss/supaBaseClient.js"></script>
+    <script src="jss/reportes.js"></script>
 </body>
 </html>

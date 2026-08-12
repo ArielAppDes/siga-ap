@@ -3,156 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIGA - Reportes</title>
+    <title>SIGA - Reportes e Indicadores</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: #f1f5f9;
-            color: #1e293b;
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* BARRA LATERAL (SIDEBAR) */
-        .sidebar {
-            width: 240px;
-            background-color: #1b2a47;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            padding: 20px 0;
-            flex-shrink: 0;
-        }
-
-        .sidebar-brand {
-            padding: 0 20px 20px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar-brand h1 {
-            color: #10b981;
-            font-size: 2rem;
-            font-weight: 800;
-            letter-spacing: 1px;
-        }
-
-        .sidebar-brand p {
-            color: #94a3b8;
-            font-size: 0.9rem;
-            margin-top: 4px;
-        }
-
-        .sidebar-menu {
-            list-style: none;
-            margin-top: 20px;
-        }
-
-        .sidebar-menu li a {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 20px;
-            color: #cbd5e1;
-            text-decoration: none;
-            font-size: 0.95rem;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .sidebar-menu li a:hover, .sidebar-menu li a.active {
-            background-color: #103c54;
-            color: white;
-            border-left: 4px solid #10b981;
-        }
-
-        /* CONTENIDO PRINCIPAL */
-        .main-wrapper {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .top-header {
-            display: flex;
-            justify-content: flex-end;
-            padding: 15px 30px;
-            background-color: transparent;
-        }
-
-        .user-badge {
-            background: white;
-            padding: 8px 16px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        .content {
-            padding: 0 30px 30px 30px;
-        }
-
-        /* BANNER */
-        .banner-proximamente {
-            background: linear-gradient(135deg, #0ea5e9, #10b981);
-            color: white;
-            padding: 20px 25px;
-            border-radius: 12px;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-        }
-
-        .banner-proximamente h2 {
-            font-size: 1.4rem;
-            margin-bottom: 4px;
-        }
-
-        .banner-badge {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 0.85rem;
-        }
-
-        /* GRILLA DE REPORTES */
-        .grid-reportes {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .card-grafico {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .card-grafico h3 {
-            align-self: flex-start;
-            font-size: 1rem;
-            color: #334155;
-            margin-bottom: 15px;
-        }
-    </style>
+    <link rel="stylesheet" href="css/reportes.css">
 </head>
 <body>
 
@@ -190,52 +44,104 @@
             <!-- BANNER SUPERIOR -->
             <div class="banner-proximamente">
                 <div>
-                    <h2>📊 Módulo de Reportes & Analíticas</h2>
-                    <p>Indicadores en tiempo real desde Supabase.</p>
+                    <h2>📊 Tablero de Control de Capacitación</h2>
+                    <p>Métricas consolidadas y analíticas en tiempo real.</p>
                 </div>
                 <span class="banner-badge">v1.1 Live</span>
             </div>
 
-            <!-- GRILLA DE REPORTES -->
-            <div class="grid-reportes">
-                
-                <!-- 1. TORTA (%) CUMPLIMIENTO -->
-                <div class="card-grafico">
-                    <h3>Cumplimiento General (%)</h3>
-                    <svg viewBox="0 0 36 36" style="width: 170px; height: 170px; margin: 10px 0;">
-                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3.8"/>
-                        <path id="svgCircleCumplimiento" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#10b981" stroke-width="3.8" stroke-dasharray="0, 100"/>
-                        <text id="lblPorcentajeCumplimiento" x="18" y="20.35" font-size="7" text-anchor="middle" fill="#1e293b" font-weight="bold">0%</text>
-                    </svg>
-                    <div style="display: flex; gap: 15px; font-size: 0.85rem; color: #64748b; margin-top: 10px;">
-                        <span><strong style="color: #10b981;">●</strong> Finalizadas</span>
-                        <span><strong style="color: #f59e0b;">●</strong> Pendientes</span>
-                    </div>
+            <!-- BLOQUE 1: INDICADORES PRINCIPALES (KPIs) -->
+            <h3 class="section-title">Métricas Generales del Mes</h3>
+            <div class="grid-kpi">
+                <div class="card-kpi">
+                    <span class="kpi-title">Actividades de Capacitación</span>
+                    <span id="lblTotalActividades" class="kpi-value blue">0</span>
+                    <span class="kpi-subtitle">Cursos / Talleres Totales</span>
                 </div>
-
-                <!-- 2. BARRAS DE ASISTENCIA -->
-                <div class="card-grafico">
-                    <h3>Total de Asistentes Registrados</h3>
-                    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 180px; width: 100%;">
-                        <span id="lblTotalAsistentes" style="font-size: 3.5rem; font-weight: 800; color: #0ea5e9;">0</span>
-                        <p style="color: #64748b; font-weight: 600;">Participantes totales</p>
-                    </div>
+                <div class="card-kpi">
+                    <span class="kpi-title">Personas Capacitadas</span>
+                    <span id="lblPersonasCapacitadas" class="kpi-value green">0</span>
+                    <span class="kpi-subtitle">Participantes Únicos</span>
                 </div>
-
-                <!-- 3. CAPACITACIONES TOTALES -->
-                <div class="card-grafico">
-                    <h3>Capacitaciones Dictadas</h3>
-                    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 180px; width: 100%;">
-                        <span id="lblTotalCapacitaciones" style="font-size: 3.5rem; font-weight: 800; color: #10b981;">0</span>
-                        <p style="color: #64748b; font-weight: 600;">Cursos completados</p>
-                    </div>
+                <div class="card-kpi">
+                    <span class="kpi-title">Asistencias del Mes</span>
+                    <span id="lblAsistenciasMes" class="kpi-value cyan">0</span>
+                    <span class="kpi-subtitle">Registros totales en el periodo</span>
                 </div>
-
+                <div class="card-kpi">
+                    <span class="kpi-title">Hs Capacitación Per Cápita</span>
+                    <span id="lblHsPerCapita" class="kpi-value orange">0 hs</span>
+                    <span class="kpi-subtitle">Promedio por empleado</span>
+                </div>
             </div>
+
+            <!-- BLOQUE 2: CARGA HORARIA -->
+            <h3 class="section-title">Carga Horaria e Intensidad</h3>
+            <div class="grid-kpi dos-columnas">
+                <div class="card-kpi horizontal">
+                    <div>
+                        <span class="kpi-title">Hs / Curso en el Mes</span>
+                        <span class="kpi-subtitle">Promedio de duración por actividad</span>
+                    </div>
+                    <span id="lblHsPromedioCurso" class="kpi-value">0 hs</span>
+                </div>
+                <div class="card-kpi horizontal">
+                    <div>
+                        <span class="kpi-title">Hs Capacitación Autogestionadas</span>
+                        <span class="kpi-subtitle">Total acumulado en e-Learning</span>
+                    </div>
+                    <span id="lblHsAutogestionadas" class="kpi-value purple">0 hs</span>
+                </div>
+            </div>
+
+            <!-- BLOQUE 3: ORIGEN DE ACTIVIDADES (INTERNAS VS EXTERNAS) -->
+            <h3 class="section-title">Origen de las Capacitaciones</h3>
+            <div class="grid-kpi">
+                <div class="card-kpi border-left-blue">
+                    <span class="kpi-title">Actividades Internas</span>
+                    <span id="lblActividadesInternas" class="kpi-value">0</span>
+                    <span class="kpi-subtitle">Cursos del equipo propio</span>
+                </div>
+                <div class="card-kpi border-left-blue">
+                    <span class="kpi-title">Asistencias a Act. Internas</span>
+                    <span id="lblAsistenciasInternas" class="kpi-value">0</span>
+                    <span class="kpi-subtitle">Participantes en cursos internos</span>
+                </div>
+                <div class="card-kpi border-left-green">
+                    <span class="kpi-title">Actividades Externas</span>
+                    <span id="lblActividadesExternas" class="kpi-value">0</span>
+                    <span class="kpi-subtitle">Cursos con proveedores</span>
+                </div>
+                <div class="card-kpi border-left-green">
+                    <span class="kpi-title">Asistencias a Act. Externas</span>
+                    <span id="lblAsistenciasExternas" class="kpi-value">0</span>
+                    <span class="kpi-subtitle">Participantes en cursos externos</span>
+                </div>
+            </div>
+
+            <!-- BLOQUE 4: MODALIDAD E-LEARNING -->
+            <h3 class="section-title">E-Learning & Virtualidad</h3>
+            <div class="grid-kpi dos-columnas">
+                <div class="card-kpi horizontal">
+                    <div>
+                        <span class="kpi-title">Asistencias Modalidad E-Learning</span>
+                        <span class="kpi-subtitle">Participaciones en plataforma virtual</span>
+                    </div>
+                    <span id="lblAsistenciasElearning" class="kpi-value dark-blue">0</span>
+                </div>
+                <div class="card-kpi horizontal">
+                    <div>
+                        <span class="kpi-title">Cumplimiento E-Learning</span>
+                        <span class="kpi-subtitle">% Cursos e-Learning completados</span>
+                    </div>
+                    <span id="lblPorcentajeElearning" class="kpi-value green">0%</span>
+                </div>
+            </div>
+
         </main>
     </div>
 
-    <!-- CONEXIÓN Y LÓGICA DE REPORTES -->
+    <!-- SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="jss/supaBaseClient.js"></script>
     <script src="jss/reportes.js"></script>

@@ -35,16 +35,17 @@ async function cargarMetricasSIGA() {
         const listaCap = capacitaciones || [];
         const totalActividades = listaCap.length;
 
-        // --- CÁLCULO DE HORAS, INTERNAS Y EXTERNAS ---
+        // ESTRUCTURAS PARA GRÁFICOS
+        const programadasPorMes = Array(12).fill(0);
+        const enCursoPorMes = Array(12).fill(0);
+        const finalizadasPorMes = Array(12).fill(0);
+        const asistenciasPorMes = Array(12).fill(0);
+
         let sumaHoras = 0;
         let actInternas = 0;
         let actExternas = 0;
         let actPresenciales = 0;
         let actVirtuales = 0;
-
-        // Estructuras para gráficos
-        const conteoMeses = Array(12).fill(0); // Ene-Dic
-        const conteoCursosMap = {};
 
         listaCap.forEach(c => {
             // Horas
@@ -73,25 +74,34 @@ async function cargarMetricasSIGA() {
                 actPresenciales++;
             }
 
-            // Agrupar por Mes
+            // Mapeo por Mes y Estado
             const fechaStr = c.fecha || c.created_at;
+            let numMes = -1;
             if (fechaStr) {
                 const f = new Date(fechaStr);
-                if (!isNaN(f.getMonth())) {
-                    conteoMeses[f.getMonth()]++;
-                }
+                if (!isNaN(f.getMonth())) numMes = f.getMonth();
             }
 
-            // Agrupar por Nombre de Curso
-            const nombreCurso = c.curso || c.nombre || c.titulo || `Capacitación #${c.id}`;
-            conteoCursosMap[nombreCurso] = (conteoCursosMap[nombreCurso] || 0) + 1;
+            if (numMes >= 0 && numMes < 12) {
+                const estadoStr = String(c.estado || c.status || '').toLowerCase();
+
+                if (estadoStr.includes('program')) {
+                    programadasPorMes[numMes]++;
+                } else if (estadoStr.includes('curso')) {
+                    enCursoPorMes[numMes]++;
+                } else {
+                    finalizadasPorMes[numMes]++;
+                }
+
+                asistenciasPorMes[numMes] += 1;
+            }
         });
 
         // Promedios
         const hsPromedio = totalActividades > 0 ? (sumaHoras / totalActividades).toFixed(1) : 0;
         const hsPerCapita = totalAsistentes > 0 ? (sumaHoras / totalAsistentes).toFixed(1) : 0;
 
-        // --- VOLCADO A LAS TARJETAS (DOM) ---
+        // --- VOLCADO A TARJETAS (DOM) ---
         setVal('lblTotalActividades', totalActividades);
         setVal('lblPersonasCapacitadas', totalAsistentes);
         setVal('lblAsistenciasMes', totalAsistentes);
@@ -105,8 +115,8 @@ async function cargarMetricasSIGA() {
         setVal('lblPorcentajeElearning', totalActividades > 0 ? `${Math.round((actVirtuales/totalActividades)*100)}%` : '0%');
 
         // --- RENDERIZAR GRÁFICOS ---
-        renderizarGraficoMeses(conteoMeses);
-        renderizarGraficoCursos(conteoCursosMap);
+        renderizarGraficoEstadosMes(programadasPorMes, enCursoPorMes, finalizadasPorMes);
+        renderizarGraficoAsistenciasMes(asistenciasPorMes);
         renderizarGraficoModalidad(actPresenciales, actVirtuales);
 
     } catch (error) {
@@ -114,70 +124,76 @@ async function cargarMetricasSIGA() {
     }
 }
 
-// 1. Gráfico de Barras: Capacitaciones por Mes
-function renderizarGraficoMeses(datosMeses) {
+// 1. Gráfico: Capacitaciones por Mes agrupado por Estado (Naranja, Azul, Verde)
+function renderizarGraficoEstadosMes(prog, curso, fin) {
     const ctx = document.getElementById('chartMeses')?.getContext('2d');
     if (!ctx) return;
 
     if (instanceChartMeses) instanceChartMeses.destroy();
 
+    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
     instanceChartMeses = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
-            datasets: [{
-                label: 'Capacitaciones',
-                data: datosMeses,
-                backgroundColor: '#0284c7',
-                borderRadius: 6
-            }]
+            labels: meses,
+            datasets: [
+                {
+                    label: 'Programadas',
+                    data: prog,
+                    backgroundColor: '#f97316', // Naranja
+                    borderRadius: 4
+                },
+                {
+                    label: 'En curso',
+                    data: curso,
+                    backgroundColor: '#0284c7', // Azul
+                    borderRadius: 4
+                },
+                {
+                    label: 'Finalizadas',
+                    data: fin,
+                    backgroundColor: '#10b981', // Verde
+                    borderRadius: 4
+                }
+            ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
             scales: {
-                y: { beginAtZero: true, ticks: { precision: 0 } },
-                x: { grid: { display: false } }
+                x: { stacked: true, grid: { display: false } },
+                y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: { boxWidth: 12, font: { size: 11 } }
+                }
             }
         }
     });
 }
 
-// 2. Gráfico de Barras con Degradado Violeta: Asistencias/Cursos
-function renderizarGraficoCursos(mapCursos) {
+// 2. Gráfico: Asistencias por Mes (Corrige el #undefined mostrando Ene..Dic)
+function renderizarGraficoAsistenciasMes(datosAsistencias) {
     const ctx = document.getElementById('chartCursos')?.getContext('2d');
     if (!ctx) return;
 
     if (instanceChartCursos) instanceChartCursos.destroy();
 
-    let labels = Object.keys(mapCursos);
-    let values = Object.values(mapCursos);
-
-    // Si no hay datos suficientes, generamos vista previa vistosa
-    if (labels.length === 0) {
-        labels = ['Seguridad', 'Excel Av.', 'Liderazgo', 'ISO 9001', 'SBT'];
-        values = [12, 19, 8, 15, 22];
-    }
-
-    // Calcular degradado según valor
-    const maxVal = Math.max(...values, 1);
-    const bgColors = values.map(val => {
-        const ratio = 0.35 + (val / maxVal) * 0.65; // Transparencia entre 0.35 y 1.0
-        return `rgba(139, 92, 246, ${ratio.toFixed(2)})`; // Violeta (#8b5cf6)
-    });
+    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
     instanceChartCursos = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: labels.slice(0, 7), // Mostrar max 7 cursos
+            labels: meses,
             datasets: [{
-                label: 'Personas',
-                data: values.slice(0, 7),
-                backgroundColor: bgColors,
-                borderColor: '#7c3aed',
-                borderWidth: 1,
-                borderRadius: 6
+                label: 'Capacitaciones acumuladas',
+                data: datosAsistencias,
+                backgroundColor: '#8b5cf6', // Violeta
+                borderRadius: 4
             }]
         },
         options: {
@@ -192,14 +208,13 @@ function renderizarGraficoCursos(mapCursos) {
     });
 }
 
-// 3. Gráfico de Torta / Dona: Modalidad Presencial vs Virtual
+// 3. Gráfico: Modalidad (Presencial vs Virtual)
 function renderizarGraficoModalidad(presenciales, virtuales) {
     const ctx = document.getElementById('chartModalidad')?.getContext('2d');
     if (!ctx) return;
 
     if (instanceChartModalidad) instanceChartModalidad.destroy();
 
-    // Valores por defecto si la base recién empieza
     const dataPresencial = (presenciales === 0 && virtuales === 0) ? 80 : presenciales;
     const dataVirtual = (presenciales === 0 && virtuales === 0) ? 20 : virtuales;
 
@@ -220,7 +235,7 @@ function renderizarGraficoModalidad(presenciales, virtuales) {
             plugins: {
                 legend: {
                     position: 'bottom',
-                    labels: { boxWidth: 12, padding: 15, font: { size: 11 } }
+                    labels: { boxWidth: 12, padding: 12, font: { size: 11 } }
                 }
             },
             cutout: '65%'

@@ -346,5 +346,43 @@
 
     </div>
 
+    <!-- SCRIPT QUE RECIBE LOS DATOS E IMPRIME -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Leer datos enviados desde el formulario
+            const cabecera = JSON.parse(localStorage.getItem('siga_impresion_cabecera')) || {};
+            const asistentes = JSON.parse(localStorage.getItem('siga_impresion_asistentes')) || [];
+
+            // 2. Rellenar los campos de la cabecera
+            const valores = document.querySelectorAll('.info-item .valor');
+            if (valores.length >= 7) {
+                valores[0].textContent = cabecera.fecha || '';
+                valores[1].textContent = cabecera.horario || '';
+                valores[2].textContent = cabecera.programa || '';
+                valores[3].textContent = cabecera.modulo || '';
+                valores[4].textContent = cabecera.temas || '';
+                valores[5].textContent = cabecera.capacitador || '';
+                valores[6].textContent = cabecera.lugar || '';
+            }
+
+            // 3. Rellenar los nombres y legajos en la tabla
+            const filas = document.querySelectorAll('tbody tr');
+            asistentes.forEach((emp, index) => {
+                if (index < filas.length) {
+                    const c = filas[index].children;
+                    c[1].textContent = emp.legajo || '';
+                    c[2].textContent = `${emp.apellido}, ${emp.nombre}`;
+                    c[3].textContent = emp.sector !== '-' ? emp.sector : '';
+                    c[4].textContent = emp.linea !== '-' ? emp.linea : '';
+                }
+            });
+
+            // 4. Lanzar la ventana de impresión / PDF automáticamente
+            setTimeout(() => {
+                window.print();
+            }, 500);
+        });
+    </script>
+    
 </body>
 </html>

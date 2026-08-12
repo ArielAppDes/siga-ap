@@ -38,11 +38,18 @@ async function cargarMetricasSIGA() {
         let actExternas = 0;
 
         listaCap.forEach(c => {
-            // Intentar obtener la duración de cualquier columna común
-            const hs = parseFloat(c.duracion || c.horas || c.carga_horaria || c.hs || 0);
+            // 1. Calcular Horas (restando hora_fin - hora_inicio)
+            let hs = 0;
+            if (c.hora_inicio && c.hora_fin) {
+                hs = calcularDiferenciaHoras(c.hora_inicio, c.hora_fin);
+            } else {
+                // Fallback por si existe una columna directa
+                hs = parseFloat(c.duracion || c.horas || c.carga_horaria || 0);
+            }
+
             sumaHoras += isNaN(hs) ? 0 : hs;
 
-            // Intentar identificar si es interna o externa
+            // 2. Identificar si es interna o externa
             const tipo = String(c.tipo || c.origen || c.modalidad || c.categoria || '').toLowerCase();
             if (tipo.includes('extern')) {
                 actExternas++;
@@ -58,16 +65,15 @@ async function cargarMetricasSIGA() {
         // --- VOLCADO A LAS TARJETAS (DOM) ---
         setVal('lblTotalActividades', totalActividades);
         setVal('lblPersonasCapacitadas', totalAsistentes);
-        setVal('lblAsistenciasMes', totalAsistentes); // Asistencias registradas
+        setVal('lblAsistenciasMes', totalAsistentes);
         setVal('lblHsPerCapita', `${hsPerCapita} hs`);
 
         setVal('lblHsPromedioCurso', `${hsPromedio} hs`);
         
-        // Cargar Internas y Externas
         setVal('lblActividadesInternas', actInternas);
         setVal('lblActividadesExternas', actExternas);
 
-        // Dejar en 0 lo relativo a e-Learning
+        // e-Learning pendiente
         setVal('lblHsAutogestionadas', '0 hs');
         setVal('lblAsistenciasElearning', 0);
         setVal('lblPorcentajeElearning', '0%');
@@ -75,6 +81,22 @@ async function cargarMetricasSIGA() {
     } catch (error) {
         console.error("Error general en reportes:", error);
     }
+}
+
+// Función auxiliar para calcular la diferencia en horas entre "HH:MM" o "HH:MM:SS"
+function calcularDiferenciaHoras(inicioStr, finStr) {
+    if (!inicioStr || !finStr) return 0;
+
+    const [hIni, mIni] = inicioStr.split(':').map(Number);
+    const [hFin, mFin] = finStr.split(':').map(Number);
+
+    if (isNaN(hIni) || isNaN(mIni) || isNaN(hFin) || isNaN(mFin)) return 0;
+
+    const minInicio = hIni * 60 + mIni;
+    const minFin = hFin * 60 + mFin;
+
+    const diffMinutos = minFin - minInicio;
+    return diffMinutos > 0 ? diffMinutos / 60 : 0;
 }
 
 function setVal(idElemento, valor) {

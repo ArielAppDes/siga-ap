@@ -38,18 +38,20 @@ async function cargarMetricasSIGA() {
         let actExternas = 0;
 
         listaCap.forEach(c => {
-            // 1. Calcular Horas (restando hora_fin - hora_inicio)
+            // Mapeo exacto con las columnas hs_inicio y hs_fin
+            const ini = c.hs_inicio || c.hora_inicio;
+            const fin = c.hs_fin || c.hora_fin;
+
             let hs = 0;
-            if (c.hora_inicio && c.hora_fin) {
-                hs = calcularDiferenciaHoras(c.hora_inicio, c.hora_fin);
+            if (ini && fin) {
+                hs = calcularDiferenciaHoras(ini, fin);
             } else {
-                // Fallback por si existe una columna directa
                 hs = parseFloat(c.duracion || c.horas || c.carga_horaria || 0);
             }
 
             sumaHoras += isNaN(hs) ? 0 : hs;
 
-            // 2. Identificar si es interna o externa
+            // Clasificación por tipo o modalidad
             const tipo = String(c.tipo || c.origen || c.modalidad || c.categoria || '').toLowerCase();
             if (tipo.includes('extern')) {
                 actExternas++;
@@ -83,17 +85,17 @@ async function cargarMetricasSIGA() {
     }
 }
 
-// Función auxiliar para calcular la diferencia en horas entre "HH:MM" o "HH:MM:SS"
+// Diferencia exacta en horas decimales (compatible con HH:MM:SS)
 function calcularDiferenciaHoras(inicioStr, finStr) {
     if (!inicioStr || !finStr) return 0;
 
-    const [hIni, mIni] = inicioStr.split(':').map(Number);
-    const [hFin, mFin] = finStr.split(':').map(Number);
+    const partesIni = String(inicioStr).split(':').map(Number);
+    const partesFin = String(finStr).split(':').map(Number);
 
-    if (isNaN(hIni) || isNaN(mIni) || isNaN(hFin) || isNaN(mFin)) return 0;
+    if (partesIni.length < 2 || partesFin.length < 2) return 0;
 
-    const minInicio = hIni * 60 + mIni;
-    const minFin = hFin * 60 + mFin;
+    const minInicio = partesIni[0] * 60 + partesIni[1];
+    const minFin = partesFin[0] * 60 + partesFin[1];
 
     const diffMinutos = minFin - minInicio;
     return diffMinutos > 0 ? diffMinutos / 60 : 0;

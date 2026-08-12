@@ -1,196 +1,184 @@
-body{
-    margin:0;
-    background:#EDEDED;
-    font-family:'Segoe UI',sans-serif;
+/* ===================================================
+   SIGA_APP -v1.0  DASHBOARD & ESTILOS GLOBALES (FIXED ZOOM)
+   =================================================== */
+
+:root {
+    --azul: #1F2A44;
+    --verde: #18C48F;
+    --blanco: #FFFFFF;
+    --gris: #EDEDED;
 }
 
-.contenedor{
-    display:flex;
-    height:100vh;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', sans-serif;
 }
 
-/* ===== MENU ===== */
-
-.sidebar{
-    width:220px;
-    background:#1F2A44;
-    color:white;
-    display:flex;
-    flex-direction:column;
+body {
+    background: var(--gris);
+    margin: 0;
 }
 
-.logo{
-    text-align:center;
-    padding:30px 20px;
-    border-bottom:1px solid rgba(255,255,255,.15);
+/* FIX 1: Permite que el contenedor se expanda en alto según el contenido */
+.contenedor {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
 }
 
-.logo h1{
-    font-size:56px;
-    margin:0;
-    color:#18C48F;
+/* FIX 2: Congela el Sidebar en pantalla y ocupa el 100% del alto sin cortarse */
+.sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: var(--azul);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    flex-shrink: 0;
 }
 
-.logo p{
-    margin-top:10px;
-    font-size:18px;
+.logo {
+    text-align: center;
+    padding: 30px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, .15);
 }
 
-nav{
-    display:flex;
-    flex-direction:column;
-    margin-top:20px;
+.logo h1 {
+    font-size: 56px;
+    margin: 0;
+    color: var(--verde);
 }
 
-nav a{
+.logo p {
+    margin-top: 10px;
+    font-size: 18px;
+}
 
-    color:white;
-    text-decoration:none;
+nav {
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+}
 
-    padding:16px 20px;
-
-    transition:.3s;
-
-    font-size:16px;
-
-    border-left:4px solid transparent;
-
+nav a {
+    color: white;
+    text-decoration: none;
+    padding: 16px 20px;
+    transition: .3s;
+    font-size: 16px;
+    border-left: 4px solid transparent;
 }
 
 nav a:hover,
-nav a.activo{
-
-    background:rgba(24,196,143,.18);
-
-    border-left:4px solid #18C48F;
-
-    color:white;
-
-    font-weight:bold;
-
+nav a.activo {
+    background: rgba(24, 196, 143, .18);
+    border-left: 4px solid var(--verde);
+    color: white;
+    font-weight: bold;
 }
 
-/* ===== CONTENIDO ===== */
-
-.contenido{
-    flex:1;
-    padding:35px;
+/* ===== CONTENIDO PRINCIPAL ===== */
+.contenido {
+    flex: 1;
+    padding: 35px;
+    min-width: 0; /* Previene que los elementos rompan las grillas al hacer Zoom Out */
 }
 
-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:40px;
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
 }
 
-header h2{
-    margin:0;
-    color:#1F2A44;
+header h2 {
+    margin: 0;
+    color: var(--azul);
 }
 
-#fecha{
-    color:#666;
+#fecha {
+    color: #666;
 }
 
-.usuario{
-    background:white;
-    padding:12px 20px;
-    border-radius:10px;
-    box-shadow:0 2px 8px rgba(0,0,0,.15);
+.usuario {
+    background: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
 }
 
-/* ===== TARJETAS ===== */
-
-.cards{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-    gap:25px;
+/* ===== TARJETAS DASHBOARD ===== */
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 25px;
 }
 
-.card{
-    background:white;
-    border-top:6px solid #18C48F;
-    border-radius:18px;
-    padding:30px;
-    cursor:pointer;
-    transition:.25s;
-    box-shadow:0 4px 10px rgba(0,0,0,.10);
+.card {
+    background: white;
+    border-top: 6px solid var(--verde);
+    border-radius: 18px;
+    padding: 30px;
+    cursor: pointer;
+    transition: .25s;
+    box-shadow: 0 4px 10px rgba(0,0,0,.10);
 }
 
-.card:hover{
-    transform:translateY(-6px);
-    box-shadow:0 10px 20px rgba(0,0,0,.18);
+.card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 20px rgba(0,0,0,.18);
 }
 
-.icono{
-    font-size:48px;
+.icono {
+    font-size: 48px;
 }
 
-.card h3{
-    margin-top:18px;
-    color:#1F2A44;
+.card h3 {
+    margin-top: 18px;
+    color: var(--azul);
 }
 
-.card p{
-
-    color:#777;
-
-    font-size:15px;
-
-    line-height:22px;
-
-    margin-top:12px;
-
+.card p {
+    color: #777;
+    font-size: 15px;
+    line-height: 22px;
+    margin-top: 12px;
 }
 
-/* ===== TABLET ===== */
-
-@media(max-width:900px){
-
-.sidebar{
-    width:210px;
+/* ===== ACTIVIDAD DE LA SEMANA ===== */
+.actividad {
+    margin-bottom: 30px;
 }
 
-.cards{
-
-grid-template-columns:1fr;
-
+.actividad h3 {
+    color: #24314f;
+    margin-bottom: 12px;
 }
 
+.actividad-card {
+    background: white;
+    border-left: 6px solid #27c59a;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 5px 15px rgba(0,0,0,.10);
+    font-size: 17px;
+    color: #555;
 }
 
-/* ==========================
-   ACTIVIDAD DE LA SEMANA
-========================== */
+/* ===== RESPONSIVE TABLET ===== */
+@media(max-width: 900px) {
+    .sidebar {
+        width: 210px;
+        min-width: 210px;
+    }
 
-.actividad{
-
-margin-bottom:30px;
-
-}
-
-.actividad h3{
-
-color:#24314f;
-margin-bottom:12px;
-
-}
-
-.actividad-card{
-
-background:white;
-
-border-left:6px solid #27c59a;
-
-border-radius:12px;
-
-padding:18px;
-
-box-shadow:0 5px 15px rgba(0,0,0,.10);
-
-font-size:17px;
-
-color:#555;
-
+    .cards {
+        grid-template-columns: 1fr;
+    }
 }

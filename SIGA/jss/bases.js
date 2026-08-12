@@ -85,17 +85,25 @@ async function generarBase(){
 
             estadoBase.value = `Guardando ${empleados.length} empleados en Supabase...`;
 
-            // Enviar datos a la tabla 'asistentes' en Supabase
+            // 1. Enviar datos a la tabla 'dotacion' en Supabase
             const { data, error } = await window.supabaseClient
-                .from('asistentes')
+                .from('dotacion')
                 .upsert(empleados, { onConflict: 'legajo' });
 
             if (error) {
                 throw error;
             }
 
+            // 2. Registrar la fecha y hora exacta del momento de importación
+            const ahora = new Date();
+            const fechaHoraFormat = ahora.toLocaleDateString('es-AR') + ' ' + 
+                                   ahora.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+
+            // Guardar localmente la fecha de última actualización
+            localStorage.setItem('fechaUltimaDotacion', fechaHoraFormat);
+
             estadoBase.value = "Base actualizada en Supabase";
-            alert(`¡Éxito! Se cargaron/actualizaron ${empleados.length} empleados correctamente en Supabase.`);
+            alert(`¡Éxito! Se cargaron/actualizaron ${empleados.length} empleados en la tabla 'dotacion'.`);
 
         }
         catch(error){
@@ -111,7 +119,6 @@ async function generarBase(){
     lector.readAsArrayBuffer(archivoSeleccionado);
 
 }
-
 //======================================================
 // EXPORTAR BASES DE SUPABASE A EXCEL (.XLSX)
 //======================================================

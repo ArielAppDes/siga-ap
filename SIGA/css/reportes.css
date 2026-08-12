@@ -143,10 +143,11 @@
 }
 
 .chart-box-card h4 {
-    font-size: 0.88rem;
-    color: #334155;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #1e293b;
     margin: 0 0 12px 0;
-    font-weight: 700;
+    letter-spacing: -0.2px;
 }
 
 .chart-container {

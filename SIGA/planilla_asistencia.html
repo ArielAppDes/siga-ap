@@ -1,1 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Asistentes - SIGA</title>
+    <style>
+        :root {
+            --azul: #1F2A44;
+            --verde: #18C48F;
+            --gris-claro: #f8fafc;
+            --borde-color: #cbd5e1;
+            --texto-oscuro: #0f172a;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #e2e8f0;
+            padding: 20px;
+            color: var(--texto-oscuro);
+        }
+
+        /* Botón de Impresión / Guardar PDF */
+        .no-print {
+            max-width: 800px;
+            margin: 0 auto 15px auto;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-imprimir {
+            background-color: var(--verde);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: background 0.2s;
+        }
+
+        .btn-imprimir:hover {
+            background-color: #14a376;
+        }
+
+        /* Hoja Din A4 en Pantalla */
+        .hoja-a4 {
+            background: white;
+            width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        /* ENCABEZADO Y LOGO */
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+        }
+
+        .titulo-seccion h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--azul);
+            display: inline-block;
+        }
+
+        .titulo-seccion .subtitulo {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            margin-left: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Bloque del Logo SIGA */
+        .logo-box {
+            background-color: var(--azul);
+            padding: 12px 24px;
+            border-radius: 10px;
+            text-align: center;
+            border-bottom: 4px solid var(--verde);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+        }
+
+        .logo-box h2 {
+            font-size: 32px;
+            font-weight: 900;
+            color: var(--verde);
+            line-height: 1;
+            letter-spacing: 1px;
+        }
+
+        .logo-box p {
+            font-size: 10px;
+            color: white;
+            margin-top: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        /* GRILLA DE METADATOS DE LA CAPACITACIÓN */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 8px 30px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: baseline;
+        }
+
+        .info-item label {
+            font-weight: 700;
+            color: var(--azul);
+            width: 110px;
+            flex-shrink: 0;
+        }
+
+        .info-item .valor {
+            border-bottom: 1px dotted #94a3b8;
+            flex: 1;
+            min-height: 18px;
+        }
+
+        .hoja-num {
+            text-align: right;
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .seccion-titulo-tabla {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--azul);
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        /* TABLA MODERNA CON BORDES REDONDEADOS */
+        .tabla-contenedor {
+            border: 1px solid var(--borde-color);
+            border-top: 5px solid var(--verde); /* Vivo de color superior */
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        thead {
+            background-color: var(--azul);
+            color: white;
+        }
+
+        th {
+            padding: 10px 8px;
+            font-weight: 700;
+            text-align: center;
+            border-right: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        th:last-child {
+            border-right: none;
+        }
+
+        td {
+            padding: 9px 8px;
+            border-bottom: 1px solid var(--borde-color);
+            border-right: 1px solid var(--borde-color);
+            height: 32px;
+        }
+
+        td:last-child {
+            border-right: none;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: var(--gris-claro);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .col-n { width: 35px; text-align: center; font-weight: bold; color: #64748b; }
+        .col-leg { width: 60px; text-align: center; }
+        .col-nombre { width: 300px; }
+        .col-sector { width: 120px; }
+        .col-linea { width: 100px; }
+        .col-firma { width: 125px; }
+
+        /* PIE DE PÁGINA Y FIRMAS */
+        .footer-seccion {
+            margin-top: 25px;
+            font-size: 13px;
+        }
+
+        .linea-firma {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 20px;
+        }
+
+        .linea-firma label {
+            font-weight: 700;
+            color: var(--azul);
+            width: 150px;
+        }
+
+        .linea-firma .puntos {
+            border-bottom: 1px dotted #64748b;
+            flex: 1;
+        }
+
+        /* REGLAS EXCLUSIVAS PARA IMPRESIÓN / PDF */
+        @media print {
+            body {
+                background: none;
+                padding: 0;
+            }
+
+            .no-print {
+                display: none;
+            }
+
+            .hoja-a4 {
+                width: 100%;
+                box-shadow: none;
+                padding: 0;
+                border-radius: 0;
+            }
+
+            .tabla-contenedor {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .logo-box, thead {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="no-print">
+        <button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+    </div>
+
+    <div class="hoja-a4">
+
+        <!-- Encabezado con Logo SIGA -->
+        <div class="header-container">
+            <div class="titulo-seccion">
+                <h1>Lista de Asistentes</h1>
+                <span class="subtitulo">"CONSTANCIA DE CAPACITACIÓN"</span>
+            </div>
+            <div class="logo-box">
+                <h2>SIGA</h2>
+                <p>Empresa S.A</p>
+            </div>
+        </div>
+
+        <!-- Información de la Capacitación -->
+        <div class="info-grid">
+            <div class="info-item"><label>FECHA:</label><span class="valor"></span></div>
+            <div class="info-item"><label>HORARIO:</label><span class="valor"></span></div>
+            <div class="info-item"><label>PROGRAMA:</label><span class="valor"></span></div>
+            <div class="info-item"><label>MÓDULO:</label><span class="valor"></span></div>
+            <div class="info-item" style="grid-column: span 2;"><label>TEMAS:</label><span class="valor"></span></div>
+            <div class="info-item" style="grid-column: span 2;"><label>CAPACITADOR:</label><span class="valor"></span></div>
+            <div class="info-item" style="grid-column: span 2;"><label>LUGAR:</label><span class="valor"></span></div>
+        </div>
+
+        <div class="hoja-num">HOJA 1 de 1</div>
+
+        <div class="seccion-titulo-tabla">DATOS DE LOS PARTICIPANTES:</div>
+
+        <!-- Tabla Estilizada con bordes redondeados y vivo verde superior -->
+        <div class="tabla-contenedor">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="col-n">N°</th>
+                        <th class="col-leg">Leg.</th>
+                        <th class="col-nombre">Apellido y nombre</th>
+                        <th class="col-sector">Sector</th>
+                        <th class="col-linea">Línea</th>
+                        <th class="col-firma">Firma</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Generación de 20 Filas -->
+                    <script>
+                        for (let i = 1; i <= 20; i++) {
+                            document.write(`
+                                <tr>
+                                    <td class="col-n">${i}</td>
+                                    <td class="col-leg"></td>
+                                    <td class="col-nombre"></td>
+                                    <td class="col-sector"></td>
+                                    <td class="col-linea"></td>
+                                    <td class="col-firma"></td>
+                                </tr>
+                            `);
+                        }
+                    </script>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Sección de Firmas u Observaciones -->
+        <div class="footer-seccion">
+            <div class="linea-firma">
+                <label>Firma capacitadores:</label>
+                <div class="puntos"></div>
+            </div>
+            <div class="linea-firma">
+                <label>Observaciones:</label>
+                <div class="puntos"></div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

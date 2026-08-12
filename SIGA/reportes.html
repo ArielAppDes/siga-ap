@@ -7,7 +7,7 @@
     <title>Reportes | SIGA-AP</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/reportes.css?v=4.0">
+    <link rel="stylesheet" href="css/reportes.css?v=6.0">
 </head>
 
 <body>
@@ -49,7 +49,7 @@
                 
                 <!-- Métricas Generales -->
                 <div class="kpi-block">
-                    <div class="kpi-block-title">Métricas Generales del Mes</div>
+                    <span class="kpi-block-title">Métricas Generales del Mes</span>
                     <div class="kpi-grid-2x2">
                         <div class="kpi-card-item">
                             <span class="kpi-lbl-title">ACTIVIDADES DE CAPACITACIÓN</span>
@@ -76,7 +76,7 @@
 
                 <!-- Origen de Capacitaciones -->
                 <div class="kpi-block">
-                    <div class="kpi-block-title">Origen de las Capacitaciones</div>
+                    <span class="kpi-block-title">Origen de las Capacitaciones</span>
                     <div class="kpi-grid-2x2">
                         <div class="kpi-card-item border-b">
                             <span class="kpi-lbl-title">ACTIVIDADES INTERNAS</span>
@@ -108,7 +108,7 @@
                 
                 <!-- Carga Horaria -->
                 <div class="kpi-block">
-                    <div class="kpi-block-title">Carga Horaria e Intensidad</div>
+                    <span class="kpi-block-title">Carga Horaria e Intensidad</span>
                     <div class="kpi-card-horizontal">
                         <div>
                             <span class="kpi-lbl-title">HS / CURSO EN EL MES</span>
@@ -127,7 +127,7 @@
 
                 <!-- E-Learning -->
                 <div class="kpi-block">
-                    <div class="kpi-block-title">E-Learning & Virtualidad</div>
+                    <span class="kpi-block-title">E-Learning & Virtualidad</span>
                     <div class="kpi-card-horizontal">
                         <div>
                             <span class="kpi-lbl-title">ASISTENCIAS MODALIDAD E-LEARNING</span>
@@ -148,29 +148,45 @@
 
         </section>
 
-        <!-- SECCIÓN INFERIOR: 3 GRÁFICOS (40% / 50% ALTURA) -->
+        <!-- SECCIÓN INFERIOR: 3 GRÁFICOS ALINEADOS EXACTOS AL 70/30 -->
         <section class="reportes-bottom">
-            <div class="chart-box-card">
-                <h4>📈 Cumplimiento por Programa</h4>
-                <div class="chart-box-placeholder">Gráfico 1</div>
+            
+            <!-- CONTENEDOR 70% (2 GRÁFICOS) -->
+            <div class="charts-col-left">
+                <div class="chart-box-card">
+                    <h4>📈 Capacitaciones por Mes</h4>
+                    <div class="chart-container">
+                        <canvas id="chartMeses"></canvas>
+                    </div>
+                </div>
+                <div class="chart-box-card">
+                    <h4>📊 Asistencias por Curso</h4>
+                    <div class="chart-container">
+                        <canvas id="chartCursos"></canvas>
+                    </div>
+                </div>
             </div>
-            <div class="chart-box-card">
-                <h4>📊 Asistencias Mensuales</h4>
-                <div class="chart-box-placeholder">Gráfico 2</div>
+
+            <!-- CONTENEDOR 30% (1 GRÁFICO) -->
+            <div class="charts-col-right">
+                <div class="chart-box-card">
+                    <h4>🥧 Modalidad (Presencial vs Virtual)</h4>
+                    <div class="chart-container pie-container">
+                        <canvas id="chartModalidad"></canvas>
+                    </div>
+                </div>
             </div>
-            <div class="chart-box-card">
-                <h4>📉 Horas Acumuladas</h4>
-                <div class="chart-box-placeholder">Gráfico 3</div>
-            </div>
+
         </section>
     </main>
 
 </div>
 
-<!-- Scripts -->
+<!-- Librerías -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="jss/supaBaseClient.js"></script>
-<script src="jss/reportes.js"></script>
+<script src="jss/reportes.js?v=6.0"></script>
 
 </body>
 </html>

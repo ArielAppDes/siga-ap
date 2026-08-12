@@ -144,11 +144,20 @@
 </div>
 
 <!---------------- MODAL DE CONFIRMACIÓN ---------------->
+<!---------------- MODAL DE CONFIRMACIÓN Y OPCIÓN PDF ---------------->
 <div id="confirmacion" class="modal" style="display: none;">
-    <div class="modal-contenido">
-        <h3>✅ Registro confirmado</h3>
-        <p id="mensajeConfirmacion"></p>
-        <button id="btnCerrarConfirmacion">Cerrar</button>
+    <div class="modal-contenido" style="text-align: center; padding: 25px;">
+        <h3 style="color: #1F2A44; margin-bottom: 10px;">✅ Registro Cerrado Correctamente</h3>
+        <p id="mensajeConfirmacion" style="color: #64748b; margin-bottom: 20px;">Los datos del curso han sido guardados exitosamente.</p>
+        
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="btnModalImprimir" class="buscar" style="padding: 10px 18px; font-weight: bold;">
+                🖨️ Generar y Guardar PDF
+            </button>
+            <button id="btnModalFinalizar" class="cancelar" style="padding: 10px 18px;">
+                Finalizar sin imprimir
+            </button>
+        </div>
     </div>
 </div>
 

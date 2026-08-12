@@ -1,30 +1,186 @@
-/* Estilo base para todas las tarjetas (KPIs y Gráficos) */
-.kpi-card-item, 
-.kpi-card-horizontal, 
-.chart-box-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-top: 4px solid #cbd5e1; /* Borde superior gris claro por defecto */
-    border-radius: 10px;
-    padding: 14px 16px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-    transition: transform 0.2s ease, box-shadow 0.2s ease; /* Transición suave */
+/* ===================================================
+   SIGA_APP - REPORTES CSS (BORDES DE COLOR & LAYOUT FIXED)
+   =================================================== */
+
+/* ESTRUCTURA SUPERIOR KPIS (70% / 30%) */
+.reportes-top {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 20px !important;
+    margin-bottom: 25px !important;
+    align-items: stretch !important;
+    width: 100% !important;
 }
 
-/* Efecto Hover: Eleva la tarjeta sutilmente */
+.kpi-col-left {
+    flex: 7 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+}
+
+.kpi-col-right {
+    flex: 3 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+}
+
+.kpi-block {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+}
+
+.kpi-block-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 12px;
+    display: block;
+    letter-spacing: -0.2px;
+}
+
+/* GRILLAS Y TARJETAS */
+.kpi-grid-2x2 {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+    flex: 1 !important;
+}
+
+.kpi-card-item {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card-horizontal {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    flex: 1;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card-horizontal:last-child {
+    margin-bottom: 0;
+}
+
+/* EFECTO HOVER DE ELEVACIÓN SUTIL */
 .kpi-card-item:hover, 
 .kpi-card-horizontal:hover, 
 .chart-box-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
 }
 
-/* Reemplazar los bordes izquierdos por bordes superiores de color */
-.kpi-card-item.border-b { 
-    border-top: 4px solid #0284c7; 
-    border-left: 1px solid #e2e8f0; 
+/* LABELS Y VALORES */
+.kpi-lbl-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.3px;
 }
-.kpi-card-item.border-g { 
-    border-top: 4px solid #10b981; 
-    border-left: 1px solid #e2e8f0; 
+
+.kpi-lbl-sub {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+
+.kpi-num-val {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-top: 6px;
+}
+
+/* CLASES DE COLORES PARA BORDES SUPERIORES DE TODAS LAS TARJETAS */
+.card-blue { border-top: 4px solid #0284c7 !important; }
+.card-green { border-top: 4px solid #10b981 !important; }
+.card-cyan { border-top: 4px solid #06b6d4 !important; }
+.card-orange { border-top: 4px solid #f59e0b !important; }
+.card-purple { border-top: 4px solid #8b5cf6 !important; }
+.card-darkblue { border-top: 4px solid #1e3a8a !important; }
+
+/* COLORES DE TEXTO DE NUMEROS */
+.kpi-num-val.blue { color: #0284c7; }
+.kpi-num-val.green { color: #10b981; }
+.kpi-num-val.cyan { color: #06b6d4; }
+.kpi-num-val.orange { color: #f59e0b; }
+.kpi-num-val.purple { color: #8b5cf6; }
+.kpi-num-val.dark-blue { color: #1e3a8a; }
+
+/* ESTRUCTURA INFERIOR GRÁFICOS (ALINEACIÓN EXACTA 70/30) */
+.reportes-bottom {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 20px !important;
+    align-items: stretch !important;
+    width: 100% !important;
+}
+
+.charts-col-left {
+    flex: 7 !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+}
+
+.charts-col-right {
+    flex: 3 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.chart-box-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    display: flex;
+    flex-direction: column;
+    min-height: 270px;
+    box-sizing: border-box;
+    height: 100%;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.chart-box-card h4 {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0 0 12px 0;
+    letter-spacing: -0.2px;
+}
+
+.chart-container {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    height: 200px;
+}
+
+.pie-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }

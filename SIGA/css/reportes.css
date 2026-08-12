@@ -1,90 +1,59 @@
 /* ===================================================
-   SIGA_APP v1.0- ESTILOS DISTRIBUCIÓN REPORTE BAP
+   SIGA_APP - REPORTES CSS (DISTRIBUCIÓN INTERNA 70/30)
    =================================================== */
 
-.main-wrapper {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    background-color: #f1f5f9;
-}
-
-.top-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 30px;
-}
-
-.header-title h2 {
-    font-size: 1.3rem;
-    color: #0f172a;
-}
-
-.header-title p {
-    font-size: 0.85rem;
-    color: #64748b;
-}
-
-.content {
-    padding: 0 30px 30px 30px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-/* SECCIÓN KPIS SUPERIOR (LAYOUT 70 / 30) */
-.kpi-top-section {
+/* CONTENEDOR SUPERIOR KPIS (70% / 30%) */
+.reportes-top {
     display: flex;
     gap: 20px;
+    margin-bottom: 25px;
 }
 
-.kpi-col-70 {
-    flex: 7;
+.kpi-col-left {
+    flex: 7; /* 70% */
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
 
-.kpi-col-30 {
-    flex: 3;
+.kpi-col-right {
+    flex: 3; /* 30% */
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
 
-.kpi-box {
+.kpi-block {
     background: #ffffff;
+    border: 1px solid #e2e8f0;
     border-radius: 10px;
     padding: 15px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
-.box-title {
+.kpi-block-title {
     font-size: 0.85rem;
+    font-weight: 700;
     color: #475569;
     margin-bottom: 12px;
-    font-weight: 700;
 }
 
-.grid-cards-4 {
+.kpi-grid-2x2 {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
 }
 
-.card-kpi {
+.kpi-card-item {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
-    padding: 12px;
+    padding: 10px 12px;
     display: flex;
     flex-direction: column;
 }
 
-.card-kpi-horizontal {
+.kpi-card-horizontal {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
@@ -95,65 +64,65 @@
     margin-bottom: 8px;
 }
 
-.card-kpi-horizontal:last-child {
+.kpi-card-horizontal:last-child {
     margin-bottom: 0;
 }
 
-.kpi-title {
-    font-size: 0.72rem;
+.kpi-lbl-title {
+    font-size: 0.7rem;
     font-weight: 700;
     color: #64748b;
 }
 
-.kpi-sub {
-    font-size: 0.68rem;
+.kpi-lbl-sub {
+    font-size: 0.65rem;
     color: #94a3b8;
-    margin-top: 4px;
+    margin-top: 2px;
 }
 
-.kpi-value {
-    font-size: 1.4rem;
+.kpi-num-val {
+    font-size: 1.35rem;
     font-weight: 800;
     color: #0f172a;
     margin-top: 4px;
 }
 
-/* COLORES */
-.kpi-value.blue { color: #0284c7; }
-.kpi-value.green { color: #10b981; }
-.kpi-value.cyan { color: #06b6d4; }
-.kpi-value.orange { color: #f59e0b; }
-.kpi-value.purple { color: #8b5cf6; }
-.kpi-value.dark-blue { color: #1e3a8a; }
+/* COLORES KPIS */
+.kpi-num-val.blue { color: #0284c7; }
+.kpi-num-val.green { color: #10b981; }
+.kpi-num-val.cyan { color: #06b6d4; }
+.kpi-num-val.orange { color: #f59e0b; }
+.kpi-num-val.purple { color: #8b5cf6; }
+.kpi-num-val.dark-blue { color: #1e3a8a; }
 
-.card-kpi.border-blue { border-left: 4px solid #0284c7; }
-.card-kpi.border-green { border-left: 4px solid #10b981; }
+.kpi-card-item.border-b { border-left: 4px solid #0284c7; }
+.kpi-card-item.border-g { border-left: 4px solid #10b981; }
 
-/* SECCIÓN INFERIOR: 3 GRÁFICOS */
-.charts-bottom-section {
+/* SECCIÓN INFERIOR DE 3 GRÁFICOS */
+.reportes-bottom {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
 }
 
-.chart-card {
+.chart-box-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 10px;
-    padding: 18px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-    min-height: 250px;
+    padding: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    min-height: 240px;
     display: flex;
     flex-direction: column;
 }
 
-.chart-card h4 {
-    font-size: 0.9rem;
+.chart-box-card h4 {
+    font-size: 0.88rem;
     color: #334155;
-    margin-bottom: 12px;
+    margin: 0 0 12px 0;
 }
 
-.chart-placeholder-box {
+.chart-box-placeholder {
     flex: 1;
     background: #f8fafc;
     border: 2px dashed #cbd5e1;
@@ -163,4 +132,5 @@
     justify-content: center;
     color: #94a3b8;
     font-weight: 600;
+    font-size: 0.85rem;
 }

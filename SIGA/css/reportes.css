@@ -35,11 +35,12 @@
 }
 
 .kpi-block-title {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: #475569;
-    margin-bottom: 10px;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 12px;
     display: block;
+    letter-spacing: -0.2px;  /* Ajuste sutil tipográfico */
 }
 
 .kpi-grid-2x2 {

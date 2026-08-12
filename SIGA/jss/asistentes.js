@@ -1,5 +1,5 @@
 // ===================================================
-// 10/08/2026 - V0.2 - SIGA_APP - REGISTRO DE ASISTENTES (Con lógica Clase X de Y y Estado)
+// SIGA_APP - REGISTRO DE ASISTENTES
 // ===================================================
 
 let listaAsistentes = [];
@@ -23,6 +23,7 @@ function obtenerIdCapActual(capData) {
     // Intento por selector en HTML
     const inputId = document.getElementById('resumenIdCap') || 
                     document.getElementById('idCap') || 
+                    document.getElementById('idcap') || 
                     document.getElementById('id_cap') || 
                     document.querySelector("input[placeholder*='CAP']");
     if (inputId && inputId.value.trim()) return inputId.value.trim();
@@ -226,7 +227,7 @@ window.quitarParticipante = function(index) {
     renderizarGrilla();
 };
 
-// 3. GUARDAR EN SUPABASE Y CERRAR REGISTRO CON REGLA MATEMÁTICA
+// 3. GUARDAR EN SUPABASE Y DESPLEGAR MODAL
 async function cerrarRegistro() {
     const idCap = obtenerIdCapActual();
 
@@ -238,14 +239,12 @@ async function cerrarRegistro() {
     const confirmacion = confirm(`¿Desea cerrar el registro de la capacitación?\n\nID: ${idCap}\nTotal de asistentes: ${listaAsistentes.length}`);
     if (!confirmacion) return;
 
-    // Evaluación matemática para definir el estado de la serie de la capacitación
+    // Evaluación para definir el estado de la serie
     const capActivaRaw = localStorage.getItem("capacitacion_activa");
     let capData = capActivaRaw ? JSON.parse(capActivaRaw) : {};
 
     const claseActual = parseInt(capData.clase_nro || "1", 10);
     const totalClases = parseInt(capData.total_clases || "1", 10);
-
-    // Si la clase actual es menor al total, la serie continúa 'En curso'. De lo contrario, 'Finalizado'.
     const estadoFinal = (claseActual < totalClases) ? "En curso" : "Finalizado";
 
     const db = obtenerDB();
@@ -267,16 +266,29 @@ async function cerrarRegistro() {
         }
     }
 
+    // Limpiar claves locales relativas a la sesión de carga activa
     localStorage.removeItem("capacitacion_activa");
     localStorage.removeItem("id_cap_asistencia");
 
-    alert(`Registro cerrado con éxito. Estado asignado a la serie: ${estadoFinal}.`);
-    window.location.href = "actividades.html";
+    // Abrir Modal de Confirmación e Impresión
+    const modal = document.getElementById('confirmacion');
+    const msgConfirmacion = document.getElementById('mensajeConfirmacion');
+
+    if (msgConfirmacion) {
+        msgConfirmacion.textContent = `Los datos del curso fueron guardados con éxito. Estado de la serie: "${estadoFinal}".`;
+    }
+
+    if (modal) {
+        modal.style.display = 'flex';
+    } else {
+        alert(`Registro cerrado con éxito. Estado asignado: ${estadoFinal}.`);
+        window.location.href = "actividades.html";
+    }
 }
 
 function configurarEventos() {
     const botones = document.querySelectorAll('button');
-    
+
     const btnAgregar = document.getElementById('btnAgregarParticipante') || document.getElementById('btnAgregar') || Array.from(botones).find(b => b.textContent.includes('Agregar'));
     if (btnAgregar) btnAgregar.onclick = (e) => { e.preventDefault(); agregarParticipante(); };
 
@@ -289,5 +301,4 @@ function configurarEventos() {
         localStorage.removeItem("capacitacion_activa");
         window.location.href = "actividades.html";
     };
-
-  }
+}

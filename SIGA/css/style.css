@@ -1,23 +1,122 @@
-:root{
+/* ===================================================
+   SIGA_APP - ESTILOS BASE Y GLOBALES (style.css)
+   =================================================== */
 
---azul:#1F2A44;
---verde:#18C48F;
---blanco:#FFFFFF;
---gris:#EDEDED;
-
+:root {
+    --azul: #1F2A44;
+    --verde: #18C48F;
+    --blanco: #FFFFFF;
+    --gris: #EDEDED;
 }
 
-*{
-
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:'Segoe UI',sans-serif;
-
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', sans-serif;
 }
 
-body{
+body {
+    background: var(--gris);
+    margin: 0;
+}
 
-background:var(--gris);
+/* FIX ESTRUCTURAL: Permite que el contenedor se expanda según el contenido */
+.contenedor {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
 
+/* FIX SIDEBAR: Queda fijo en pantalla y cubre el 100% de la altura sin cortarse al hacer zoom */
+.sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: var(--azul);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+
+.logo {
+    text-align: center;
+    padding: 30px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, .15);
+}
+
+.logo h1 {
+    font-size: 56px;
+    margin: 0;
+    color: var(--verde);
+}
+
+.logo p {
+    margin-top: 10px;
+    font-size: 18px;
+}
+
+nav {
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    padding: 16px 20px;
+    transition: .3s;
+    font-size: 16px;
+    border-left: 4px solid transparent;
+}
+
+nav a:hover,
+nav a.activo {
+    background: rgba(24, 196, 143, .18);
+    border-left: 4px solid var(--verde);
+    color: white;
+    font-weight: bold;
+}
+
+/* ===== CONTENIDO PRINCIPAL BASE ===== */
+.contenido {
+    flex: 1;
+    padding: 35px;
+    min-width: 0; /* Previene desbordamientos en grillas */
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+header h2 {
+    margin: 0;
+    color: var(--azul);
+}
+
+#fecha {
+    color: #666;
+}
+
+.usuario {
+    background: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+
+/* ===== RESPONSIVE TABLET ===== */
+@media(max-width: 900px) {
+    .sidebar {
+        width: 210px;
+        min-width: 210px;
+    }
 }

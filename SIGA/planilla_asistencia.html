@@ -345,6 +345,48 @@
         </div>
 
     </div>
+document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Obtener el ID de la capacitación desde la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const capId = urlParams.get('id');
 
+    if (!capId || !window.supabaseClient) return;
+
+    // 2. Traer datos de la capacitación desde Supabase
+    const { data: cap, error } = await window.supabaseClient
+        .from('capacitaciones')
+        .select('*')
+        .eq('id', capId)
+        .single();
+
+    if (error || !cap) return;
+
+    // Llenar metadatos
+    document.querySelectorAll('.info-item .valor')[0].textContent = cap.fecha || '';
+    document.querySelectorAll('.info-item .valor')[1].textContent = `${cap.hs_inicio || ''} - ${cap.hs_fin || ''}`;
+    document.querySelectorAll('.info-item .valor')[2].textContent = cap.nombre || cap.programa || '';
+    document.querySelectorAll('.info-item .valor')[3].textContent = cap.modulo || '-';
+    document.querySelectorAll('.info-item .valor')[4].textContent = cap.temario || cap.descripcion || '';
+    document.querySelectorAll('.info-item .valor')[5].textContent = cap.capacitador || '';
+    document.querySelectorAll('.info-item .valor')[6].textContent = cap.lugar || 'Planta General';
+
+    // 3. Traer los inscriptos de esa capacitación
+    const { data: inscriptos } = await window.supabaseClient
+        .from('asistentes')
+        .select('*')
+        .eq('capacitacion_id', capId);
+
+    // Llenar las filas de la tabla con los datos reales
+    const filas = document.querySelectorAll('tbody tr');
+    (inscriptos || []).forEach((emp, index) => {
+        if (index < filas.length) {
+            const c = filas[index].children;
+            c[1].textContent = emp.legajo || '';
+            c[2].textContent = `${emp.apellido || ''}, ${emp.nombre || ''}`;
+            c[3].textContent = emp.gerencia || emp.sector || '';
+            c[4].textContent = emp.linea || '-';
+        }
+    });
+});
 </body>
 </html>

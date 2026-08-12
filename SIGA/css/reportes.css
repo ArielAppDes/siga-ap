@@ -1,5 +1,5 @@
 /* ===================================================
-   SIGA_APP - REPORTES CSS (DISTRIBUCIÓN INTERNA 70/30)
+   SIGA_APP - REPORTES CSS (ALINEACIÓN EXACTA 70/30)
    =================================================== */
 
 /* CONTENEDOR SUPERIOR KPIS (70% / 30%) */
@@ -7,6 +7,7 @@
     display: flex;
     gap: 20px;
     margin-bottom: 25px;
+    align-items: flex-start; /* Alinea los bordes superiores exactos */
 }
 
 .kpi-col-left {
@@ -29,6 +30,7 @@
     border-radius: 10px;
     padding: 15px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    box-sizing: border-box;
 }
 
 .kpi-block-title {

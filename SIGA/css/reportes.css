@@ -1,192 +1,162 @@
-<!DOCTYPE html>
-<html lang="es">
+/* ===================================================
+   SIGA_APP - REPORTES CSS (REVISION COMPLETA FINAL)
+   =================================================== */
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reportes | SIGA-AP</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/reportes.css?v=6.0">
-</head>
+/* ESTRUCTURA SUPERIOR KPIS (70% / 30%) */
+.reportes-top {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 25px;
+    align-items: stretch;
+}
 
-<body>
+.kpi-col-left {
+    flex: 7;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
 
-<div class="contenedor">
+.kpi-col-right {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
 
-    <!-- Menú lateral -->
-    <aside class="sidebar">
-        <div class="logo">
-            <h1>SIGA</h1>
-            <p>Empresa S.A</p>
-        </div>
-        <nav>
-            <a href="dashboard.html">🏠 Inicio</a>
-            <a href="actividades.html">🎓 Actividades</a>
-            <a href="agenda.html">📅 Agenda</a>
-            <a href="#">🏆 Certificaciones</a>
-            <a href="reportes.html" class="activo">📊 Reportes</a>
-            <a href="administracion.html">⚙ Administración</a>
-            <a href="#">❓ Ayuda</a>
-            <a href="index.html">🚪 Salir</a>
-        </nav>
-    </aside>
+.kpi-block {
+    background: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
 
-    <!-- Contenido Principal -->
-    <main class="contenido">
-        <header>
-            <div>
-                <h2>Tablero de Control de Capacitación</h2>
-                <p class="subtitulo">Métricas consolidadas y analíticas en tiempo real.</p>
-            </div>
-        </header>
+.kpi-block-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: 10px;
+    display: block;
+}
 
-        <!-- SECCIÓN KPIS SUPERIOR (DISTRIBUCIÓN 70% / 30%) -->
-        <section class="reportes-top">
-            
-            <!-- BLOQUE IZQUIERDA (70%) -->
-            <div class="kpi-col-left">
-                
-                <!-- Métricas Generales -->
-                <div class="kpi-block">
-                    <span class="kpi-block-title">Métricas Generales del Mes</span>
-                    <div class="kpi-grid-2x2">
-                        <div class="kpi-card-item">
-                            <span class="kpi-lbl-title">ACTIVIDADES DE CAPACITACIÓN</span>
-                            <span id="lblTotalActividades" class="kpi-num-val blue">0</span>
-                            <span class="kpi-lbl-sub">Cursos / Talleres Totales</span>
-                        </div>
-                        <div class="kpi-card-item">
-                            <span class="kpi-lbl-title">PERSONAS CAPACITADAS</span>
-                            <span id="lblPersonasCapacitadas" class="kpi-num-val green">0</span>
-                            <span class="kpi-lbl-sub">Participantes Únicos</span>
-                        </div>
-                        <div class="kpi-card-item">
-                            <span class="kpi-lbl-title">ASISTENCIAS DEL MES</span>
-                            <span id="lblAsistenciasMes" class="kpi-num-val cyan">0</span>
-                            <span class="kpi-lbl-sub">Registros totales en el periodo</span>
-                        </div>
-                        <div class="kpi-card-item">
-                            <span class="kpi-lbl-title">HS CAPACITACIÓN PER CÁPITA</span>
-                            <span id="lblHsPerCapita" class="kpi-num-val orange">0 hs</span>
-                            <span class="kpi-lbl-sub">Promedio por empleado</span>
-                        </div>
-                    </div>
-                </div>
+.kpi-grid-2x2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    flex: 1;
+}
 
-                <!-- Origen de Capacitaciones -->
-                <div class="kpi-block">
-                    <span class="kpi-block-title">Origen de las Capacitaciones</span>
-                    <div class="kpi-grid-2x2">
-                        <div class="kpi-card-item border-b">
-                            <span class="kpi-lbl-title">ACTIVIDADES INTERNAS</span>
-                            <span id="lblActividadesInternas" class="kpi-num-val">0</span>
-                            <span class="kpi-lbl-sub">Cursos del equipo propio</span>
-                        </div>
-                        <div class="kpi-card-item border-b">
-                            <span class="kpi-lbl-title">ASISTENCIAS A ACT. INTERNAS</span>
-                            <span id="lblAsistenciasInternas" class="kpi-num-val">0</span>
-                            <span class="kpi-lbl-sub">Participantes en cursos internos</span>
-                        </div>
-                        <div class="kpi-card-item border-g">
-                            <span class="kpi-lbl-title">ACTIVIDADES EXTERNAS</span>
-                            <span id="lblActividadesExternas" class="kpi-num-val">0</span>
-                            <span class="kpi-lbl-sub">Cursos con proveedores</span>
-                        </div>
-                        <div class="kpi-card-item border-g">
-                            <span class="kpi-lbl-title">ASISTENCIAS A ACT. EXTERNAS</span>
-                            <span id="lblAsistenciasExternas" class="kpi-num-val">0</span>
-                            <span class="kpi-lbl-sub">Participantes en cursos externos</span>
-                        </div>
-                    </div>
-                </div>
+.kpi-card-item {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
 
-            </div>
+.kpi-card-horizontal {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    flex: 1;
+}
 
-            <!-- BLOQUE DERECHA (30%) -->
-            <div class="kpi-col-right">
-                
-                <!-- Carga Horaria -->
-                <div class="kpi-block">
-                    <span class="kpi-block-title">Carga Horaria e Intensidad</span>
-                    <div class="kpi-card-horizontal">
-                        <div>
-                            <span class="kpi-lbl-title">HS / CURSO EN EL MES</span>
-                            <span class="kpi-lbl-sub">Promedio de duración por actividad</span>
-                        </div>
-                        <span id="lblHsPromedioCurso" class="kpi-num-val">0 hs</span>
-                    </div>
-                    <div class="kpi-card-horizontal">
-                        <div>
-                            <span class="kpi-lbl-title">HS CAPACITACIÓN AUTOGESTIONADAS</span>
-                            <span class="kpi-lbl-sub">Total acumulado en e-Learning</span>
-                        </div>
-                        <span id="lblHsAutogestionadas" class="kpi-num-val purple">0 hs</span>
-                    </div>
-                </div>
+.kpi-card-horizontal:last-child {
+    margin-bottom: 0;
+}
 
-                <!-- E-Learning -->
-                <div class="kpi-block">
-                    <span class="kpi-block-title">E-Learning & Virtualidad</span>
-                    <div class="kpi-card-horizontal">
-                        <div>
-                            <span class="kpi-lbl-title">ASISTENCIAS MODALIDAD E-LEARNING</span>
-                            <span class="kpi-lbl-sub">Participaciones en plataforma virtual</span>
-                        </div>
-                        <span id="lblAsistenciasElearning" class="kpi-num-val dark-blue">0</span>
-                    </div>
-                    <div class="kpi-card-horizontal">
-                        <div>
-                            <span class="kpi-lbl-title">CUMPLIMIENTO E-LEARNING</span>
-                            <span class="kpi-lbl-sub">% Cursos e-Learning completados</span>
-                        </div>
-                        <span id="lblPorcentajeElearning" class="kpi-num-val green">0%</span>
-                    </div>
-                </div>
+.kpi-lbl-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.3px;
+}
 
-            </div>
+.kpi-lbl-sub {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    margin-top: 4px;
+}
 
-        </section>
+.kpi-num-val {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-top: 6px;
+}
 
-        <!-- SECCIÓN INFERIOR: 3 GRÁFICOS ALINEADOS EXACTOS AL 70/30 -->
-        <section class="reportes-bottom">
-            
-            <!-- CONTENEDOR 70% (2 GRÁFICOS) -->
-            <div class="charts-col-left">
-                <div class="chart-box-card">
-                    <h4>📈 Capacitaciones por Mes</h4>
-                    <div class="chart-container">
-                        <canvas id="chartMeses"></canvas>
-                    </div>
-                </div>
-                <div class="chart-box-card">
-                    <h4>📊 Asistencias por Curso</h4>
-                    <div class="chart-container">
-                        <canvas id="chartCursos"></canvas>
-                    </div>
-                </div>
-            </div>
+.kpi-num-val.blue { color: #0284c7; }
+.kpi-num-val.green { color: #10b981; }
+.kpi-num-val.cyan { color: #06b6d4; }
+.kpi-num-val.orange { color: #f59e0b; }
+.kpi-num-val.purple { color: #8b5cf6; }
+.kpi-num-val.dark-blue { color: #1e3a8a; }
 
-            <!-- CONTENEDOR 30% (1 GRÁFICO) -->
-            <div class="charts-col-right">
-                <div class="chart-box-card">
-                    <h4>🥧 Modalidad (Presencial vs Virtual)</h4>
-                    <div class="chart-container pie-container">
-                        <canvas id="chartModalidad"></canvas>
-                    </div>
-                </div>
-            </div>
+.kpi-card-item.border-b { border-left: 4px solid #0284c7; }
+.kpi-card-item.border-g { border-left: 4px solid #10b981; }
 
-        </section>
-    </main>
+/* ESTRUCTURA INFERIOR GRÁFICOS (ALINEACIÓN EXACTA 70/30) */
+.reportes-bottom {
+    display: flex;
+    gap: 20px;
+    align-items: stretch;
+}
 
-</div>
+.charts-col-left {
+    flex: 7;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
 
-<!-- Librerías -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="jss/supaBaseClient.js"></script>
-<script src="jss/reportes.js?v=6.0"></script>
+.charts-col-right {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+}
 
-</body>
-</html>
+.chart-box-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    display: flex;
+    flex-direction: column;
+    min-height: 260px;
+    max-height: 280px;
+    box-sizing: border-box;
+    height: 100%;
+}
+
+.chart-box-card h4 {
+    font-size: 0.88rem;
+    color: #334155;
+    margin: 0 0 12px 0;
+    font-weight: 700;
+}
+
+.chart-container {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    height: 180px;
+}
+
+.pie-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

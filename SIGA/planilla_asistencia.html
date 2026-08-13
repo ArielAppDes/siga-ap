@@ -61,25 +61,26 @@
             page-break-inside: avoid;
         }
 
-        /* ENCABEZADO */
+        /* ENCABEZADO PRINCIPAL */
         .header-container {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 12px;
+            margin-bottom: 16px; /* Más espacio abajo del título/logo */
         }
 
         .titulo-seccion h1 {
-            font-size: 22px;
+            font-size: 24px; /* Un poco más grande */
             font-weight: 800;
             color: var(--azul);
         }
 
         .titulo-seccion .subtitulo {
-            font-size: 11px;
+            font-size: 11.5px;
             font-weight: 700;
             color: #64748b;
             margin-left: 2px;
+            letter-spacing: 0.5px;
         }
 
         .logo-box {
@@ -103,13 +104,13 @@
             margin-top: 2px;
         }
 
-        /* METADATOS - FILAS REORGANIZADAS */
+        /* METADATOS CON MÁS AIRE Y MAYOR TIPOGRAFÍA */
         .info-container {
             display: flex;
             flex-direction: column;
-            gap: 5px;
-            margin-bottom: 10px;
-            font-size: 11px;
+            gap: 9px; /* Mayor separación vertical entre líneas (antes 5px) */
+            margin-bottom: 14px;
+            font-size: 11.5px; /* Base tipográfica aumentada */
         }
 
         .info-row {
@@ -128,15 +129,18 @@
         .info-item label {
             font-weight: 700;
             color: var(--azul);
-            margin-right: 6px;
+            margin-right: 8px;
             flex-shrink: 0;
+            font-size: 11.5px; /* Etiqueta más clara y visible */
         }
 
         .info-item .valor {
             border-bottom: 1px dotted #94a3b8;
             flex: 1;
-            min-height: 14px;
+            min-height: 16px;
             color: #1e293b;
+            font-size: 11.5px;
+            font-weight: 500;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -146,7 +150,7 @@
             border-bottom: 1.5px solid var(--azul);
             flex: 1;
             font-weight: 800;
-            font-size: 12px;
+            font-size: 13px; /* Destacado superior para el ID */
             color: var(--azul);
             letter-spacing: 0.5px;
         }
@@ -155,22 +159,22 @@
             display: flex;
             justify-content: space-between;
             align-items: baseline;
-            margin-top: 2px;
+            margin-top: 3px;
         }
 
         .hoja-num {
-            font-size: 11px;
+            font-size: 11.5px;
             font-weight: 800;
             color: var(--azul);
             text-align: right;
         }
 
         .seccion-titulo-tabla {
-            font-size: 11px;
+            font-size: 11.5px;
             font-weight: 800;
             color: var(--azul);
             margin-bottom: 6px;
-            margin-top: 4px;
+            margin-top: 6px;
         }
 
         /* TABLA OPTIMIZADA */
@@ -372,7 +376,7 @@
                             </div>
                         </div>
 
-                        <!-- NUEVA CABECERA ORGANIZADA EN LÍNEAS COMPLETAS -->
+                        <!-- METADATOS CON MÁS AIRE Y TIPOGRAFÍA AGRANDADA -->
                         <div class="info-container">
                             <!-- Línea 1 -->
                             <div class="info-row">
@@ -381,28 +385,28 @@
                                 <div class="info-item"><label>ID N°:</label><span class="valor-id">${cabecera.id_cap}</span></div>
                             </div>
 
-                            <!-- Línea 2: Programa completo -->
+                            <!-- Línea 2 -->
                             <div class="info-row">
                                 <div class="info-item"><label>PROGRAMA:</label><span class="valor">${cabecera.programa}</span></div>
                             </div>
 
-                            <!-- Línea 3: Curso completo -->
+                            <!-- Línea 3 -->
                             <div class="info-row">
                                 <div class="info-item"><label>CURSO:</label><span class="valor">${cabecera.curso}</span></div>
                             </div>
 
-                            <!-- Línea 4: Temas completo -->
+                            <!-- Línea 4 -->
                             <div class="info-row">
                                 <div class="info-item"><label>TEMAS:</label><span class="valor">${cabecera.temas}</span></div>
                             </div>
 
-                            <!-- Línea 5: Lugar y Capacitador -->
+                            <!-- Línea 5 -->
                             <div class="info-row">
                                 <div class="info-item"><label>LUGAR:</label><span class="valor">${cabecera.lugar}</span></div>
                                 <div class="info-item"><label>CAPACITADOR:</label><span class="valor">${cabecera.capacitador}</span></div>
                             </div>
 
-                            <!-- Línea 6: Modalidad e indicación de Hoja -->
+                            <!-- Línea 6 -->
                             <div class="info-row row-hoja">
                                 <div class="info-item" style="max-width: 50%;"><label>MODALIDAD:</label><span class="valor">${cabecera.modalidad}</span></div>
                                 <div class="hoja-num">HOJA ${numHoja} de ${totalHojas}</div>

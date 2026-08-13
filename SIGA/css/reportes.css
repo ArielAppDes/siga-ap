@@ -184,3 +184,59 @@
     align-items: center;
     justify-content: center;
 }
+
+/* ESTRUCTURA DE LOS 4 CONTENEDORES PRINCIPALES */
+.kpi-block-contenedor {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+}
+
+.kpi-block-title {
+    font-size: 1.10rem;
+    font-weight: 800;
+    color: #1F2A44;
+    margin-bottom: 16px;
+    display: block;
+    border-bottom: 2px solid #18C48F; /* Verde institucional */
+    padding-bottom: 6px;
+    letter-spacing: -0.2px;
+}
+
+/* Grillas Internas Ajustables */
+.kpi-grid-4cols {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+.kpi-grid-3cols {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.kpi-grid-2x2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.charts-grid-4 {
+    display: grid;
+    grid-template-columns: 2fr 1fr; /* El gráfico de líneas toma más espacio que la torta */
+    gap: 15px;
+}
+
+/* Responsive para que no rompa en monitores chicos/móviles */
+@media (max-width: 992px) {
+    .kpi-grid-4cols,
+    .kpi-grid-3cols,
+    .kpi-grid-2x2,
+    .charts-grid-4 {
+        grid-template-columns: 1fr !important;
+    }
+}

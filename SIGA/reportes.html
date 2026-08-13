@@ -41,151 +41,112 @@
 
     <!-- Contenido Principal -->
     <main class="contenido">
-        <header>
-            <div>
-                <h2>Tablero de Control de Capacitación</h2>
-                <p class="subtitulo">Métricas consolidadas y analíticas en tiempo real.</p>
+    <header>
+        <div>
+            <h2>Tablero de Control de Capacitaciones</h2>
+            <p class="subtitulo">Métricas consolidadas y analíticas de gestión.</p>
+        </div>
+        <div class="usuario">👤 Ariel Pizzutto</div>
+    </header>
+
+    <!-- ===================================================
+         1. CONTENEDOR GENERAL: KPIS DE VOLUMEN
+         =================================================== -->
+    <section class="kpi-block-contenedor">
+        <span class="kpi-block-title">📊 1. Indicadores Generales de Gestión</span>
+        <div class="kpi-grid-4cols">
+            <div class="kpi-card-item card-blue">
+                <span class="kpi-lbl-title">TOTAL ACTIVIDADES</span>
+                <span class="kpi-num-val blue" id="lblTotalActividades">0</span>
+                <span class="kpi-lbl-sub">Registradas en el sistema</span>
             </div>
-        </header>
-
-        <!-- SECCIÓN KPIS SUPERIOR (70% / 30%) -->
-        <section class="reportes-top">
-            
-            <!-- COLUMNA IZQUIERDA (70%) -->
-            <div class="kpi-col-left">
-                
-                <!-- Métricas Generales del Mes -->
-                <div class="kpi-block">
-                    <span class="kpi-block-title">Métricas Generales del Mes</span>
-                    <div class="kpi-grid-2x2">
-                        <div class="kpi-card-item card-blue">
-                            <span class="kpi-lbl-title">ACTIVIDADES DE CAPACITACIÓN</span>
-                            <span id="lblTotalActividades" class="kpi-num-val blue">0</span>
-                            <span class="kpi-lbl-sub">Cursos / Talleres Totales</span>
-                        </div>
-                        <div class="kpi-card-item card-green">
-                            <span class="kpi-lbl-title">PERSONAS CAPACITADAS</span>
-                            <span id="lblPersonasCapacitadas" class="kpi-num-val green">0</span>
-                            <span class="kpi-lbl-sub">Participantes Únicos</span>
-                        </div>
-                        <div class="kpi-card-item card-cyan">
-                            <span class="kpi-lbl-title">ASISTENCIAS DEL MES</span>
-                            <span id="lblAsistenciasMes" class="kpi-num-val cyan">0</span>
-                            <span class="kpi-lbl-sub">Registros totales en el periodo</span>
-                        </div>
-                        <div class="kpi-card-item card-orange">
-                            <span class="kpi-lbl-title">HS CAPACITACIÓN PER CÁPITA</span>
-                            <span id="lblHsPerCapita" class="kpi-num-val orange">0 hs</span>
-                            <span class="kpi-lbl-sub">Promedio por empleado</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Origen de las Capacitaciones -->
-                <div class="kpi-block">
-                    <span class="kpi-block-title">Origen de las Capacitaciones</span>
-                    <div class="kpi-grid-2x2">
-                        <div class="kpi-card-item card-blue">
-                            <span class="kpi-lbl-title">ACTIVIDADES INTERNAS</span>
-                            <span id="lblActividadesInternas" class="kpi-num-val">0</span>
-                            <span class="kpi-lbl-sub">Cursos del equipo propio</span>
-                        </div>
-                        <div class="kpi-card-item card-blue">
-                            <span class="kpi-lbl-title">ASISTENCIAS A ACT. INTERNAS</span>
-                            <span id="lblAsistenciasInternas" class="kpi-num-val">0</span>
-                            <span class="kpi-lbl-sub">Participantes en cursos internos</span>
-                        </div>
-                        <div class="kpi-card-item card-green">
-                            <span class="kpi-lbl-title">ACTIVIDADES EXTERNAS</span>
-                            <span id="lblActividadesExternas" class="kpi-num-val">0</span>
-                            <span class="kpi-lbl-sub">Cursos con proveedores</span>
-                        </div>
-                        <div class="kpi-card-item card-green">
-                            <span class="kpi-lbl-title">ASISTENCIAS A ACT. EXTERNAS</span>
-                            <span id="lblAsistenciasExternas" class="kpi-num-val">0</span>
-                            <span class="kpi-lbl-sub">Participantes en cursos externos</span>
-                        </div>
-                    </div>
-                </div>
-
+            <div class="kpi-card-item card-green">
+                <span class="kpi-lbl-title">PERSONAS CAPACITADAS</span>
+                <span class="kpi-num-val green" id="lblPersonasCapacitadas">0</span>
+                <span class="kpi-lbl-sub">Participantes únicos</span>
             </div>
-
-            <!-- COLUMNA DERECHA (30%) -->
-            <div class="kpi-col-right">
-                
-                <!-- Carga Horaria e Intensidad -->
-                <div class="kpi-block">
-                    <span class="kpi-block-title">Carga Horaria e Intensidad</span>
-                    <div class="kpi-card-horizontal card-blue">
-                        <div>
-                            <span class="kpi-lbl-title">HS / CURSO EN EL MES</span>
-                            <span class="kpi-lbl-sub">Promedio de duración por actividad</span>
-                        </div>
-                        <span id="lblHsPromedioCurso" class="kpi-num-val">0 hs</span>
-                    </div>
-                    <div class="kpi-card-horizontal card-purple">
-                        <div>
-                            <span class="kpi-lbl-title">HS CAPACITACIÓN AUTOGESTIONADAS</span>
-                            <span class="kpi-lbl-sub">Total acumulado en e-Learning</span>
-                        </div>
-                        <span id="lblHsAutogestionadas" class="kpi-num-val purple">0 hs</span>
-                    </div>
-                </div>
-
-                <!-- E-Learning & Virtualidad -->
-                <div class="kpi-block">
-                    <span class="kpi-block-title">E-Learning & Virtualidad</span>
-                    <div class="kpi-card-horizontal card-darkblue">
-                        <div>
-                            <span class="kpi-lbl-title">ASISTENCIAS MODALIDAD E-LEARNING</span>
-                            <span class="kpi-lbl-sub">Participaciones en plataforma virtual</span>
-                        </div>
-                        <span id="lblAsistenciasElearning" class="kpi-num-val dark-blue">0</span>
-                    </div>
-                    <div class="kpi-card-horizontal card-green">
-                        <div>
-                            <span class="kpi-lbl-title">CUMPLIMIENTO E-LEARNING</span>
-                            <span class="kpi-lbl-sub">% Cursos e-Learning completados</span>
-                        </div>
-                        <span id="lblPorcentajeElearning" class="kpi-num-val green">0%</span>
-                    </div>
-                </div>
-
+            <div class="kpi-card-item card-cyan">
+                <span class="kpi-lbl-title">TOTAL ASISTENCIAS</span>
+                <span class="kpi-num-val cyan" id="lblTotalAsistencias">0</span>
+                <span class="kpi-lbl-sub">Presentes acumulados</span>
             </div>
+            <div class="kpi-card-item card-orange">
+                <span class="kpi-lbl-title">CURSOS EN CURSO</span>
+                <span class="kpi-num-val orange" id="lblCursosEnCurso">0</span>
+                <span class="kpi-lbl-sub">Ejecutándose hoy</span>
+            </div>
+        </div>
+    </section>
 
-        </section>
-
-        <!-- SECCIÓN INFERIOR GRÁFICOS (70% / 30%) -->
-        <section class="reportes-bottom">
-            
-            <!-- CONTENEDOR 70% -->
-            <div class="charts-col-left">
-                <div class="chart-box-card card-blue">
-                    <h4>📈 Capacitaciones por Mes</h4>
-                    <div class="chart-container">
-                        <canvas id="chartMeses"></canvas>
-                    </div>
+    <!-- ===================================================
+         2. CONTENEDOR CARGA HORARIA E INTENSIDAD
+         =================================================== -->
+    <section class="kpi-block-contenedor">
+        <span class="kpi-block-title">⏱️ 2. Carga Horaria e Intensidad de Formación</span>
+        <div class="kpi-grid-2x2">
+            <div class="kpi-card-horizontal card-purple">
+                <div>
+                    <span class="kpi-lbl-title">PROMEDIO HS / CURSO</span>
+                    <span class="kpi-lbl-sub">Duración media de actividades</span>
                 </div>
-                <div class="chart-box-card card-purple">
-                    <h4>📊 Asistencias por Curso</h4>
-                    <div class="chart-container">
-                        <canvas id="chartCursos"></canvas>
-                    </div>
+                <span class="kpi-num-val purple" id="lblHsPromedioCurso">0.0 hs</span>
+            </div>
+            <div class="kpi-card-horizontal card-darkblue">
+                <div>
+                    <span class="kpi-lbl-title">HORAS CAPACITACIÓN PER CÁPITA</span>
+                    <span class="kpi-lbl-sub">Promedio de formación por empleado</span>
+                </div>
+                <span class="kpi-num-val dark-blue" id="lblHsPerCapita">0.0 hs</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================================================
+         3. CONTENEDOR ORIGEN Y MODALIDADES
+         =================================================== -->
+    <section class="kpi-block-contenedor">
+        <span class="kpi-block-title">🏢 3. Origen de Capacitación y E-Learning</span>
+        <div class="kpi-grid-3cols">
+            <div class="kpi-card-item card-blue">
+                <span class="kpi-lbl-title">CAPACITACIONES INTERNAS</span>
+                <span class="kpi-num-val blue" id="lblActInternas">0</span>
+                <span class="kpi-lbl-sub">Dictadas por personal propio</span>
+            </div>
+            <div class="kpi-card-item card-orange">
+                <span class="kpi-lbl-title">CAPACITACIONES EXTERNAS</span>
+                <span class="kpi-num-val orange" id="lblActExternas">0</span>
+                <span class="kpi-lbl-sub">Proveedores / Entidades</span>
+            </div>
+            <div class="kpi-card-item card-green">
+                <span class="kpi-lbl-title">% CUMPLIMIENTO E-LEARNING</span>
+                <span class="kpi-num-val green" id="lblPctElearning">0%</span>
+                <span class="kpi-lbl-sub">Modalidad virtual asincrónica</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================================================
+         4. CONTENEDOR ANALÍTICA Y GRÁFICOS
+         =================================================== -->
+    <section class="kpi-block-contenedor">
+        <span class="kpi-block-title">📈 4. Análisis de Tendencias y Distribución</span>
+        <div class="charts-grid-4">
+            <div class="chart-box-card">
+                <h4>Evolución Mensual de Capacitaciones</h4>
+                <div class="chart-container">
+                    <canvas id="chartEvolucionMensual"></canvas>
                 </div>
             </div>
-
-            <!-- CONTENEDOR 30% -->
-            <div class="charts-col-right">
-                <div class="chart-box-card card-green">
-                    <h4>🥧 Modalidad (Presencial vs Virtual)</h4>
-                    <div class="chart-container pie-container">
-                        <canvas id="chartModalidad"></canvas>
-                    </div>
+            <div class="chart-box-card">
+                <h4>Distribución por Modalidad</h4>
+                <div class="chart-container pie-container">
+                    <canvas id="chartModalidad"></canvas>
                 </div>
             </div>
+        </div>
+    </section>
 
-        </section>
-    </main>
+</main>
 
 </div>
 

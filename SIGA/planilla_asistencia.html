@@ -54,7 +54,7 @@
             background: white;
             width: 800px;
             margin: 0 auto;
-            padding: 32px 40px;
+            padding: 28px 40px;
             border-radius: 8px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             page-break-after: always;
@@ -66,7 +66,7 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
 
         .titulo-seccion h1 {
@@ -79,7 +79,7 @@
             font-size: 11px;
             font-weight: 700;
             color: #64748b;
-            margin-left: 4px;
+            margin-left: 2px;
         }
 
         .logo-box {
@@ -103,18 +103,26 @@
             margin-top: 2px;
         }
 
-        /* METADATOS - GRID REORGANIZADO EN 4 LÍNEAS */
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1.2fr;
-            gap: 6px 20px;
+        /* METADATOS - FILAS REORGANIZADAS */
+        .info-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
             margin-bottom: 10px;
             font-size: 11px;
+        }
+
+        .info-row {
+            display: flex;
+            align-items: baseline;
+            width: 100%;
+            gap: 15px;
         }
 
         .info-item {
             display: flex;
             align-items: baseline;
+            flex: 1;
         }
 
         .info-item label {
@@ -127,29 +135,34 @@
         .info-item .valor {
             border-bottom: 1px dotted #94a3b8;
             flex: 1;
-            min-height: 15px;
+            min-height: 14px;
             color: #1e293b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        /* ID N° Destacado */
         .info-item .valor-id {
             border-bottom: 1.5px solid var(--azul);
             flex: 1;
             font-weight: 800;
-            font-size: 12.5px;
+            font-size: 12px;
             color: var(--azul);
             letter-spacing: 0.5px;
         }
 
-        .col-span-2 { grid-column: span 2; }
-        .col-span-3 { grid-column: span 3; }
+        .row-hoja {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-top: 2px;
+        }
 
         .hoja-num {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--azul);
             text-align: right;
-            font-size: 10.5px;
-            font-weight: 700;
-            color: #64748b;
-            margin-bottom: 6px;
         }
 
         .seccion-titulo-tabla {
@@ -157,21 +170,22 @@
             font-weight: 800;
             color: var(--azul);
             margin-bottom: 6px;
+            margin-top: 4px;
         }
 
-        /* TABLA CON ALTURA OPTIMIZADA (29px) */
+        /* TABLA OPTIMIZADA */
         .tabla-contenedor {
             border: 1px solid var(--borde-color);
             border-top: 4px solid var(--verde);
             border-radius: 6px;
             overflow: hidden;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 11px;
+            font-size: 10.5px;
         }
 
         thead {
@@ -180,17 +194,18 @@
         }
 
         th {
-            padding: 7px 4px;
+            padding: 6px 4px;
             font-weight: 700;
             text-align: center;
             border-right: 1px solid rgba(255, 255, 255, 0.15);
         }
 
         td {
-            padding: 4px 6px;
+            padding: 3px 6px;
             border-bottom: 1px solid var(--borde-color);
             border-right: 1px solid var(--borde-color);
-            height: 29px; /* Llena verticalmente la hoja A4 */
+            height: 23px;
+            vertical-align: middle;
         }
 
         tbody tr:nth-child(even) {
@@ -199,21 +214,21 @@
 
         .col-n { width: 30px; text-align: center; font-weight: bold; color: #64748b; }
         .col-leg { width: 60px; text-align: center; }
-        .col-nombre { width: 270px; }
+        .col-nombre { width: 270px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .col-sector { width: 110px; }
         .col-linea { width: 85px; }
         .col-firma { width: 110px; }
 
         /* FIRMAS Y OBSERVACIONES */
         .footer-seccion {
-            margin-top: 14px;
+            margin-top: 10px;
             font-size: 11px;
         }
 
         .linea-firma {
             display: flex;
             align-items: baseline;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
         .linea-firma label {
@@ -260,7 +275,7 @@
             let cabecera = {};
             let asistentes = [];
 
-            // 1. CARGA DESDE SUPABASE SI VIENE DESDE HISTORIAL (QUERY PARAM ?id_cap=...)
+            // 1. CARGA DESDE SUPABASE (HISTORIAL ?id_cap=...)
             if (idCapParam && (window.supabaseClient || window.supabase)) {
                 const db = window.supabaseClient || window.supabase;
                 try {
@@ -275,7 +290,7 @@
                             programa: capData.programa || capData.nombre_curso || '-',
                             curso: capData.nombre_curso ? `${capData.nombre_curso} (Clase ${capData.clase_nro || 1} de ${capData.total_clases || 1})` : '-',
                             temas: capData.temas || capData.descripcion || '-',
-                            capacitador: capData.instructor_1 || capData.instructor || '-',
+                            capacitador: [capData.instructor_1, capData.instructor_2].filter(Boolean).join(', ') || '-',
                             lugar: capData.lugar || 'Planta General',
                             modalidad: capData.modalidad || 'Presencial'
                         };
@@ -285,7 +300,7 @@
                     console.error("Error consultando historial en Supabase:", e);
                 }
             } else {
-                // 2. CARGA DESDE LOCALSTORAGE (MODO REGISTRO EN CURSO)
+                // 2. CARGA DESDE LOCALSTORAGE (NUEVA / REGISTRO EN CURSO)
                 const cabLocal = JSON.parse(localStorage.getItem('siga_impresion_cabecera')) || {};
                 asistentes = JSON.parse(localStorage.getItem('siga_impresion_asistentes')) || [];
 
@@ -295,7 +310,7 @@
                     horario: cabLocal.horario || '-',
                     programa: cabLocal.programa || 'Capacitación General',
                     curso: cabLocal.modulo ? `${cabLocal.programa} (${cabLocal.modulo})` : cabLocal.programa,
-                    temas: cabLocal.descripcion || 'Capacitación técnica y operativa.',
+                    temas: cabLocal.descripcion || '-',
                     capacitador: cabLocal.capacitador || '-',
                     lugar: cabLocal.lugar || 'Planta General',
                     modalidad: cabLocal.modalidad || 'Presencial'
@@ -303,7 +318,7 @@
             }
 
             // PAGINACIÓN A4 (22 FILAS POR HOJA)
-            const FILAS_POR_HOJA = 24;
+            const FILAS_POR_HOJA = 22;
             const totalAsistentes = asistentes.length;
             const totalHojas = Math.max(1, Math.ceil(totalAsistentes / FILAS_POR_HOJA));
 
@@ -357,27 +372,42 @@
                             </div>
                         </div>
 
-                        <!-- NUEVA CABECERA ORGANIZADA EN 4 LÍNEAS -->
-                        <div class="info-grid">
+                        <!-- NUEVA CABECERA ORGANIZADA EN LÍNEAS COMPLETAS -->
+                        <div class="info-container">
                             <!-- Línea 1 -->
-                            <div class="info-item"><label>FECHA:</label><span class="valor">${cabecera.fecha}</span></div>
-                            <div class="info-item"><label>HORARIO:</label><span class="valor">${cabecera.horario}</span></div>
-                            <div class="info-item"><label>ID N°:</label><span class="valor-id">${cabecera.id_cap}</span></div>
+                            <div class="info-row">
+                                <div class="info-item"><label>FECHA:</label><span class="valor">${cabecera.fecha}</span></div>
+                                <div class="info-item"><label>HORARIO:</label><span class="valor">${cabecera.horario}</span></div>
+                                <div class="info-item"><label>ID N°:</label><span class="valor-id">${cabecera.id_cap}</span></div>
+                            </div>
 
-                            <!-- Línea 2 -->
-                            <div class="info-item"><label>PROGRAMA:</label><span class="valor">${cabecera.programa}</span></div>
-                            <div class="info-item col-span-2"><label>CURSO:</label><span class="valor">${cabecera.curso}</span></div>
+                            <!-- Línea 2: Programa completo -->
+                            <div class="info-row">
+                                <div class="info-item"><label>PROGRAMA:</label><span class="valor">${cabecera.programa}</span></div>
+                            </div>
 
-                            <!-- Línea 3 -->
-                            <div class="info-item col-span-3"><label>TEMAS:</label><span class="valor">${cabecera.temas}</span></div>
+                            <!-- Línea 3: Curso completo -->
+                            <div class="info-row">
+                                <div class="info-item"><label>CURSO:</label><span class="valor">${cabecera.curso}</span></div>
+                            </div>
 
-                            <!-- Línea 4 -->
-                            <div class="info-item"><label>LUGAR:</label><span class="valor">${cabecera.lugar}</span></div>
-                            <div class="info-item"><label>CAPACITADOR:</label><span class="valor">${cabecera.capacitador}</span></div>
-                            <div class="info-item"><label>MODALIDAD:</label><span class="valor">${cabecera.modalidad}</span></div>
+                            <!-- Línea 4: Temas completo -->
+                            <div class="info-row">
+                                <div class="info-item"><label>TEMAS:</label><span class="valor">${cabecera.temas}</span></div>
+                            </div>
+
+                            <!-- Línea 5: Lugar y Capacitador -->
+                            <div class="info-row">
+                                <div class="info-item"><label>LUGAR:</label><span class="valor">${cabecera.lugar}</span></div>
+                                <div class="info-item"><label>CAPACITADOR:</label><span class="valor">${cabecera.capacitador}</span></div>
+                            </div>
+
+                            <!-- Línea 6: Modalidad e indicación de Hoja -->
+                            <div class="info-row row-hoja">
+                                <div class="info-item" style="max-width: 50%;"><label>MODALIDAD:</label><span class="valor">${cabecera.modalidad}</span></div>
+                                <div class="hoja-num">HOJA ${numHoja} de ${totalHojas}</div>
+                            </div>
                         </div>
-
-                        <div class="hoja-num">HOJA ${numHoja} de ${totalHojas}</div>
 
                         <div class="seccion-titulo-tabla">DATOS DE LOS PARTICIPANTES:</div>
 

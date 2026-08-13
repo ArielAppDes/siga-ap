@@ -1,5 +1,5 @@
 // ===================================================
-// 10/08/2026 - V0.2 - SIGA_APP - LÓGICA DE ACTIVIDADES (Ciclo de Vida Limpio)
+// 10/08/2026 - V0.3 - SIGA_APP - LÓGICA DE ACTIVIDADES (Ciclo de Vida Limpio)
 // ===================================================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -168,7 +168,20 @@ function renderizarFilasModal(lista, estadoFiltro) {
         } else if (estadoFiltro === "En curso") {
             botonAccion = `<button onclick="cargarSiguienteClase('${item.id_cap}')" style="background:#2980b9; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">Continuar Clase</button>`;
         } else {
-            botonAccion = `<button onclick="verFinalizada('${item.id_cap}')" style="background:#7f8c8d; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">Ver Detalle</button>`;
+            // HISTORIAL DE FINALIZADAS: BOTÓN IMPRIMIR + VER DETALLE
+            botonAccion = `
+                <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
+                    <button onclick="imprimirPlanillaHistorica('${item.id_cap}')" 
+                            style="background-color: #1F6FEB; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 13px;" 
+                            title="Imprimir Planilla A4">
+                        🖨️
+                    </button>
+                    <button onclick="verFinalizada('${item.id_cap}')" 
+                            style="background-color: #7f8c8d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                        Ver Detalle
+                    </button>
+                </div>
+            `;
         }
 
         tr.innerHTML = `
@@ -240,6 +253,12 @@ window.verFinalizada = function(idCap) {
 
     localStorage.setItem("capacitacion_activa", JSON.stringify(cap));
     window.location.href = "capacitaciones.html";
+};
+
+// 4. Imprimir Planilla Histórica (Solo Lectura desde Supabase)
+window.imprimirPlanillaHistorica = function(idCap) {
+    if (!idCap) return;
+    window.open(`planilla_asistencia.html?id_cap=${encodeURIComponent(idCap)}`, '_blank');
 };
 
 // --- BÚSQUEDA EN TIEMPO REAL (MODAL ACTIVIDADES) ---

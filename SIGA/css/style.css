@@ -120,3 +120,76 @@ header h2 {
         min-width: 210px;
     }
 }
+
+/* ===================================================
+   ADAPTACIÓN RESPONSIVE PARA CELULARES (SIGA)
+   =================================================== */
+@media (max-width: 768px) {
+
+    /* 1. Menú Lateral Oculto (Se desliza solo al tocar ☰) */
+    .sidebar {
+        position: fixed !important;
+        top: 0;
+        left: -270px; /* Oculto fuera de la pantalla */
+        width: 250px !important;
+        height: 100vh;
+        z-index: 9999;
+        transition: left 0.3s ease-in-out;
+        box-shadow: 4px 0 12px rgba(0,0,0,0.4);
+    }
+
+    /* Clase que lo activa al hacer clic en el botón */
+    .sidebar.active {
+        left: 0 !important;
+    }
+
+    /* 2. El contenido principal aprovecha el 100% del ancho móvil */
+    .main-content, .content, .dashboard-container {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 12px !important;
+    }
+
+    /* 3. Reorganización de Grillas a 1 sola Columna */
+    .cards-grid, .grid-container, .metrics-grid, .charts-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    /* 4. Tablas adaptables con scroll horizontal protegido */
+    .table-container, .tabla-contenedor, .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 15px;
+    }
+
+    /* 5. Barra superior móvil fija con botón de tres líneas */
+    .mobile-header {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #1F2A44;
+        padding: 10px 15px;
+        position: sticky;
+        top: 0;
+        z-index: 998;
+        border-bottom: 3px solid #18C48F;
+    }
+
+    .btn-hamburger {
+        background: none;
+        border: none;
+        color: #18C48F;
+        font-size: 26px;
+        cursor: pointer;
+        padding: 0 5px;
+    }
+}
+
+/* Ocultar la barra superior en computadoras de escritorio */
+@media (min-width: 769px) {
+    .mobile-header {
+        display: none !important;
+    }
+}

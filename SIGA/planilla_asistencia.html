@@ -5,222 +5,243 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lista de Asistentes - SIGA</title>
-<style>
-    :root {
-        --azul: #1F2A44;
-        --verde: #18C48F;
-        --gris-claro: #f8fafc;
-        --borde-color: #cbd5e1;
-        --texto-oscuro: #0f172a;
-    }
-
-    * {
-        box-sizing: border-box;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        margin: 0;
-        padding: 0;
-    }
-
-    body {
-        background-color: #e2e8f0;
-        padding: 15px;
-        color: var(--texto-oscuro);
-    }
-
-    .no-print {
-        max-width: 800px;
-        margin: 0 auto 15px auto;
-        display: flex;
-        justify-content: flex-end;
-    }
-
-    .btn-imprimir {
-        background-color: var(--verde);
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: bold;
-        cursor: pointer;
-    }
-
-    /* HOJA A4 EQUILIBRADA */
-    .hoja-a4 {
-        background: white;
-        width: 800px;
-        margin: 0 auto;
-        padding: 30px 40px; /* Recuperamos espacio visual */
-        border-radius: 8px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        page-break-after: always;
-        page-break-inside: avoid;
-    }
-
-    .header-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 15px;
-    }
-
-    .titulo-seccion h1 {
-        font-size: 22px;
-        font-weight: 800;
-        color: var(--azul);
-    }
-
-    .titulo-seccion .subtitulo {
-        font-size: 11px;
-        font-weight: 700;
-        color: #64748b;
-        margin-left: 6px;
-    }
-
-    .logo-box {
-        background-color: var(--azul);
-        padding: 8px 18px;
-        border-radius: 8px;
-        text-align: center;
-        border-bottom: 3px solid var(--verde);
-    }
-
-    .logo-box h2 {
-        font-size: 26px;
-        font-weight: 900;
-        color: var(--verde);
-        line-height: 1;
-    }
-
-    .logo-box p {
-        font-size: 9.5px;
-        color: white;
-        margin-top: 2px;
-    }
-
-    .info-grid {
-        display: grid;
-        grid-template-columns: 1.2fr 1fr;
-        gap: 6px 25px;
-        margin-bottom: 12px;
-        font-size: 11.5px;
-    }
-
-    .info-item {
-        display: flex;
-        align-items: baseline;
-    }
-
-    .info-item label {
-        font-weight: 700;
-        color: var(--azul);
-        width: 95px;
-        flex-shrink: 0;
-    }
-
-    .info-item .valor {
-        border-bottom: 1px dotted #94a3b8;
-        flex: 1;
-        min-height: 15px;
-    }
-
-    .hoja-num {
-        text-align: right;
-        font-size: 10.5px;
-        font-weight: 700;
-        color: #64748b;
-        margin-bottom: 6px;
-    }
-
-    .seccion-titulo-tabla {
-        font-size: 11.5px;
-        font-weight: 800;
-        color: var(--azul);
-        margin-bottom: 6px;
-    }
-
-    /* TABLA CON ALTURA MEDIA (26px) */
-    .tabla-contenedor {
-        border: 1px solid var(--borde-color);
-        border-top: 4px solid var(--verde);
-        border-radius: 6px;
-        overflow: hidden;
-        margin-bottom: 18px;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 11px;
-    }
-
-    thead {
-        background-color: var(--azul);
-        color: white;
-    }
-
-    th {
-        padding: 6px 4px;
-        font-weight: 700;
-        text-align: center;
-        border-right: 1px solid rgba(255, 255, 255, 0.15);
-    }
-
-    td {
-        padding: 4px 6px;
-        border-bottom: 1px solid var(--borde-color);
-        border-right: 1px solid var(--borde-color);
-        height: 26px; /* Altura perfecta para escribir cómodo a mano */
-    }
-
-    tbody tr:nth-child(even) {
-        background-color: var(--gris-claro);
-    }
-
-    .col-n { width: 30px; text-align: center; font-weight: bold; color: #64748b; }
-    .col-leg { width: 60px; text-align: center; }
-    .col-nombre { width: 270px; }
-    .col-sector { width: 110px; }
-    .col-linea { width: 85px; }
-    .col-firma { width: 110px; }
-
-    .footer-seccion {
-        margin-top: 15px;
-        font-size: 11.5px;
-    }
-
-    .linea-firma {
-        display: flex;
-        align-items: baseline;
-        margin-bottom: 12px;
-    }
-
-    .linea-firma label {
-        font-weight: 700;
-        color: var(--azul);
-        width: 140px;
-    }
-
-    .linea-firma .puntos {
-        border-bottom: 1px dotted #64748b;
-        flex: 1;
-    }
-
-    @page {
-        size: A4 portrait;
-        margin: 8mm;
-    }
-
-    @media print {
-        body { background: none; padding: 0; margin: 0; }
-        .no-print { display: none !important; }
-        .hoja-a4 { width: 100%; box-shadow: none; padding: 0; margin: 0; }
-        .tabla-contenedor, .logo-box, thead {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+    <!-- Supabase CDN para lectura histórica directa -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="jss/supaBaseClient.js?v=9.0"></script>
+    <style>
+        :root {
+            --azul: #1F2A44;
+            --verde: #18C48F;
+            --gris-claro: #f8fafc;
+            --borde-color: #cbd5e1;
+            --texto-oscuro: #0f172a;
         }
-    }
-</style>
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #e2e8f0;
+            padding: 15px;
+            color: var(--texto-oscuro);
+        }
+
+        .no-print {
+            max-width: 800px;
+            margin: 0 auto 12px auto;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-imprimir {
+            background-color: var(--verde);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* HOJA A4 PERFECTA */
+        .hoja-a4 {
+            background: white;
+            width: 800px;
+            margin: 0 auto;
+            padding: 32px 40px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            page-break-after: always;
+            page-break-inside: avoid;
+        }
+
+        /* ENCABEZADO */
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 14px;
+        }
+
+        .titulo-seccion h1 {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--azul);
+        }
+
+        .titulo-seccion .subtitulo {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            margin-left: 4px;
+        }
+
+        .logo-box {
+            background-color: var(--azul);
+            padding: 8px 18px;
+            border-radius: 8px;
+            text-align: center;
+            border-bottom: 3px solid var(--verde);
+        }
+
+        .logo-box h2 {
+            font-size: 26px;
+            font-weight: 900;
+            color: var(--verde);
+            line-height: 1;
+        }
+
+        .logo-box p {
+            font-size: 9.5px;
+            color: white;
+            margin-top: 2px;
+        }
+
+        /* METADATOS - GRID REORGANIZADO EN 4 LÍNEAS */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1.2fr;
+            gap: 6px 20px;
+            margin-bottom: 10px;
+            font-size: 11px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: baseline;
+        }
+
+        .info-item label {
+            font-weight: 700;
+            color: var(--azul);
+            margin-right: 6px;
+            flex-shrink: 0;
+        }
+
+        .info-item .valor {
+            border-bottom: 1px dotted #94a3b8;
+            flex: 1;
+            min-height: 15px;
+            color: #1e293b;
+        }
+
+        /* ID N° Destacado */
+        .info-item .valor-id {
+            border-bottom: 1.5px solid var(--azul);
+            flex: 1;
+            font-weight: 800;
+            font-size: 12.5px;
+            color: var(--azul);
+            letter-spacing: 0.5px;
+        }
+
+        .col-span-2 { grid-column: span 2; }
+        .col-span-3 { grid-column: span 3; }
+
+        .hoja-num {
+            text-align: right;
+            font-size: 10.5px;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+
+        .seccion-titulo-tabla {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--azul);
+            margin-bottom: 6px;
+        }
+
+        /* TABLA CON ALTURA OPTIMIZADA (29px) */
+        .tabla-contenedor {
+            border: 1px solid var(--borde-color);
+            border-top: 4px solid var(--verde);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+
+        thead {
+            background-color: var(--azul);
+            color: white;
+        }
+
+        th {
+            padding: 7px 4px;
+            font-weight: 700;
+            text-align: center;
+            border-right: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        td {
+            padding: 4px 6px;
+            border-bottom: 1px solid var(--borde-color);
+            border-right: 1px solid var(--borde-color);
+            height: 29px; /* Llena verticalmente la hoja A4 */
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: var(--gris-claro);
+        }
+
+        .col-n { width: 30px; text-align: center; font-weight: bold; color: #64748b; }
+        .col-leg { width: 60px; text-align: center; }
+        .col-nombre { width: 270px; }
+        .col-sector { width: 110px; }
+        .col-linea { width: 85px; }
+        .col-firma { width: 110px; }
+
+        /* FIRMAS Y OBSERVACIONES */
+        .footer-seccion {
+            margin-top: 14px;
+            font-size: 11px;
+        }
+
+        .linea-firma {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 12px;
+        }
+
+        .linea-firma label {
+            font-weight: 700;
+            color: var(--azul);
+            width: 140px;
+        }
+
+        .linea-firma .puntos {
+            border-bottom: 1px dotted #64748b;
+            flex: 1;
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 8mm;
+        }
+
+        @media print {
+            body { background: none; padding: 0; margin: 0; }
+            .no-print { display: none !important; }
+            .hoja-a4 { width: 100%; box-shadow: none; padding: 0; margin: 0; }
+            .tabla-contenedor, .logo-box, thead {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -229,119 +250,176 @@
         <button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
     </div>
 
-    <div class="hoja-a4">
+    <div id="hojas-container"></div>
 
-        <!-- Encabezado con Logo SIGA -->
-        <div class="header-container">
-            <div class="titulo-seccion">
-                <h1>Lista de Asistentes</h1>
-                <span class="subtitulo">"CONSTANCIA DE CAPACITACIÓN"</span>
-            </div>
-            <div class="logo-box">
-                <h2>SIGA</h2>
-                <p>Empresa S.A</p>
-            </div>
-        </div>
-
-        <!-- Información de la Capacitación -->
-        <div class="info-grid">
-            <div class="info-item"><label>FECHA:</label><span class="valor"></span></div>
-            <div class="info-item"><label>HORARIO:</label><span class="valor"></span></div>
-            <div class="info-item"><label>PROGRAMA:</label><span class="valor"></span></div>
-            <div class="info-item"><label>MÓDULO:</label><span class="valor"></span></div>
-            <div class="info-item" style="grid-column: span 2;"><label>TEMAS:</label><span class="valor"></span></div>
-            <div class="info-item" style="grid-column: span 2;"><label>CAPACITADOR:</label><span class="valor"></span></div>
-            <div class="info-item" style="grid-column: span 2;"><label>LUGAR:</label><span class="valor"></span></div>
-        </div>
-
-        <div class="hoja-num">HOJA 1 de 1</div>
-
-        <div class="seccion-titulo-tabla">DATOS DE LOS PARTICIPANTES:</div>
-
-        <!-- Tabla Estilizada con bordes redondeados y vivo verde superior -->
-        <div class="tabla-contenedor">
-            <table>
-                <thead>
-                    <tr>
-                        <th class="col-n">N°</th>
-                        <th class="col-leg">Leg.</th>
-                        <th class="col-nombre">Apellido y nombre</th>
-                        <th class="col-sector">Sector</th>
-                        <th class="col-linea">Línea</th>
-                        <th class="col-firma">Firma</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Generación de 20 Filas -->
-                    <script>
-                        for (let i = 1; i <= 20; i++) {
-                            document.write(`
-                                <tr>
-                                    <td class="col-n">${i}</td>
-                                    <td class="col-leg"></td>
-                                    <td class="col-nombre"></td>
-                                    <td class="col-sector"></td>
-                                    <td class="col-linea"></td>
-                                    <td class="col-firma"></td>
-                                </tr>
-                            `);
-                        }
-                    </script>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Sección de Firmas u Observaciones -->
-        <div class="footer-seccion">
-            <div class="linea-firma">
-                <label>Firma capacitadores:</label>
-                <div class="puntos"></div>
-            </div>
-            <div class="linea-firma">
-                <label>Observaciones:</label>
-                <div class="puntos"></div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- SCRIPT QUE RECIBE LOS DATOS E IMPRIME -->
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // 1. Leer datos enviados desde el formulario
-            const cabecera = JSON.parse(localStorage.getItem('siga_impresion_cabecera')) || {};
-            const asistentes = JSON.parse(localStorage.getItem('siga_impresion_asistentes')) || [];
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const idCapParam = urlParams.get('id_cap');
 
-            // 2. Rellenar los campos de la cabecera
-            const valores = document.querySelectorAll('.info-item .valor');
-            if (valores.length >= 7) {
-                valores[0].textContent = cabecera.fecha || '';
-                valores[1].textContent = cabecera.horario || '';
-                valores[2].textContent = cabecera.programa || '';
-                valores[3].textContent = cabecera.modulo || '';
-                valores[4].textContent = cabecera.temas || '';
-                valores[5].textContent = cabecera.capacitador || '';
-                valores[6].textContent = cabecera.lugar || '';
+            let cabecera = {};
+            let asistentes = [];
+
+            // 1. CARGA DESDE SUPABASE SI VIENE DESDE HISTORIAL (QUERY PARAM ?id_cap=...)
+            if (idCapParam && (window.supabaseClient || window.supabase)) {
+                const db = window.supabaseClient || window.supabase;
+                try {
+                    const { data: capData } = await db.from('capacitaciones').select('*').eq('id_cap', idCapParam).maybeSingle();
+                    const { data: asisData } = await db.from('asistentes').select('*').eq('id_cap', idCapParam);
+
+                    if (capData) {
+                        cabecera = {
+                            id_cap: capData.id_cap,
+                            fecha: capData.fecha || '',
+                            horario: capData.horario || '-',
+                            programa: capData.programa || capData.nombre_curso || '-',
+                            curso: capData.nombre_curso ? `${capData.nombre_curso} (Clase ${capData.clase_nro || 1} de ${capData.total_clases || 1})` : '-',
+                            temas: capData.temas || capData.descripcion || '-',
+                            capacitador: capData.instructor_1 || capData.instructor || '-',
+                            lugar: capData.lugar || 'Planta General',
+                            modalidad: capData.modalidad || 'Presencial'
+                        };
+                    }
+                    if (asisData) asistentes = asisData;
+                } catch (e) {
+                    console.error("Error consultando historial en Supabase:", e);
+                }
+            } else {
+                // 2. CARGA DESDE LOCALSTORAGE (MODO REGISTRO EN CURSO)
+                const cabLocal = JSON.parse(localStorage.getItem('siga_impresion_cabecera')) || {};
+                asistentes = JSON.parse(localStorage.getItem('siga_impresion_asistentes')) || [];
+
+                cabecera = {
+                    id_cap: cabLocal.temas?.includes('ID Capacitación:') ? cabLocal.temas.replace('ID Capacitación:', '').trim() : (cabLocal.id_cap || '-'),
+                    fecha: cabLocal.fecha || new Date().toLocaleDateString('es-AR'),
+                    horario: cabLocal.horario || '-',
+                    programa: cabLocal.programa || 'Capacitación General',
+                    curso: cabLocal.modulo ? `${cabLocal.programa} (${cabLocal.modulo})` : cabLocal.programa,
+                    temas: cabLocal.descripcion || 'Capacitación técnica y operativa.',
+                    capacitador: cabLocal.capacitador || '-',
+                    lugar: cabLocal.lugar || 'Planta General',
+                    modalidad: cabLocal.modalidad || 'Presencial'
+                };
             }
 
-            // 3. Rellenar los nombres y legajos en la tabla
-            const filas = document.querySelectorAll('tbody tr');
-            asistentes.forEach((emp, index) => {
-                if (index < filas.length) {
-                    const c = filas[index].children;
-                    c[1].textContent = emp.legajo || '';
-                    c[2].textContent = `${emp.apellido}, ${emp.nombre}`;
-                    c[3].textContent = emp.sector !== '-' ? emp.sector : '';
-                    c[4].textContent = emp.linea !== '-' ? emp.linea : '';
-                }
-            });
+            // PAGINACIÓN A4 (15 FILAS POR HOJA)
+            const FILAS_POR_HOJA = 15;
+            const totalAsistentes = asistentes.length;
+            const totalHojas = Math.max(1, Math.ceil(totalAsistentes / FILAS_POR_HOJA));
 
-            // 4. Lanzar la ventana de impresión / PDF automáticamente
+            const container = document.getElementById('hojas-container');
+            container.innerHTML = '';
+
+            for (let numHoja = 1; numHoja <= totalHojas; numHoja++) {
+                const inicioIndex = (numHoja - 1) * FILAS_POR_HOJA;
+                const asistentesHoja = asistentes.slice(inicioIndex, inicioIndex + FILAS_POR_HOJA);
+
+                let filasHTML = '';
+                for (let i = 0; i < FILAS_POR_HOJA; i++) {
+                    const emp = asistentesHoja[i];
+                    const numGlobal = inicioIndex + i + 1;
+
+                    if (emp) {
+                        filasHTML += `
+                            <tr>
+                                <td class="col-n">${numGlobal}</td>
+                                <td class="col-leg">${emp.legajo || ''}</td>
+                                <td class="col-nombre">${emp.apellido ? `${emp.apellido}, ${emp.nombre}` : ''}</td>
+                                <td class="col-sector">${emp.sector && emp.sector !== '-' ? emp.sector : ''}</td>
+                                <td class="col-linea">${emp.linea && emp.linea !== '-' ? emp.linea : ''}</td>
+                                <td class="col-firma"></td>
+                            </tr>
+                        `;
+                    } else {
+                        filasHTML += `
+                            <tr>
+                                <td class="col-n">${numGlobal}</td>
+                                <td class="col-leg"></td>
+                                <td class="col-nombre"></td>
+                                <td class="col-sector"></td>
+                                <td class="col-linea"></td>
+                                <td class="col-firma"></td>
+                            </tr>
+                        `;
+                    }
+                }
+
+                const hojaHTML = `
+                    <div class="hoja-a4">
+                        <div class="header-container">
+                            <div class="titulo-seccion">
+                                <h1>Lista de Asistentes</h1>
+                                <span class="subtitulo">"CONSTANCIA DE CAPACITACIÓN"</span>
+                            </div>
+                            <div class="logo-box">
+                                <h2>SIGA</h2>
+                                <p>Empresa S.A</p>
+                            </div>
+                        </div>
+
+                        <!-- NUEVA CABECERA ORGANIZADA EN 4 LÍNEAS -->
+                        <div class="info-grid">
+                            <!-- Línea 1 -->
+                            <div class="info-item"><label>FECHA:</label><span class="valor">${cabecera.fecha}</span></div>
+                            <div class="info-item"><label>HORARIO:</label><span class="valor">${cabecera.horario}</span></div>
+                            <div class="info-item"><label>ID N°:</label><span class="valor-id">${cabecera.id_cap}</span></div>
+
+                            <!-- Línea 2 -->
+                            <div class="info-item"><label>PROGRAMA:</label><span class="valor">${cabecera.programa}</span></div>
+                            <div class="info-item col-span-2"><label>CURSO:</label><span class="valor">${cabecera.curso}</span></div>
+
+                            <!-- Línea 3 -->
+                            <div class="info-item col-span-3"><label>TEMAS:</label><span class="valor">${cabecera.temas}</span></div>
+
+                            <!-- Línea 4 -->
+                            <div class="info-item"><label>LUGAR:</label><span class="valor">${cabecera.lugar}</span></div>
+                            <div class="info-item"><label>CAPACITADOR:</label><span class="valor">${cabecera.capacitador}</span></div>
+                            <div class="info-item"><label>MODALIDAD:</label><span class="valor">${cabecera.modalidad}</span></div>
+                        </div>
+
+                        <div class="hoja-num">HOJA ${numHoja} de ${totalHojas}</div>
+
+                        <div class="seccion-titulo-tabla">DATOS DE LOS PARTICIPANTES:</div>
+
+                        <div class="tabla-contenedor">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th class="col-n">N°</th>
+                                        <th class="col-leg">Leg.</th>
+                                        <th class="col-nombre">Apellido y nombre</th>
+                                        <th class="col-sector">Sector</th>
+                                        <th class="col-linea">Línea</th>
+                                        <th class="col-firma">Firma</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${filasHTML}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="footer-seccion">
+                            <div class="linea-firma">
+                                <label>Firma capacitadores:</label>
+                                <div class="puntos"></div>
+                            </div>
+                            <div class="linea-firma">
+                                <label>Observaciones:</label>
+                                <div class="puntos"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                container.insertAdjacentHTML('beforeend', hojaHTML);
+            }
+
             setTimeout(() => {
                 window.print();
-            }, 500);
+            }, 200);
         });
     </script>
-    
+
 </body>
 </html>

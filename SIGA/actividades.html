@@ -12,118 +12,133 @@
 
 <body>
 
-            <!-- Barra para dispositivos móviles -->
-            <div class="mobile-header">
-            <button class="btn-hamburger" onclick="toggleMenu()">☰</button>
-            <span style="font-weight: 800; color: #18C48F; font-size: 18px;">SIGA</span>
+    <!-- Barra para dispositivos móviles -->
+    <div class="mobile-header">
+        <button class="btn-hamburger" onclick="toggleMenu()">☰</button>
+        <span style="font-weight: 800; color: #18C48F; font-size: 18px;">SIGA</span>
+    </div>
+
+    <div class="contenedor">
+        
+        <!-- Menú lateral -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>SIGA</h1>
+                <p>Empresa S.A</p>
+            </div>
+            <nav>
+                <a href="dashboard.html">🏠 Inicio</a>
+                <a href="actividades.html" class="activo">🎓 Actividades</a>
+                <a href="agenda.html">📅 Agenda</a>
+                <a href="certificaciones.html">🏆 Certificaciones</a>
+                <a href="normativas.html">⚖️ Normativas</a>
+                <a href="reportes.html">📊 Reportes</a>
+                <a href="administracion.html">⚙ Administración</a>
+                <a href="#">❓ Ayuda</a>
+                <a href="index.html">🚪 Salir</a>
+            </nav>
+        </aside>
+
+        <!-- Contenido -->
+        <main class="contenido">
+            <header>
+                <div>
+                    <h2>Actividades</h2>
+                    <p class="subtitulo">Centro de gestión de capacitaciones.</p>
+                </div>
+            </header>
+
+            <section class="tarjetas">
+                <!-- Fila 1 -->
+                <a href="capacitaciones.html" id="cardNueva" class="tarjeta">
+                    <div class="icono">➕</div>
+                    <h3>Nueva capacitación</h3>
+                    <p>Crear una nueva capacitación.</p>
+                </a>
+
+                <a href="#" id="cardProgramadas" class="tarjeta">
+                    <div class="icono">📅</div>
+                    <h3>Programadas</h3>
+                    <p>Consultar y editar capacitaciones programadas.</p>
+                </a>
+
+                <!-- Fila 2 -->
+                <a href="#" id="cardEnCurso" class="tarjeta">
+                    <div class="icono">▶</div>
+                    <h3>En curso</h3>
+                    <p>Continuar capacitaciones en ejecución.</p>
+                </a>
+
+                <a href="#" id="cardFinalizadas" class="tarjeta">
+                    <div class="icono">✔</div>
+                    <h3>Finalizadas</h3>
+                    <p>Consultar historial de capacitaciones.</p>
+                </a>
+
+                <!-- Fila 3 -->
+                <a href="#" id="cardTransferencia" class="tarjeta">
+                    <div class="icono">📋</div>
+                    <h3>Encuesta de Transferencia</h3>
+                    <p>Evaluación de impacto laboral post-capacitación.</p>
+                </a>
+
+                <a href="#" id="cardSatisfaccion" class="tarjeta">
+                    <div class="icono">📱</div>
+                    <h3>Encuesta de Satisfacción</h3>
+                    <p>Gestión y generación de códigos QR de evaluación.</p>
+                </a>
+            </section>
+        </main>
+
+    </div>
+
+    <!-- Modal -->
+    <div id="modalCapacitaciones" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
+        <div style="background:#fff; width:90%; max-width:900px; padding:25px; border-radius:12px; max-height:85vh; display:flex; flex-direction:column; box-shadow:0 10px 25px rgba(0,0,0,0.3);">
+            
+            <!-- CABECERA: TÍTULO Y BOTÓN CERRAR -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #eee; padding-bottom:10px;">
+                <h3 id="tituloModal" style="margin:0; color:#1a252f;">Capacitaciones</h3>
+                <button id="btnCerrarModal" style="background:none; border:none; font-size:24px; cursor:pointer; color:#888;">&times;</button>
+            </div>
+            
+            <!-- BARRA DE BÚSQUEDA -->
+            <div style="margin-bottom:15px;">
+                <input 
+                    type="text" 
+                    id="inputBuscarModal" 
+                    oninput="filtrarModal()"
+                    placeholder="🔍 Buscar por ID, Curso o Instructor..." 
+                    style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.95rem; box-sizing:border-box; outline:none;">
             </div>
 
-<div class="contenedor">
-   
-    <!-- Menú lateral -->
-    <aside class="sidebar">
-        <div class="logo">
-            <h1>SIGA</h1>
-            <p>Empresa S.A</p>
-        </div>
-        <nav>
-            <a href="dashboard.html">🏠 Inicio</a>
-            <a href="actividades.html" class="activo">🎓 Actividades</a>
-            <a href="agenda.html">📅 Agenda</a>
-            <a href="certificaciones.html">🏆 Certificaciones</a>
-            <a href="normativas.html">⚖️ Normativas</a>
-            <a href="reportes.html">📊 Reportes</a>
-            <a href="administracion.html">⚙ Administración</a>
-            <a href="#">❓ Ayuda</a>
-            <a href="index.html">🚪 Salir</a>
-        </nav>
-    </aside>
-
-    <!-- Contenido -->
-    <main class="contenido">
-        <header>
-            <div>
-                <h2>Actividades</h2>
-                <p class="subtitulo">Centro de gestión de capacitaciones.</p>
+            <!-- TABLA DE RESULTADOS CON ALTURA MÁXIMA Y SCROLL VERTICAL -->
+            <div id="tablaContenedor" style="max-height:380px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px;">
+                <table style="width:100%; border-collapse:collapse; text-align:left;">
+                    <thead>
+                        <tr style="background:#f4f6f7; border-bottom:2px solid #ddd; position:sticky; top:0; z-index:10;">
+                            <th style="padding:10px; background:#f4f6f7;">ID CAP</th>
+                            <th style="padding:10px; background:#f4f6f7;">Curso</th>
+                            <th style="padding:10px; background:#f4f6f7;">Clase</th>
+                            <th style="padding:10px; background:#f4f6f7;">Fecha</th>
+                            <th style="padding:10px; background:#f4f6f7;">Instructor</th>
+                            <th style="padding:10px; text-align:center; background:#f4f6f7;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyCapacitaciones"></tbody>
+                </table>
             </div>
-        </header>
-
-        <section class="tarjetas">
-            <a href="capacitaciones.html" id="cardNueva" class="tarjeta">
-                <div class="icono">➕</div>
-                <h3>Nueva capacitación</h3>
-                <p>Crear una nueva capacitación.</p>
-            </a>
-
-            <a href="#" id="cardProgramadas" class="tarjeta">
-                <div class="icono">📅</div>
-                <h3>Programadas</h3>
-                <p>Consultar y editar capacitaciones programadas.</p>
-            </a>
-
-            <a href="#" id="cardEnCurso" class="tarjeta">
-                <div class="icono">▶</div>
-                <h3>En curso</h3>
-                <p>Continuar capacitaciones en ejecución.</p>
-            </a>
-
-            <a href="#" id="cardFinalizadas" class="tarjeta">
-                <div class="icono">✔</div>
-                <h3>Finalizadas</h3>
-                <p>Consultar historial de capacitaciones.</p>
-            </a>
-        </section>
-    </main>
-
-</div>
-
-<!-- Modal -->
-<div id="modalCapacitaciones" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
-    <div style="background:#fff; width:90%; max-width:900px; padding:25px; border-radius:12px; max-height:85vh; display:flex; flex-direction:column; box-shadow:0 10px 25px rgba(0,0,0,0.3);">
-        
-        <!-- CABECERA: TÍTULO Y BOTÓN CERRAR -->
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #eee; padding-bottom:10px;">
-            <h3 id="tituloModal" style="margin:0; color:#1a252f;">Capacitaciones</h3>
-            <button id="btnCerrarModal" style="background:none; border:none; font-size:24px; cursor:pointer; color:#888;">&times;</button>
-        </div>
-        
-        <!-- BARRA DE BÚSQUEDA -->
-        <div style="margin-bottom:15px;">
-            <input 
-                type="text" 
-                id="inputBuscarModal" 
-                oninput="filtrarModal()"
-                placeholder="🔍 Buscar por ID, Curso o Instructor..." 
-                style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.95rem; box-sizing:border-box; outline:none;">
-        </div>
-
-        <!-- TABLA DE RESULTADOS CON ALTURA MÁXIMA Y SCROLL VERTICAL -->
-        <div id="tablaContenedor" style="max-height:380px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px;">
-            <table style="width:100%; border-collapse:collapse; text-align:left;">
-                <thead>
-                    <tr style="background:#f4f6f7; border-bottom:2px solid #ddd; position:sticky; top:0; z-index:10;">
-                        <th style="padding:10px; background:#f4f6f7;">ID CAP</th>
-                        <th style="padding:10px; background:#f4f6f7;">Curso</th>
-                        <th style="padding:10px; background:#f4f6f7;">Clase</th>
-                        <th style="padding:10px; background:#f4f6f7;">Fecha</th>
-                        <th style="padding:10px; background:#f4f6f7;">Instructor</th>
-                        <th style="padding:10px; text-align:center; background:#f4f6f7;">Acción</th>
-                    </tr>
-                </thead>
-                <tbody id="tbodyCapacitaciones"></tbody>
-            </table>
         </div>
     </div>
-</div>
 
-<!-- 1. Librería Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- 1. Librería Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!-- 2. Cliente de conexión -->
-<script src="jss/supaBaseClient.js?v=9.0"></script>
+    <!-- 2. Cliente de conexión -->
+    <script src="jss/supaBaseClient.js?v=9.0"></script>
 
-<!-- 3. Lógica principal (versión forzada para evitar caché de GitHub) -->
-<script src="jss/actividades.js?v=11"></script>
+    <!-- 3. Lógica principal -->
+    <script src="jss/actividades.js?v=11"></script>
 
 </body>
 </html>

@@ -19,7 +19,7 @@ async function cargarMetricasSIGA() {
             return;
         }
 
-        // 1. Obtener Asistentes (Participaciones a capacitaciones)
+        // 1. Obtener Asistentes
         const { data: listaAsistentes, error: errAsist } = await window.supabaseClient
             .from('asistentes')
             .select('*');
@@ -27,15 +27,43 @@ async function cargarMetricasSIGA() {
         if (errAsist) console.error("Error al obtener asistentes:", errAsist);
         const asistenciasData = listaAsistentes || [];
 
-        // 2. Obtener Capacitaciones relacionando la tabla cursos para traer la modalidad
+        // 2. Obtener Capacitaciones
         const { data: capacitaciones, error: errCap } = await window.supabaseClient
             .from('capacitaciones')
-            .select('*, cursos(modalidad)');
+            .select('*');
 
         if (errCap) console.error("Error al obtener capacitaciones:", errCap);
-        const capacitacionesData = capacitaciones || [];
+        let capacitacionesData = capacitaciones || [];
 
-        // 3. EJECUCIÓN DE MÓDULOS INDEPENDIENTES
+        // 3. Obtener Cursos para cruzar modalidad por el nombre del curso
+        const { data: listaCursos, error: errCur } = await window.supabaseClient
+            .from('cursos')
+            .select('*');
+
+        if (errCur) console.error("Error al obtener cursos:", errCur);
+
+        // Mapa auxiliar: Nombre del curso -> Modalidad
+        const mapaModalidad = {};
+        if (listaCursos) {
+            listaCursos.forEach(cur => {
+                if (cur.nombre) {
+                    const nombreClean = String(cur.nombre).trim().toLowerCase();
+                    mapaModalidad[nombreClean] = cur.modalidad || cur.tipo || '';
+                }
+            });
+        }
+
+        // Asociar la modalidad a cada capacitación comparando 'nombre_curso' con 'nombre'
+        capacitacionesData = capacitacionesData.map(c => {
+            const nombreCapClean = String(c.nombre_curso || c.nombre || '').trim().toLowerCase();
+            const modCurso = mapaModalidad[nombreCapClean] || '';
+            return {
+                ...c,
+                modalidad: c.modalidad || modCurso
+            };
+        });
+
+        // 4. EJECUCIÓN DE MÓDULOS INDEPENDIENTES
         calcularModuloGenerales(capacitacionesData, asistenciasData);
         calcularModuloHoraria(capacitacionesData, asistenciasData);
         calcularModuloOrigen(capacitacionesData);

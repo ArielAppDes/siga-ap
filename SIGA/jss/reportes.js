@@ -45,14 +45,29 @@ async function cargarMetricasSIGA() {
         console.error("Error general al procesar reportes:", error);
     }
 }
+
+// Función auxiliar para leer la modalidad en cualquier estructura de Supabase
+function obtenerModalidad(c) {
+    let mod = '';
+    if (c.cursos) {
+        if (Array.isArray(c.cursos) && c.cursos.length > 0) {
+            mod = c.cursos[0].modalidad || '';
+        } else if (typeof c.cursos === 'object') {
+            mod = c.cursos.modalidad || '';
+        }
+    }
+    if (!mod) {
+        mod = c.modalidad || c.tipo || c.origen || c.categoria || '';
+    }
+    return String(mod).toLowerCase();
+}
+
 // ===================================================
 // MÓDULO 1: INDICADORES GENERALES DE GESTIÓN
 // ===================================================
 function calcularModuloGenerales(capacitaciones, asistentes) {
-    // Total Actividades
     const totalActividades = capacitaciones.length;
 
-    // Personas Capacitadas (Filtro por Legajo / DNI Único sin repetir)
     const legajosUnicos = new Set(
         asistentes
             .map(a => a.legajo || a.dni || a.empleado_id)
@@ -60,16 +75,13 @@ function calcularModuloGenerales(capacitaciones, asistentes) {
     );
     const personasCapacitadas = legajosUnicos.size;
 
-    // Total Asistencias (Sumatoria general acumulada de participaciones, incluidos duplicados)
     const totalAsistencias = asistentes.length;
 
-    // Renderizado en HTML (Asegura compatibilidad con distintos IDs del DOM)
     setVal('lblTotalActividades', totalActividades);
     setVal('lblPersonasCapacitadas', personasCapacitadas);
     setVal('lblTotalAsistencias', totalAsistencias);
     setVal('lblAsistenciasMes', totalAsistencias);
 }
-
 
 // ===================================================
 // MÓDULO 2: CARGA HORARIA E INTENSIDAD
@@ -90,7 +102,6 @@ function calcularModuloHoraria(capacitaciones, asistentes) {
         sumaHoras += isNaN(hs) ? 0 : hs;
     });
 
-    // Legajos únicos para cálculo Per Cápita
     const legajosUnicos = new Set(
         asistentes
             .map(a => a.legajo || a.dni || a.empleado_id)
@@ -98,16 +109,13 @@ function calcularModuloHoraria(capacitaciones, asistentes) {
     );
     const totalPersonasUnicas = legajosUnicos.size;
 
-    // Promedios
     const totalActividades = capacitaciones.length;
     const hsPromedio = totalActividades > 0 ? (sumaHoras / totalActividades).toFixed(1) : '0.0';
     const hsPerCapita = totalPersonasUnicas > 0 ? (sumaHoras / totalPersonasUnicas).toFixed(1) : '0.0';
 
-    // Renderizado en HTML
     setVal('lblHsPromedioCurso', `${hsPromedio} hs`);
     setVal('lblHsPerCapita', `${hsPerCapita} hs`);
 }
-
 
 // ===================================================
 // MÓDULO 3: ORIGEN Y E-LEARNING
@@ -120,24 +128,22 @@ function calcularModuloOrigen(capacitaciones) {
     const totalActividades = capacitaciones.length;
 
     capacitaciones.forEach(c => {
-        const tipo = String(c.tipo || c.origen || c.modalidad || c.categoria || '').toLowerCase();
+        const tipo = String(c.tipo || c.origen || c.categoria || '').toLowerCase();
+        const modalidad = obtenerModalidad(c);
 
-        // Interna vs Externa
         if (tipo.includes('extern')) {
             actExternas++;
         } else {
             actInternas++;
         }
 
-        // Virtual vs Presencial
-        if (tipo.includes('virtu') || tipo.includes('e-learn') || tipo.includes('onlin')) {
+        if (modalidad.includes('virtu') || modalidad.includes('e-learn') || modalidad.includes('onlin')) {
             actVirtuales++;
         }
     });
 
     const pctElearning = totalActividades > 0 ? Math.round((actVirtuales / totalActividades) * 100) : 0;
 
-    // Renderizado en HTML
     setVal('lblActInternas', actInternas);
     setVal('lblActividadesInternas', actInternas);
     setVal('lblActExternas', actExternas);
@@ -147,7 +153,6 @@ function calcularModuloOrigen(capacitaciones) {
     setVal('lblAsistenciasElearning', actVirtuales);
     setVal('lblHsAutogestionadas', '0 hs');
 }
-
 
 // ===================================================
 // MÓDULO 4: TENDENCIAS Y GRÁFICOS
@@ -162,20 +167,19 @@ function calcularModuloGraficos(capacitaciones, asistentes) {
     let actVirtuales = 0;
 
     capacitaciones.forEach(c => {
-        const tipo = String(c.tipo || c.origen || c.modalidad || c.categoria || '').toLowerCase();
+        const modalidad = obtenerModalidad(c);
         
-        if (tipo.includes('virtu') || tipo.includes('e-learn') || tipo.includes('onlin')) {
+        if (modalidad.includes('virtu') || modalidad.includes('e-learn') || modalidad.includes('onlin')) {
             actVirtuales++;
         } else {
             actPresenciales++;
         }
 
-        // Agrupación mensual
         const fechaStr = c.fecha || c.created_at;
         let numMes = -1;
         if (fechaStr) {
             const f = new Date(fechaStr);
-            if (!isNaN(f.getMonth())) numMes = f.getMonth();
+            if (!isNaN(f.getTime())) numMes = f.getMonth();
         }
 
         if (numMes >= 0 && numMes < 12) {
@@ -193,15 +197,13 @@ function calcularModuloGraficos(capacitaciones, asistentes) {
         }
     });
 
-    // Renderizado de Chart.js
     renderizarGraficoEstadosMes(programadasPorMes, enCursoPorMes, finalizadasPorMes);
     renderizarGraficoAsistenciasMes(asistenciasPorMes);
     renderizarGraficoModalidad(actPresenciales, actVirtuales);
 }
 
-
 // ===================================================
-// FUNCIONES DE RENDERIZADO DE GRÁFICOS V0.1 (CHART.JS)
+// FUNCIONES DE RENDERIZADO DE GRÁFICOS (CHART.JS)
 // ===================================================
 function renderizarGraficoEstadosMes(prog, curso, fin) {
     const ctx = (document.getElementById('chartEvolucionMensual') || document.getElementById('chartMeses'))?.getContext('2d');
@@ -225,7 +227,7 @@ function renderizarGraficoEstadosMes(prog, curso, fin) {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                x: { stacked: false, grid: { display: false } }, // Barras individuales lado a lado
+                x: { stacked: false, grid: { display: false } },
                 y: { stacked: false, beginAtZero: true, ticks: { precision: 0 } }
             },
             plugins: {
@@ -297,7 +299,6 @@ function renderizarGraficoModalidad(presenciales, virtuales) {
     });
 }
 
-
 // ===================================================
 // NAVEGACIÓN Y CONTROL DEL HUB
 // ===================================================
@@ -324,7 +325,6 @@ function volverAlHub() {
     if (vistaDetalle) vistaDetalle.style.display = 'none';
     if (hub) hub.style.display = 'grid';
 }
-
 
 // ===================================================
 // FUNCIONES AUXILIARES

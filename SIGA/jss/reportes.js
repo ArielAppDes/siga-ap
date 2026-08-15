@@ -259,3 +259,24 @@ function setVal(idElemento, valor) {
     const el = document.getElementById(idElemento);
     if (el) el.textContent = valor;
 }
+function abrirReporte(idSeccion) {
+    // Ocultar HUB y mostrar contenedor de detalle
+    document.getElementById('reportesHubGrid').style.display = 'none';
+    document.getElementById('vistaDetalleReporte').style.display = 'block';
+
+    // Ocultar todas las secciones internas
+    const secciones = document.querySelectorAll('.seccion-reporte');
+    secciones.forEach(sec => sec.style.display = 'none');
+
+    // Mostrar solo la sección seleccionada
+    if (idSeccion === 'generales') document.getElementById('secGenerales').style.display = 'block';
+    if (idSeccion === 'horaria') document.getElementById('secHoraria').style.display = 'block';
+    if (idSeccion === 'origen') document.getElementById('secOrigen').style.display = 'block';
+    if (idSeccion === 'graficos') document.getElementById('secGraficos').style.display = 'block';
+}
+
+function volverAlHub() {
+    // Ocultar vista de detalle y mostrar el HUB
+    document.getElementById('vistaDetalleReporte').style.display = 'none';
+    document.getElementById('reportesHubGrid').style.display = 'grid';
+}

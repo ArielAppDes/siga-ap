@@ -1,5 +1,5 @@
 // ===================================================
-// SIGA_APP - LÓGICA MÓDULO DE REPORTES (ESTRUCTURA MODULAR)
+// SIGA_APP - V01. LÓGICA MÓDULO DE REPORTES (ESTRUCTURA MODULAR)
 // ===================================================
 
 let instanceChartMeses = null;

@@ -40,112 +40,117 @@
     </aside>
 
     <!-- Contenido Principal -->
-    <main class="contenido">
+  <main class="contenido">
     <header>
         <div>
-            <h2>Tablero de Control de Capacitaciones</h2>
-            <p class="subtitulo">Métricas consolidadas y analíticas de gestión.</p>
+            <h2>Reportes y Analíticas</h2>
+            <p class="subtitulo">Centro de control, métricas y estadísticas de capacitaciones.</p>
         </div>
         <div class="usuario">👤 Ariel Pizzutto</div>
     </header>
 
-    <!-- ===================================================
-         1. CONTENEDOR GENERAL: KPIS DE VOLUMEN
-         =================================================== -->
-    <section class="kpi-block-contenedor">
-        <span class="kpi-block-title">📊 1. Indicadores Generales de Gestión</span>
-        <div class="kpi-grid-4cols">
-            <div class="kpi-card-item card-blue">
-                <span class="kpi-lbl-title">TOTAL ACTIVIDADES</span>
-                <span class="kpi-num-val blue" id="lblTotalActividades">0</span>
-                <span class="kpi-lbl-sub">Registradas en el sistema</span>
-            </div>
-            <div class="kpi-card-item card-green">
-                <span class="kpi-lbl-title">PERSONAS CAPACITADAS</span>
-                <span class="kpi-num-val green" id="lblPersonasCapacitadas">0</span>
-                <span class="kpi-lbl-sub">Participantes únicos</span>
-            </div>
-            <div class="kpi-card-item card-cyan">
-                <span class="kpi-lbl-title">TOTAL ASISTENCIAS</span>
-                <span class="kpi-num-val cyan" id="lblTotalAsistencias">0</span>
-                <span class="kpi-lbl-sub">Presentes acumulados</span>
-            </div>
-            <div class="kpi-card-item card-orange">
-                <span class="kpi-lbl-title">CURSOS EN CURSO</span>
-                <span class="kpi-num-val orange" id="lblCursosEnCurso">0</span>
-                <span class="kpi-lbl-sub">Ejecutándose hoy</span>
+    <!-- HUB PRINCIPAL: 4 CONTENEDORES CLICABLES -->
+    <div id="reportesHubGrid" class="reportes-hub-grid">
+        
+        <div class="hub-card" onclick="abrirReporte('generales')">
+            <div class="hub-icon">📊</div>
+            <h3>Indicadores Generales</h3>
+            <p>Volumen total de actividades, personas capacitadas y asistencias.</p>
+        </div>
+
+        <div class="hub-card" onclick="abrirReporte('horaria')">
+            <div class="hub-icon">⏱️</div>
+            <h3>Carga Horaria e Intensidad</h3>
+            <p>Promedio de horas por curso y horas de formación per cápita.</p>
+        </div>
+
+        <div class="hub-card" onclick="abrirReporte('origen')">
+            <div class="hub-icon">🏢</div>
+            <h3>Origen y E-Learning</h3>
+            <p>Capacitaciones internas vs. externas y porcentaje de virtualidad.</p>
+        </div>
+
+        <div class="hub-card" onclick="abrirReporte('graficos')">
+            <div class="hub-icon">📈</div>
+            <h3>Tendencias y Gráficos</h3>
+            <p>Evolutivo mensual de capacitaciones y distribución por modalidad.</p>
+        </div>
+
+    </div>
+
+    <!-- VISTA DETALLADA (Se muestra al hacer clic en un contenedor) -->
+    <div id="vistaDetalleReporte" style="display: none; margin-top: 20px;">
+        <button class="btn-volver-hub" onclick="volverAlHub()">← Volver al Menú de Reportes</button>
+        
+        <!-- Bloque 1: Indicadores Generales -->
+        <div id="secGenerales" class="seccion-reporte" style="display:none;">
+            <h3 class="seccion-titulo">📊 Indicadores Generales de Gestión</h3>
+            <div class="kpi-grid-4cols">
+                <div class="kpi-card-item card-blue">
+                    <span class="kpi-lbl-title">TOTAL ACTIVIDADES</span>
+                    <span class="kpi-num-val blue" id="lblTotalActividades">0</span>
+                </div>
+                <div class="kpi-card-item card-green">
+                    <span class="kpi-lbl-title">PERSONAS CAPACITADAS</span>
+                    <span class="kpi-num-val green" id="lblPersonasCapacitadas">0</span>
+                </div>
+                <div class="kpi-card-item card-cyan">
+                    <span class="kpi-lbl-title">TOTAL ASISTENCIAS</span>
+                    <span class="kpi-num-val cyan" id="lblTotalAsistencias">0</span>
+                </div>
             </div>
         </div>
-    </section>
 
-    <!-- ===================================================
-         2. CONTENEDOR CARGA HORARIA E INTENSIDAD
-         =================================================== -->
-    <section class="kpi-block-contenedor">
-        <span class="kpi-block-title">⏱️ 2. Carga Horaria e Intensidad de Formación</span>
-        <div class="kpi-grid-2x2">
-            <div class="kpi-card-horizontal card-purple">
-                <div>
+        <!-- Bloque 2: Carga Horaria -->
+        <div id="secHoraria" class="seccion-reporte" style="display:none;">
+            <h3 class="seccion-titulo">⏱️ Carga Horaria e Intensidad</h3>
+            <div class="kpi-grid-2cols">
+                <div class="kpi-card-item card-purple">
                     <span class="kpi-lbl-title">PROMEDIO HS / CURSO</span>
-                    <span class="kpi-lbl-sub">Duración media de actividades</span>
+                    <span class="kpi-num-val purple" id="lblHsPromedioCurso">0.0 hs</span>
                 </div>
-                <span class="kpi-num-val purple" id="lblHsPromedioCurso">0.0 hs</span>
-            </div>
-            <div class="kpi-card-horizontal card-darkblue">
-                <div>
-                    <span class="kpi-lbl-title">HORAS CAPACITACIÓN PER CÁPITA</span>
-                    <span class="kpi-lbl-sub">Promedio de formación por empleado</span>
-                </div>
-                <span class="kpi-num-val dark-blue" id="lblHsPerCapita">0.0 hs</span>
-            </div>
-        </div>
-    </section>
-
-    <!-- ===================================================
-         3. CONTENEDOR ORIGEN Y MODALIDADES
-         =================================================== -->
-    <section class="kpi-block-contenedor">
-        <span class="kpi-block-title">🏢 3. Origen de Capacitación y E-Learning</span>
-        <div class="kpi-grid-3cols">
-            <div class="kpi-card-item card-blue">
-                <span class="kpi-lbl-title">CAPACITACIONES INTERNAS</span>
-                <span class="kpi-num-val blue" id="lblActInternas">0</span>
-                <span class="kpi-lbl-sub">Dictadas por personal propio</span>
-            </div>
-            <div class="kpi-card-item card-orange">
-                <span class="kpi-lbl-title">CAPACITACIONES EXTERNAS</span>
-                <span class="kpi-num-val orange" id="lblActExternas">0</span>
-                <span class="kpi-lbl-sub">Proveedores / Entidades</span>
-            </div>
-            <div class="kpi-card-item card-green">
-                <span class="kpi-lbl-title">% CUMPLIMIENTO E-LEARNING</span>
-                <span class="kpi-num-val green" id="lblPctElearning">0%</span>
-                <span class="kpi-lbl-sub">Modalidad virtual asincrónica</span>
-            </div>
-        </div>
-    </section>
-
-    <!-- ===================================================
-         4. CONTENEDOR ANALÍTICA Y GRÁFICOS
-         =================================================== -->
-    <section class="kpi-block-contenedor">
-        <span class="kpi-block-title">📈 4. Análisis de Tendencias y Distribución</span>
-        <div class="charts-grid-4">
-            <div class="chart-box-card">
-                <h4>Evolución Mensual de Capacitaciones</h4>
-                <div class="chart-container">
-                    <canvas id="chartEvolucionMensual"></canvas>
-                </div>
-            </div>
-            <div class="chart-box-card">
-                <h4>Distribución por Modalidad</h4>
-                <div class="chart-container pie-container">
-                    <canvas id="chartModalidad"></canvas>
+                <div class="kpi-card-item card-darkblue">
+                    <span class="kpi-lbl-title">HS CAPACITACIÓN PER CÁPITA</span>
+                    <span class="kpi-num-val dark-blue" id="lblHsPerCapita">0.0 hs</span>
                 </div>
             </div>
         </div>
-    </section>
 
+        <!-- Bloque 3: Origen -->
+        <div id="secOrigen" class="seccion-reporte" style="display:none;">
+            <h3 class="seccion-titulo">🏢 Origen y E-Learning</h3>
+            <div class="kpi-grid-3cols">
+                <div class="kpi-card-item card-blue">
+                    <span class="kpi-lbl-title">CAPACITACIONES INTERNAS</span>
+                    <span class="kpi-num-val blue" id="lblActInternas">0</span>
+                </div>
+                <div class="kpi-card-item card-orange">
+                    <span class="kpi-lbl-title">CAPACITACIONES EXTERNAS</span>
+                    <span class="kpi-num-val orange" id="lblActExternas">0</span>
+                </div>
+                <div class="kpi-card-item card-green">
+                    <span class="kpi-lbl-title">% CUMPLIMIENTO E-LEARNING</span>
+                    <span class="kpi-num-val green" id="lblPctElearning">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bloque 4: Gráficos -->
+        <div id="secGraficos" class="seccion-reporte" style="display:none;">
+            <h3 class="seccion-titulo">📈 Análisis de Tendencias y Distribución</h3>
+            <div class="charts-col-left" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                <div class="chart-box-card">
+                    <h4>Evolución Mensual de Capacitaciones</h4>
+                    <div class="chart-container"><canvas id="chartEvolucionMensual"></canvas></div>
+                </div>
+                <div class="chart-box-card">
+                    <h4>Distribución por Modalidad</h4>
+                    <div class="chart-container pie-container"><canvas id="chartModalidad"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
 </main>
 
 </div>

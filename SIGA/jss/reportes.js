@@ -27,10 +27,10 @@ async function cargarMetricasSIGA() {
         if (errAsist) console.error("Error al obtener asistentes:", errAsist);
         const asistenciasData = listaAsistentes || [];
 
-        // 2. Obtener Capacitaciones
+        // 2. Obtener Capacitaciones relacionando la tabla cursos para traer la modalidad
         const { data: capacitaciones, error: errCap } = await window.supabaseClient
             .from('capacitaciones')
-            .select('*');
+            .select('*, cursos(modalidad)');
 
         if (errCap) console.error("Error al obtener capacitaciones:", errCap);
         const capacitacionesData = capacitaciones || [];
@@ -45,8 +45,6 @@ async function cargarMetricasSIGA() {
         console.error("Error general al procesar reportes:", error);
     }
 }
-
-
 // ===================================================
 // MÓDULO 1: INDICADORES GENERALES DE GESTIÓN
 // ===================================================

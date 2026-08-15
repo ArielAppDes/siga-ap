@@ -1,1 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encuesta de Satisfacción | SIGA</title>
+    <style>
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #f1f5f9; margin: 0; padding: 20px 15px; color: #0f172a; display: flex; justify-content: center; }
+        .container { background: #ffffff; width: 100%; max-width: 480px; border-radius: 16px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
+        .header { text-align: center; margin-bottom: 24px; border-bottom: 2px solid #f1f5f9; padding-bottom: 16px; }
+        .header h1 { color: #18C48F; margin: 0; font-size: 24px; font-weight: 800; }
+        .header p { color: #64748b; margin: 6px 0 0 0; font-size: 14px; }
+        .info-cap { background: #f8fafc; border-left: 4px solid #18C48F; padding: 12px 16px; border-radius: 0 8px 8px 0; margin-bottom: 24px; font-size: 13px; color: #334155; }
+        .pregunta { margin-bottom: 20px; }
+        .pregunta label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 8px; color: #1e293b; }
+        .stars { display: flex; gap: 8px; direction: row; }
+        .star { font-size: 32px; color: #cbd5e1; cursor: pointer; transition: color 0.2s ease; user-select: none; }
+        .star.active { color: #f59e0b; }
+        textarea { width: 100%; height: 90px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; font-size: 14px; outline: none; resize: none; }
+        textarea:focus { border-color: #18C48F; }
+        .btn-enviar { width: 100%; background: #18C48F; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
+        .btn-enviar:hover { background: #15ad7e; }
+        .gracias { text-align: center; padding: 40px 10px; display: none; }
+        .gracias-icon { font-size: 50px; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
 
+<div class="container">
+    <div id="formContainer">
+        <div class="header">
+            <h1>SIGA</h1>
+            <p>Encuesta de Satisfacción de Actividad</p>
+        </div>
+
+        <div class="info-cap">
+            <strong>Código de Actividad:</strong> <span id="lblIdCap">Cargando...</span>
+        </div>
+
+        <form id="encuestaForm" onsubmit="guardarEncuesta(event)">
+            
+            <!-- Pregunta 1 -->
+            <div class="pregunta">
+                <label>1. Evaluación general de la actividad:</label>
+                <div class="stars" data-field="puntaje_general">
+                    <span class="star" onclick="setScore('puntaje_general', 1)">★</span>
+                    <span class="star" onclick="setScore('puntaje_general', 2)">★</span>
+                    <span class="star" onclick="setScore('puntaje_general', 3)">★</span>
+                    <span class="star" onclick="setScore('puntaje_general', 4)">★</span>
+                    <span class="star" onclick="setScore('puntaje_general', 5)">★</span>
+                </div>
+            </div>
+
+            <!-- Pregunta 2 -->
+            <div class="pregunta">
+                <label>2. Claridad y desempeño del instructor:</label>
+                <div class="stars" data-field="puntaje_docente">
+                    <span class="star" onclick="setScore('puntaje_docente', 1)">★</span>
+                    <span class="star" onclick="setScore('puntaje_docente', 2)">★</span>
+                    <span class="star" onclick="setScore('puntaje_docente', 3)">★</span>
+                    <span class="star" onclick="setScore('puntaje_docente', 4)">★</span>
+                    <span class="star" onclick="setScore('puntaje_docente', 5)">★</span>
+                </div>
+            </div>
+
+            <!-- Pregunta 3 -->
+            <div class="pregunta">
+                <label>3. Calidad y utilidad del contenido:</label>
+                <div class="stars" data-field="puntaje_contenido">
+                    <span class="star" onclick="setScore('puntaje_contenido', 1)">★</span>
+                    <span class="star" onclick="setScore('puntaje_contenido', 2)">★</span>
+                    <span class="star" onclick="setScore('puntaje_contenido', 3)">★</span>
+                    <span class="star" onclick="setScore('puntaje_contenido', 4)">★</span>
+                    <span class="star" onclick="setScore('puntaje_contenido', 5)">★</span>
+                </div>
+            </div>
+
+            <!-- Pregunta 4 -->
+            <div class="pregunta">
+                <label>4. Instalaciones y/o herramientas utilizadas:</label>
+                <div class="stars" data-field="puntaje_entorno">
+                    <span class="star" onclick="setScore('puntaje_entorno', 1)">★</span>
+                    <span class="star" onclick="setScore('puntaje_entorno', 2)">★</span>
+                    <span class="star" onclick="setScore('puntaje_entorno', 3)">★</span>
+                    <span class="star" onclick="setScore('puntaje_entorno', 4)">★</span>
+                    <span class="star" onclick="setScore('puntaje_entorno', 5)">★</span>
+                </div>
+            </div>
+
+            <!-- Comentarios -->
+            <div class="pregunta">
+                <label>Comentarios o sugerencias (Opcional):</label>
+                <textarea id="txtComentarios" placeholder="Escriba aquí sus observaciones..."></textarea>
+            </div>
+
+            <button type="submit" class="btn-enviar" id="btnSubmit">Enviar Evaluación</button>
+        </form>
+    </div>
+
+    <!-- Mensaje de Éxito -->
+    <div id="graciasContainer" class="gracias">
+        <div class="gracias-icon">🎉</div>
+        <h2 style="margin:0 0 10px 0; color:#0f172a;">¡Muchas Gracias!</h2>
+        <p style="color:#64748b; font-size:14px;">Tu evaluación ha sido registrada exitosamente. Nos ayuda a seguir mejorando.</p>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="jss/supaBaseClient.js?v=9.0"></script>
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const idCap = urlParams.get('id_cap') || 'N/A';
+    document.getElementById('lblIdCap').textContent = idCap;
+
+    const scores = {
+        puntaje_general: 0,
+        puntaje_docente: 0,
+        puntaje_contenido: 0,
+        puntaje_entorno: 0
+    };
+
+    function setScore(field, score) {
+        scores[field] = score;
+        const container = document.querySelector(`.stars[data-field="${field}"]`);
+        const stars = container.querySelectorAll('.star');
+        stars.forEach((star, index) => {
+            if (index < score) {
+                star.classList.add('active');
+            } else {
+                star.classList.remove('active');
+            }
+        });
+    }
+
+    async function guardarEncuesta(e) {
+        e.preventDefault();
+        
+        if (scores.puntaje_general === 0 || scores.puntaje_docente === 0) {
+            alert("Por favor completa al menos las valoraciones principales con estrellas.");
+            return;
+        }
+
+        const btn = document.getElementById('btnSubmit');
+        btn.disabled = true;
+        btn.textContent = "Enviando...";
+
+        const payload = {
+            id_cap: idCap,
+            puntaje_general: scores.puntaje_general,
+            puntaje_docente: scores.puntaje_docente,
+            puntaje_contenido: scores.puntaje_contenido || 5,
+            puntaje_entorno: scores.puntaje_entorno || 5,
+            comentarios: document.getElementById('txtComentarios').value.trim()
+        };
+
+        try {
+            const { error } = await window.supabaseClient.from('evaluaciones').insert([payload]);
+            if (error) throw error;
+
+            document.getElementById('formContainer').style.display = 'none';
+            document.getElementById('graciasContainer').style.display = 'block';
+        } catch (err) {
+            console.error("Error al guardar evaluación:", err);
+            alert("Hubo un error al enviar la evaluación. Por favor reintente.");
+            btn.disabled = false;
+            btn.textContent = "Enviar Evaluación";
+        }
+    }
+</script>
+</body>
+</html>

@@ -92,7 +92,7 @@
 
     </div>
 
-    <!-- Modal -->
+    <!-- Modal Listado Capacitaciones -->
     <div id="modalCapacitaciones" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
         <div style="background:#fff; width:90%; max-width:900px; padding:25px; border-radius:12px; max-height:85vh; display:flex; flex-direction:column; box-shadow:0 10px 25px rgba(0,0,0,0.3);">
             
@@ -131,26 +131,35 @@
         </div>
     </div>
 
+    <!-- MODAL DE CÓDIGO QR -->
+    <div id="modalQR" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1100; align-items:center; justify-content:center;">
+        <div style="background:#fff; width:90%; max-width:400px; padding:25px; border-radius:16px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.3); position:relative;">
+            <button id="btnCerrarQR" style="position:absolute; top:12px; right:15px; background:none; border:none; font-size:24px; cursor:pointer; color:#888;">&times;</button>
+            
+            <h3 style="margin:0 0 5px 0; color:#1a252f;">Encuesta de Satisfacción</h3>
+            <p id="qrSubtitulo" style="font-size:13px; color:#64748b; margin-bottom:20px;">Escaneá para evaluar la capacitación</p>
+            
+            <div id="contenedorQR" style="display:flex; justify-content:center; align-items:center; margin:20px 0; padding:15px; background:#f8fafc; border-radius:12px;"></div>
+            
+            <p id="qrIdCapText" style="font-weight:700; color:#18C48F; margin:10px 0; font-size:14px;"></p>
+            
+            <button onclick="window.print()" style="margin-top:10px; background:#0f172a; color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600;">
+                🖨️ Imprimir / Descargar QR
+            </button>
+        </div>
+    </div>
+
     <!-- Librería para Generación de Código QR -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-<!-- 1. Librería Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- 2. Cliente de conexión -->
-<script src="jss/supaBaseClient.js?v=9.0"></script>
-
-<!-- 3. Lógica principal -->
-<script src="jss/actividades.js?v=12"></script>
-    
-    <!-- 1. Librería Supabase -->
+    <!-- Librería Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- 2. Cliente de conexión -->
+    <!-- Cliente de conexión -->
     <script src="jss/supaBaseClient.js?v=9.0"></script>
 
-    <!-- 3. Lógica principal -->
-    <script src="jss/actividades.js?v=11"></script>
+    <!-- Lógica principal -->
+    <script src="jss/actividades.js?v=12"></script>
 
 </body>
 </html>

@@ -206,7 +206,7 @@ function calcularModuloGraficos(capacitaciones, asistentes) {
 // FUNCIONES DE RENDERIZADO DE GRÁFICOS (CHART.JS)
 // ===================================================
 function renderizarGraficoEstadosMes(prog, curso, fin) {
-    const ctx = document.getElementById('chartMeses')?.getContext('2d');
+    const ctx = (document.getElementById('chartEvolucionMensual') || document.getElementById('chartMeses'))?.getContext('2d');
     if (!ctx) return;
 
     if (instanceChartMeses) instanceChartMeses.destroy();

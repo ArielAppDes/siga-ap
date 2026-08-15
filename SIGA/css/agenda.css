@@ -156,3 +156,63 @@
         padding: 5px;
     }
 }
+
+/* --- CORRECCIÓN DE PUNTOS EN LEYENDA (ÓVALOS) --- */
+.leyenda-estados {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.item-leyenda {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #475569;
+    font-weight: 600;
+}
+
+.dot {
+    width: 12px !important;
+    height: 12px !important;
+    min-width: 12px !important;
+    min-height: 12px !important;
+    border-radius: 50% !important;
+    display: inline-block !important;
+    flex-shrink: 0 !important; /* Impide que el flexbox lo estire como óvalo */
+}
+
+.dot-programado { background-color: #f59e0b; }
+.dot-encurso    { background-color: #0284c7; }
+.dot-finalizado { background-color: #10b981; }
+
+
+/* --- CORRECCIÓN DE ALINEACIÓN DE ENCABEZADOS Y DÍAS --- */
+.calendario-contenedor {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 15px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+    overflow-x: auto; /* Permite scroll limpio en zooms altos o pantallas chicas */
+}
+
+/* Grilla unificada para que días y encabezados compartan el mismo ancho exacto */
+.calendario-grid-header,
+.calendario-grid {
+    display: grid !important;
+    grid-template-columns: repeat(7, minmax(120px, 1fr)) !important; /* Mantiene 7 columnas idénticas siempre */
+    gap: 8px !important;
+    width: 100%;
+}
+
+.dia-semana-header {
+    background: #1e293b;
+    color: #ffffff;
+    text-align: center;
+    padding: 10px 0;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border-radius: 6px;
+}

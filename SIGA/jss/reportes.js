@@ -203,7 +203,7 @@ function calcularModuloGraficos(capacitaciones, asistentes) {
 
 
 // ===================================================
-// FUNCIONES DE RENDERIZADO DE GRÁFICOS (CHART.JS)
+// FUNCIONES DE RENDERIZADO DE GRÁFICOS V0.1 (CHART.JS)
 // ===================================================
 function renderizarGraficoEstadosMes(prog, curso, fin) {
     const ctx = (document.getElementById('chartEvolucionMensual') || document.getElementById('chartMeses'))?.getContext('2d');
@@ -218,17 +218,17 @@ function renderizarGraficoEstadosMes(prog, curso, fin) {
         data: {
             labels: meses,
             datasets: [
-                { label: 'Programadas', data: prog, backgroundColor: '#f97316', borderRadius: 4 },
-                { label: 'En curso', data: curso, backgroundColor: '#0284c7', borderRadius: 4 },
-                { label: 'Finalizadas', data: fin, backgroundColor: '#10b981', borderRadius: 4 }
+                { label: 'Programadas', data: prog, backgroundColor: '#f97316', borderRadius: 3 },
+                { label: 'En curso', data: curso, backgroundColor: '#0284c7', borderRadius: 3 },
+                { label: 'Finalizadas', data: fin, backgroundColor: '#10b981', borderRadius: 3 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                x: { stacked: true, grid: { display: false } },
-                y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
+                x: { stacked: false, grid: { display: false } }, // Barras individuales lado a lado
+                y: { stacked: false, beginAtZero: true, ticks: { precision: 0 } }
             },
             plugins: {
                 legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }

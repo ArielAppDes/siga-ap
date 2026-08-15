@@ -1,5 +1,5 @@
 // ===================================================
-// 10/08/2026 - V0.3 - SIGA_APP - LÓGICA DE ACTIVIDADES (Ciclo de Vida Limpio)
+// 15/08/2026 - V0.4 - SIGA_APP - LÓGICA DE ACTIVIDADES CON QR DE SATISFACCIÓN
 // ===================================================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -42,6 +42,11 @@ function inicializarTarjetas() {
     // Tarjeta Finalizadas
     document.getElementById("cardFinalizadas")?.addEventListener("click", () => {
         abrirModalPorEstado("Finalizado", "Historial de Capacitaciones Finalizadas");
+    });
+
+    // Tarjeta Encuesta de Satisfacción (Generador de QR)
+    document.getElementById("cardSatisfaccion")?.addEventListener("click", () => {
+        abrirModalPorEstado("QR", "Encuesta de Satisfacción - Seleccionar Capacitación");
     });
 }
 
@@ -96,15 +101,23 @@ async function verificarCampoIdCapLocal() {
 }
 
 function configurarEventosModal() {
-    const modal = document.getElementById("modalCapacitaciones");
-    const btnCerrar = document.getElementById("btnCerrarModal");
+    const modalCap = document.getElementById("modalCapacitaciones");
+    const btnCerrarCap = document.getElementById("btnCerrarModal");
 
-    btnCerrar?.addEventListener("click", () => {
-        if (modal) modal.style.display = "none";
+    const modalQR = document.getElementById("modalQR");
+    const btnCerrarQR = document.getElementById("btnCerrarQR");
+
+    btnCerrarCap?.addEventListener("click", () => {
+        if (modalCap) modalCap.style.display = "none";
+    });
+
+    btnCerrarQR?.addEventListener("click", () => {
+        if (modalQR) modalQR.style.display = "none";
     });
 
     window.addEventListener("click", (e) => {
-        if (e.target === modal) modal.style.display = "none";
+        if (e.target === modalCap) modalCap.style.display = "none";
+        if (e.target === modalQR) modalQR.style.display = "none";
     });
 }
 
@@ -113,7 +126,6 @@ async function abrirModalPorEstado(estadoFiltro, titulo) {
     const txtTitulo = document.getElementById("tituloModal");
     const tbody = document.getElementById("tbodyCapacitaciones");
 
-    // 🧹 LIMPIAR EL BUSCADOR AL ABRIR EL MODAL
     const inputBuscar = document.getElementById('inputBuscarModal');
     if (inputBuscar) inputBuscar.value = '';
 
@@ -128,16 +140,20 @@ async function abrirModalPorEstado(estadoFiltro, titulo) {
     }
 
     try {
-        const { data, error } = await db
-            .from("capacitaciones")
-            .select("*")
-            .eq("estado", estadoFiltro)
-            .order("id_cap", { ascending: false });
+        let query = db.from("capacitaciones").select("*");
+
+        // Si es consulta de QR muestra todas, sino filtra por estado específico
+        if (estadoFiltro !== "QR") {
+            query = query.eq("estado", estadoFiltro);
+        }
+
+        const { data, error } = await query.order("id_cap", { ascending: false });
 
         if (error) throw error;
 
         if (!data || data.length === 0) {
-            if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px;">No hay capacitaciones en estado '<strong>${estadoFiltro}</strong>'.</td></tr>`;
+            const msj = estadoFiltro === "QR" ? "No existen capacitaciones registradas." : `No hay capacitaciones en estado '<strong>${estadoFiltro}</strong>'.`;
+            if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px;">${msj}</td></tr>`;
             return;
         }
 
@@ -160,15 +176,15 @@ function renderizarFilasModal(lista, estadoFiltro) {
         tr.style.borderBottom = "1px solid #eee";
 
         let botonAccion = "";
-        // Unificar instructores para mostrar en la grilla
         const instructores = [item.instructor_1, item.instructor_2].filter(Boolean).join(", ") || "-";
 
         if (estadoFiltro === "Programado") {
             botonAccion = `<button onclick="editarProgramada('${item.id_cap}')" style="background:#27ae60; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">Editar</button>`;
         } else if (estadoFiltro === "En curso") {
             botonAccion = `<button onclick="cargarSiguienteClase('${item.id_cap}')" style="background:#2980b9; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">Continuar Clase</button>`;
+        } else if (estadoFiltro === "QR") {
+            botonAccion = `<button onclick="generarQRModal('${item.id_cap}', '${(item.nombre_curso || '').replace(/'/g, "\\'")}')" style="background:#18C48F; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:600;">📱 Generar QR</button>`;
         } else {
-            // HISTORIAL DE FINALIZADAS: BOTÓN IMPRIMIR + VER DETALLE
             botonAccion = `
                 <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
                     <button onclick="imprimirPlanillaHistorica('${item.id_cap}')" 
@@ -199,6 +215,35 @@ function renderizarFilasModal(lista, estadoFiltro) {
     window.listaCapacitacionesTemp = lista;
 }
 
+// Genera y muestra el modal con el código QR vinculado a encuesta.html
+window.generarQRModal = function(idCap, nombreCurso) {
+    const modalQR = document.getElementById("modalQR");
+    const contenedorQR = document.getElementById("contenedorQR");
+    const qrSubtitulo = document.getElementById("qrSubtitulo");
+    const qrIdCapText = document.getElementById("qrIdCapText");
+
+    if (!contenedorQR || !modalQR) return;
+
+    contenedorQR.innerHTML = "";
+
+    const rutaBase = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+    const urlEncuesta = `${rutaBase}encuesta.html?id_cap=${encodeURIComponent(idCap)}`;
+
+    new QRCode(contenedorQR, {
+        text: urlEncuesta,
+        width: 180,
+        height: 180,
+        colorDark: "#1a252f",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+
+    if (qrSubtitulo) qrSubtitulo.textContent = nombreCurso || "Escaneá para evaluar la capacitación";
+    if (qrIdCapText) qrIdCapText.textContent = `ID: ${idCap}`;
+
+    modalQR.style.display = "flex";
+};
+
 // 1. Editar Programada
 window.editarProgramada = function(idCap) {
     const cap = window.listaCapacitacionesTemp?.find(c => c.id_cap === idCap);
@@ -208,14 +253,13 @@ window.editarProgramada = function(idCap) {
     window.location.href = "capacitaciones.html";
 };
 
-// 2. Continuar Clase "En curso" (Finaliza la anterior y formatea a 2 dígitos)
+// 2. Continuar Clase "En curso"
 window.cargarSiguienteClase = async function(idCap) {
     const cap = window.listaCapacitacionesTemp?.find(c => c.id_cap === idCap);
     if (!cap) return;
 
     const db = obtenerDB();
     if (db) {
-        // Marcar la clase actual/anterior como Finalizada en Supabase
         await db
             .from("capacitaciones")
             .update({ estado: "Finalizado" })
@@ -225,7 +269,6 @@ window.cargarSiguienteClase = async function(idCap) {
     let claseActual = parseInt(cap.clase_nro || "1", 10);
     let siguienteClase = claseActual + 1;
 
-    // Formatear SIEMPRE a 2 dígitos: 02, 03, 04...
     const numClaseFormateado = String(siguienteClase).padStart(2, "0");
     const partes = idCap.split("-");
 
@@ -255,13 +298,13 @@ window.verFinalizada = function(idCap) {
     window.location.href = "capacitaciones.html";
 };
 
-// 4. Imprimir Planilla Histórica (Solo Lectura desde Supabase)
+// 4. Imprimir Planilla Histórica
 window.imprimirPlanillaHistorica = function(idCap) {
     if (!idCap) return;
     window.open(`planilla_asistencia.html?id_cap=${encodeURIComponent(idCap)}`, '_blank');
 };
 
-// --- BÚSQUEDA EN TIEMPO REAL (MODAL ACTIVIDADES) ---
+// Búsqueda en tiempo real
 function filtrarModal() {
     const input = document.getElementById('inputBuscarModal');
     if (!input) return;
@@ -270,7 +313,6 @@ function filtrarModal() {
     const filas = document.querySelectorAll('#tbodyCapacitaciones tr');
 
     filas.forEach(fila => {
-        // Ignora filas de carga o mensajes sin columnas completas
         if (fila.children.length <= 1) return; 
 
         const textoFila = fila.textContent.toLowerCase();

@@ -1,9 +1,9 @@
 // ===================================================
-// SIGA_APP - V01. LÓGICA MÓDULO DE REPORTES (ESTRUCTURA MODULAR)
+// SIGA_APP - V0.2 LÓGICA MÓDULO DE REPORTES (ESTRUCTURA MODULAR)
 // ===================================================
 
 let instanceChartMeses = null;
-let instanceChartCursos = null;
+let instanceChartCurs2os = null;
 let instanceChartModalidad = null;
 
 // 1. INICIALIZACIÓN

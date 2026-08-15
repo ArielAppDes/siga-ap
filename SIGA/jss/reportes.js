@@ -1,15 +1,17 @@
 // ===================================================
-// SIGA_APP - LÓGICA MÓDULO DE REPORTES, KPIS Y CHARTS
+// SIGA_APP - LÓGICA MÓDULO DE REPORTES (ESTRUCTURA MODULAR)
 // ===================================================
 
 let instanceChartMeses = null;
 let instanceChartCursos = null;
 let instanceChartModalidad = null;
 
+// 1. INICIALIZACIÓN
 document.addEventListener('DOMContentLoaded', () => {
     cargarMetricasSIGA();
 });
 
+// 2. FUNCIÓN PRINCIPAL ORQUESTADORA
 async function cargarMetricasSIGA() {
     try {
         if (!window.supabaseClient) {
@@ -17,13 +19,13 @@ async function cargarMetricasSIGA() {
             return;
         }
 
-        // 1. Obtener Asistentes
+        // 1. Obtener Asistentes (Participaciones a capacitaciones)
         const { data: listaAsistentes, error: errAsist } = await window.supabaseClient
             .from('asistentes')
             .select('*');
 
         if (errAsist) console.error("Error al obtener asistentes:", errAsist);
-        const totalAsistentes = listaAsistentes ? listaAsistentes.length : 0;
+        const asistenciasData = listaAsistentes || [];
 
         // 2. Obtener Capacitaciones
         const { data: capacitaciones, error: errCap } = await window.supabaseClient
@@ -31,100 +33,178 @@ async function cargarMetricasSIGA() {
             .select('*');
 
         if (errCap) console.error("Error al obtener capacitaciones:", errCap);
+        const capacitacionesData = capacitaciones || [];
 
-        const listaCap = capacitaciones || [];
-        const totalActividades = listaCap.length;
-
-        // ESTRUCTURAS PARA GRÁFICOS
-        const programadasPorMes = Array(12).fill(0);
-        const enCursoPorMes = Array(12).fill(0);
-        const finalizadasPorMes = Array(12).fill(0);
-        const asistenciasPorMes = Array(12).fill(0);
-
-        let sumaHoras = 0;
-        let actInternas = 0;
-        let actExternas = 0;
-        let actPresenciales = 0;
-        let actVirtuales = 0;
-
-        listaCap.forEach(c => {
-            // Horas
-            const ini = c.hs_inicio || c.hora_inicio;
-            const fin = c.hs_fin || c.hora_fin;
-            let hs = 0;
-            if (ini && fin) {
-                hs = calcularDiferenciaHoras(ini, fin);
-            } else {
-                hs = parseFloat(c.duracion || c.horas || c.carga_horaria || 0);
-            }
-            sumaHoras += isNaN(hs) ? 0 : hs;
-
-            // Tipo (Interna/Externa)
-            const tipo = String(c.tipo || c.origen || c.modalidad || c.categoria || '').toLowerCase();
-            if (tipo.includes('extern')) {
-                actExternas++;
-            } else {
-                actInternas++;
-            }
-
-            // Modalidad (Presencial/Virtual)
-            if (tipo.includes('virtu') || tipo.includes('e-learn') || tipo.includes('onlin')) {
-                actVirtuales++;
-            } else {
-                actPresenciales++;
-            }
-
-            // Mapeo por Mes y Estado
-            const fechaStr = c.fecha || c.created_at;
-            let numMes = -1;
-            if (fechaStr) {
-                const f = new Date(fechaStr);
-                if (!isNaN(f.getMonth())) numMes = f.getMonth();
-            }
-
-            if (numMes >= 0 && numMes < 12) {
-                const estadoStr = String(c.estado || c.status || '').toLowerCase();
-
-                if (estadoStr.includes('program')) {
-                    programadasPorMes[numMes]++;
-                } else if (estadoStr.includes('curso')) {
-                    enCursoPorMes[numMes]++;
-                } else {
-                    finalizadasPorMes[numMes]++;
-                }
-
-                asistenciasPorMes[numMes] += 1;
-            }
-        });
-
-        // Promedios
-        const hsPromedio = totalActividades > 0 ? (sumaHoras / totalActividades).toFixed(1) : 0;
-        const hsPerCapita = totalAsistentes > 0 ? (sumaHoras / totalAsistentes).toFixed(1) : 0;
-
-        // --- VOLCADO A TARJETAS (DOM) ---
-        setVal('lblTotalActividades', totalActividades);
-        setVal('lblPersonasCapacitadas', totalAsistentes);
-        setVal('lblAsistenciasMes', totalAsistentes);
-        setVal('lblHsPerCapita', `${hsPerCapita} hs`);
-        setVal('lblHsPromedioCurso', `${hsPromedio} hs`);
-        setVal('lblActividadesInternas', actInternas);
-        setVal('lblActividadesExternas', actExternas);
-
-        setVal('lblHsAutogestionadas', '0 hs');
-        setVal('lblAsistenciasElearning', actVirtuales);
-        setVal('lblPorcentajeElearning', totalActividades > 0 ? `${Math.round((actVirtuales/totalActividades)*100)}%` : '0%');
-
-        // --- RENDERIZAR GRÁFICOS ---
-        renderizarGraficoEstadosMes(programadasPorMes, enCursoPorMes, finalizadasPorMes);
-        renderizarGraficoAsistenciasMes(asistenciasPorMes);
-        renderizarGraficoModalidad(actPresenciales, actVirtuales);
+        // 3. EJECUCIÓN DE MÓDULOS INDEPENDIENTES
+        calcularModuloGenerales(capacitacionesData, asistenciasData);
+        calcularModuloHoraria(capacitacionesData, asistenciasData);
+        calcularModuloOrigen(capacitacionesData);
+        calcularModuloGraficos(capacitacionesData, asistenciasData);
 
     } catch (error) {
-        console.error("Error general en reportes:", error);
+        console.error("Error general al procesar reportes:", error);
     }
 }
 
-// 1. Gráfico: Capacitaciones por Mes agrupado por Estado (Naranja, Azul, Verde)
+
+// ===================================================
+// MÓDULO 1: INDICADORES GENERALES DE GESTIÓN
+// ===================================================
+function calcularModuloGenerales(capacitaciones, asistentes) {
+    // Total Actividades
+    const totalActividades = capacitaciones.length;
+
+    // Personas Capacitadas (Filtro por Legajo / DNI Único sin repetir)
+    const legajosUnicos = new Set(
+        asistentes
+            .map(a => a.legajo || a.dni || a.empleado_id)
+            .filter(val => val !== null && val !== undefined && val !== '')
+    );
+    const personasCapacitadas = legajosUnicos.size;
+
+    // Total Asistencias (Sumatoria general acumulada de participaciones, incluidos duplicados)
+    const totalAsistencias = asistentes.length;
+
+    // Renderizado en HTML (Asegura compatibilidad con distintos IDs del DOM)
+    setVal('lblTotalActividades', totalActividades);
+    setVal('lblPersonasCapacitadas', personasCapacitadas);
+    setVal('lblTotalAsistencias', totalAsistencias);
+    setVal('lblAsistenciasMes', totalAsistencias);
+}
+
+
+// ===================================================
+// MÓDULO 2: CARGA HORARIA E INTENSIDAD
+// ===================================================
+function calcularModuloHoraria(capacitaciones, asistentes) {
+    let sumaHoras = 0;
+
+    capacitaciones.forEach(c => {
+        const ini = c.hs_inicio || c.hora_inicio;
+        const fin = c.hs_fin || c.hora_fin;
+        let hs = 0;
+
+        if (ini && fin) {
+            hs = calcularDiferenciaHoras(ini, fin);
+        } else {
+            hs = parseFloat(c.duracion || c.horas || c.carga_horaria || 0);
+        }
+        sumaHoras += isNaN(hs) ? 0 : hs;
+    });
+
+    // Legajos únicos para cálculo Per Cápita
+    const legajosUnicos = new Set(
+        asistentes
+            .map(a => a.legajo || a.dni || a.empleado_id)
+            .filter(val => val !== null && val !== undefined && val !== '')
+    );
+    const totalPersonasUnicas = legajosUnicos.size;
+
+    // Promedios
+    const totalActividades = capacitaciones.length;
+    const hsPromedio = totalActividades > 0 ? (sumaHoras / totalActividades).toFixed(1) : '0.0';
+    const hsPerCapita = totalPersonasUnicas > 0 ? (sumaHoras / totalPersonasUnicas).toFixed(1) : '0.0';
+
+    // Renderizado en HTML
+    setVal('lblHsPromedioCurso', `${hsPromedio} hs`);
+    setVal('lblHsPerCapita', `${hsPerCapita} hs`);
+}
+
+
+// ===================================================
+// MÓDULO 3: ORIGEN Y E-LEARNING
+// ===================================================
+function calcularModuloOrigen(capacitaciones) {
+    let actInternas = 0;
+    let actExternas = 0;
+    let actVirtuales = 0;
+
+    const totalActividades = capacitaciones.length;
+
+    capacitaciones.forEach(c => {
+        const tipo = String(c.tipo || c.origen || c.modalidad || c.categoria || '').toLowerCase();
+
+        // Interna vs Externa
+        if (tipo.includes('extern')) {
+            actExternas++;
+        } else {
+            actInternas++;
+        }
+
+        // Virtual vs Presencial
+        if (tipo.includes('virtu') || tipo.includes('e-learn') || tipo.includes('onlin')) {
+            actVirtuales++;
+        }
+    });
+
+    const pctElearning = totalActividades > 0 ? Math.round((actVirtuales / totalActividades) * 100) : 0;
+
+    // Renderizado en HTML
+    setVal('lblActInternas', actInternas);
+    setVal('lblActividadesInternas', actInternas);
+    setVal('lblActExternas', actExternas);
+    setVal('lblActividadesExternas', actExternas);
+    setVal('lblPctElearning', `${pctElearning}%`);
+    setVal('lblPorcentajeElearning', `${pctElearning}%`);
+    setVal('lblAsistenciasElearning', actVirtuales);
+    setVal('lblHsAutogestionadas', '0 hs');
+}
+
+
+// ===================================================
+// MÓDULO 4: TENDENCIAS Y GRÁFICOS
+// ===================================================
+function calcularModuloGraficos(capacitaciones, asistentes) {
+    const programadasPorMes = Array(12).fill(0);
+    const enCursoPorMes = Array(12).fill(0);
+    const finalizadasPorMes = Array(12).fill(0);
+    const asistenciasPorMes = Array(12).fill(0);
+
+    let actPresenciales = 0;
+    let actVirtuales = 0;
+
+    capacitaciones.forEach(c => {
+        const tipo = String(c.tipo || c.origen || c.modalidad || c.categoria || '').toLowerCase();
+        
+        if (tipo.includes('virtu') || tipo.includes('e-learn') || tipo.includes('onlin')) {
+            actVirtuales++;
+        } else {
+            actPresenciales++;
+        }
+
+        // Agrupación mensual
+        const fechaStr = c.fecha || c.created_at;
+        let numMes = -1;
+        if (fechaStr) {
+            const f = new Date(fechaStr);
+            if (!isNaN(f.getMonth())) numMes = f.getMonth();
+        }
+
+        if (numMes >= 0 && numMes < 12) {
+            const estadoStr = String(c.estado || c.status || '').toLowerCase();
+
+            if (estadoStr.includes('program')) {
+                programadasPorMes[numMes]++;
+            } else if (estadoStr.includes('curso')) {
+                enCursoPorMes[numMes]++;
+            } else {
+                finalizadasPorMes[numMes]++;
+            }
+
+            asistenciasPorMes[numMes] += 1;
+        }
+    });
+
+    // Renderizado de Chart.js
+    renderizarGraficoEstadosMes(programadasPorMes, enCursoPorMes, finalizadasPorMes);
+    renderizarGraficoAsistenciasMes(asistenciasPorMes);
+    renderizarGraficoModalidad(actPresenciales, actVirtuales);
+}
+
+
+// ===================================================
+// FUNCIONES DE RENDERIZADO DE GRÁFICOS (CHART.JS)
+// ===================================================
 function renderizarGraficoEstadosMes(prog, curso, fin) {
     const ctx = document.getElementById('chartMeses')?.getContext('2d');
     if (!ctx) return;
@@ -138,24 +218,9 @@ function renderizarGraficoEstadosMes(prog, curso, fin) {
         data: {
             labels: meses,
             datasets: [
-                {
-                    label: 'Programadas',
-                    data: prog,
-                    backgroundColor: '#f97316', // Naranja
-                    borderRadius: 4
-                },
-                {
-                    label: 'En curso',
-                    data: curso,
-                    backgroundColor: '#0284c7', // Azul
-                    borderRadius: 4
-                },
-                {
-                    label: 'Finalizadas',
-                    data: fin,
-                    backgroundColor: '#10b981', // Verde
-                    borderRadius: 4
-                }
+                { label: 'Programadas', data: prog, backgroundColor: '#f97316', borderRadius: 4 },
+                { label: 'En curso', data: curso, backgroundColor: '#0284c7', borderRadius: 4 },
+                { label: 'Finalizadas', data: fin, backgroundColor: '#10b981', borderRadius: 4 }
             ]
         },
         options: {
@@ -166,17 +231,12 @@ function renderizarGraficoEstadosMes(prog, curso, fin) {
                 y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
             },
             plugins: {
-                legend: {
-                    display: true,
-                    position: 'bottom',
-                    labels: { boxWidth: 12, font: { size: 11 } }
-                }
+                legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
             }
         }
     });
 }
 
-// 2. Gráfico: Asistencias por Mes (Corrige el #undefined mostrando Ene..Dic)
 function renderizarGraficoAsistenciasMes(datosAsistencias) {
     const ctx = document.getElementById('chartCursos')?.getContext('2d');
     if (!ctx) return;
@@ -192,7 +252,7 @@ function renderizarGraficoAsistenciasMes(datosAsistencias) {
             datasets: [{
                 label: 'Capacitaciones acumuladas',
                 data: datosAsistencias,
-                backgroundColor: '#8b5cf6', // Violeta
+                backgroundColor: '#8b5cf6',
                 borderRadius: 4
             }]
         },
@@ -208,7 +268,6 @@ function renderizarGraficoAsistenciasMes(datosAsistencias) {
     });
 }
 
-// 3. Gráfico: Modalidad (Presencial vs Virtual)
 function renderizarGraficoModalidad(presenciales, virtuales) {
     const ctx = document.getElementById('chartModalidad')?.getContext('2d');
     if (!ctx) return;
@@ -233,17 +292,45 @@ function renderizarGraficoModalidad(presenciales, virtuales) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { boxWidth: 12, padding: 12, font: { size: 11 } }
-                }
+                legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { size: 11 } } }
             },
             cutout: '65%'
         }
     });
 }
 
-// Auxiliares
+
+// ===================================================
+// NAVEGACIÓN Y CONTROL DEL HUB
+// ===================================================
+function abrirReporte(idSeccion) {
+    const hub = document.getElementById('reportesHubGrid');
+    const vistaDetalle = document.getElementById('vistaDetalleReporte');
+
+    if (hub) hub.style.display = 'none';
+    if (vistaDetalle) vistaDetalle.style.display = 'block';
+
+    const secciones = document.querySelectorAll('.seccion-reporte');
+    secciones.forEach(sec => sec.style.display = 'none');
+
+    if (idSeccion === 'generales') setDisplay('secGenerales', 'block');
+    if (idSeccion === 'horaria') setDisplay('secHoraria', 'block');
+    if (idSeccion === 'origen') setDisplay('secOrigen', 'block');
+    if (idSeccion === 'graficos') setDisplay('secGraficos', 'block');
+}
+
+function volverAlHub() {
+    const vistaDetalle = document.getElementById('vistaDetalleReporte');
+    const hub = document.getElementById('reportesHubGrid');
+
+    if (vistaDetalle) vistaDetalle.style.display = 'none';
+    if (hub) hub.style.display = 'grid';
+}
+
+
+// ===================================================
+// FUNCIONES AUXILIARES
+// ===================================================
 function calcularDiferenciaHoras(inicioStr, finStr) {
     if (!inicioStr || !finStr) return 0;
     const partesIni = String(inicioStr).split(':').map(Number);
@@ -259,24 +346,8 @@ function setVal(idElemento, valor) {
     const el = document.getElementById(idElemento);
     if (el) el.textContent = valor;
 }
-function abrirReporte(idSeccion) {
-    // Ocultar HUB y mostrar contenedor de detalle
-    document.getElementById('reportesHubGrid').style.display = 'none';
-    document.getElementById('vistaDetalleReporte').style.display = 'block';
 
-    // Ocultar todas las secciones internas
-    const secciones = document.querySelectorAll('.seccion-reporte');
-    secciones.forEach(sec => sec.style.display = 'none');
-
-    // Mostrar solo la sección seleccionada
-    if (idSeccion === 'generales') document.getElementById('secGenerales').style.display = 'block';
-    if (idSeccion === 'horaria') document.getElementById('secHoraria').style.display = 'block';
-    if (idSeccion === 'origen') document.getElementById('secOrigen').style.display = 'block';
-    if (idSeccion === 'graficos') document.getElementById('secGraficos').style.display = 'block';
-}
-
-function volverAlHub() {
-    // Ocultar vista de detalle y mostrar el HUB
-    document.getElementById('vistaDetalleReporte').style.display = 'none';
-    document.getElementById('reportesHubGrid').style.display = 'grid';
+function setDisplay(idElemento, displayValue) {
+    const el = document.getElementById(idElemento);
+    if (el) el.style.display = displayValue;
 }

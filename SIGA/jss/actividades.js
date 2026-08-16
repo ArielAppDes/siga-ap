@@ -1,5 +1,5 @@
 // ===================================================
-// 16/08/2026 - V0.5 - SIGA_APP - LÓGICA DE ACTIVIDADES CON MÓDULO DE TRANSFERENCIA (30 DÍAS PRUEBA)
+// 16/08/2026 - V0.6 - SIGA_APP - LÓGICA DE ACTIVIDADES CON CABECERA DINÁMICA Y TRANSFERENCIAS (30 DÍAS)
 // ===================================================
 
 const DIAS_EVALUACION_TRANSFERENCIA = 30; // ⚙️ Parámetro de prueba (cambiar a 90 en producción)
@@ -113,6 +113,21 @@ async function abrirModalPorEstado(estadoFiltro, titulo) {
     const modal = document.getElementById("modalCapacitaciones");
     const txtTitulo = document.getElementById("tituloModal");
     const tbody = document.getElementById("tbodyCapacitaciones");
+    const thead = document.querySelector("#modalCapacitaciones table thead");
+
+    // Adaptar cabecera para capacitaciones estándar
+    if (thead) {
+        thead.innerHTML = `
+            <tr>
+                <th style="padding:10px;">ID CAP</th>
+                <th style="padding:10px;">Curso</th>
+                <th style="padding:10px; text-align:center;">Clase</th>
+                <th style="padding:10px;">Fecha</th>
+                <th style="padding:10px;">Instructor/es</th>
+                <th style="padding:10px; text-align:center;">Acción</th>
+            </tr>
+        `;
+    }
 
     const inputBuscar = document.getElementById('inputBuscarModal');
     if (inputBuscar) inputBuscar.value = '';
@@ -199,6 +214,21 @@ async function abrirModalTransferencia() {
     const modal = document.getElementById("modalCapacitaciones");
     const txtTitulo = document.getElementById("tituloModal");
     const tbody = document.getElementById("tbodyCapacitaciones");
+    const thead = document.querySelector("#modalCapacitaciones table thead");
+
+    // Adaptar cabecera específica para Transferencias
+    if (thead) {
+        thead.innerHTML = `
+            <tr>
+                <th style="padding:10px;">ID CAP</th>
+                <th style="padding:10px;">Curso</th>
+                <th style="padding:10px; text-align:center;">Fecha Cursada</th>
+                <th style="padding:10px; text-align:center;">Fecha Obj. Tra.</th>
+                <th style="padding:10px; text-align:center;">Estado / Atraso</th>
+                <th style="padding:10px; text-align:center;">Acciones</th>
+            </tr>
+        `;
+    }
 
     const inputBuscar = document.getElementById('inputBuscarModal');
     if (inputBuscar) inputBuscar.value = '';
@@ -214,7 +244,6 @@ async function abrirModalTransferencia() {
     }
 
     try {
-        // Consultar capacitaciones finalizadas excluyendo las que 'No Aplica'
         const { data, error } = await db
             .from("capacitaciones")
             .select("*")
@@ -247,7 +276,6 @@ function renderizarFilasTransferencia(lista) {
         const tr = document.createElement("tr");
         tr.style.borderBottom = "1px solid #eee";
 
-        // Fecha objetivo de transferencia (Calculada a 30 días si no existía)
         let fechaObj;
         if (item.fecha_tra) {
             fechaObj = new Date(item.fecha_tra + "T00:00:00");
@@ -258,7 +286,6 @@ function renderizarFilasTransferencia(lista) {
             fechaObj = new Date();
         }
 
-        // Cálculo de días restantes o atraso
         const difMs = fechaObj.getTime() - hoy.getTime();
         const diasDiferencia = Math.ceil(difMs / (1000 * 3600 * 24));
 
@@ -319,7 +346,7 @@ window.omitirTransferencia = async function(idCap) {
         if (error) throw error;
 
         alert("Capacitación omitida correctamente.");
-        abrirModalTransferencia(); // Recargar grilla
+        abrirModalTransferencia();
     } catch (err) {
         console.error("Error al omitir transferencia:", err);
         alert("Ocurrió un error al actualizar la capacitación.");
@@ -335,7 +362,6 @@ window.generarQRTransferencia = async function(idCap, nombreCurso) {
 
     if (!contenedorQR || !modalQR) return;
 
-    // Actualizar estado_tra en Supabase a 'Enviada'
     const db = obtenerDB();
     if (db) {
         await db
@@ -411,7 +437,6 @@ window.cargarSiguienteClase = async function(idCap) {
 
     const db = obtenerDB();
     if (db) {
-        // Fecha a 30 días calculada automáticamente al finalizar
         const hoy = new Date();
         const fecha30Dias = new Date();
         fecha30Dias.setDate(hoy.getDate() + DIAS_EVALUACION_TRANSFERENCIA);

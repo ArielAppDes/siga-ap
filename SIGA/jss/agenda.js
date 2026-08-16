@@ -1,5 +1,5 @@
 // ===================================================
-// 16/08/2026 - V0.6.1 - SIGA-APP - AGENDA CON ALERTAS DE TRANSFERENCIA EXACTAS
+// 16/08/2026 - V0.7 - SIGA-APP - LÓGICA DE AGENDA CON CALCULADORA DINÁMICA (+30 DÍAS) DE TRANSFERENCIA
 // ===================================================
 
 let fechaActual = new Date();
@@ -13,6 +13,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function obtenerDB() {
     return window.supabaseClient || window.supabase || null;
+}
+
+// Función para obtener la Fecha Obj. Tra. (si no existe en DB, le suma 30 días a la fecha de cursada)
+function calcularFechaObjTra(item) {
+    if (item.fecha_tra && item.fecha_tra.trim() !== "") {
+        return item.fecha_tra;
+    }
+    if (!item.fecha) return null;
+
+    const partes = item.fecha.split("-");
+    if (partes.length !== 3) return null;
+
+    const [a, m, d] = partes.map(num => parseInt(num, 10));
+    const fechaBase = new Date(a, m - 1, d);
+    fechaBase.setDate(fechaBase.getDate() + 30); // 30 días post-cursada
+
+    const anio = fechaBase.getFullYear();
+    const mes = String(fechaBase.getMonth() + 1).padStart(2, "0");
+    const dia = String(fechaBase.getDate()).padStart(2, "0");
+
+    return `${anio}-${mes}-${dia}`;
 }
 
 function configurarControles() {
@@ -61,7 +82,7 @@ function renderizarVistaAgenda() {
     const mesStr = String(mes + 1).padStart(2, "0");
     const prefijoAnioMes = `${anio}-${mesStr}`;
     
-    // Capacitaciones dictadas en el mes seleccionado
+    // Capacitaciones dictadas en este mes
     capacitacionesMes = todasLasCapacitaciones.filter(c => c.fecha && c.fecha.startsWith(prefijoAnioMes));
 
     renderizarBannerResumenAnual(anio, mes, nombresMeses);
@@ -115,6 +136,7 @@ function renderizarGridCalendario(anio, mes) {
     const primerDiaSemana = new Date(anio, mes, 1).getDay();
     const totalDiasMes = new Date(anio, mes + 1, 0).getDate();
     
+    // Fecha actual real
     const hoyObj = new Date();
     const hoyStr = `${hoyObj.getFullYear()}-${String(hoyObj.getMonth() + 1).padStart(2, "0")}-${String(hoyObj.getDate()).padStart(2, "0")}`;
 
@@ -135,19 +157,21 @@ function renderizarGridCalendario(anio, mes) {
         // 1. Cursadas normales dictadas en este día
         const eventosDelDia = capacitacionesMes.filter(c => c.fecha === fechaStr);
 
-        // 2. Transferencias:
-        // A) Vence este día exacto.
-        // B) O está vencida y persistente en el día de HOY.
+        // 2. Transferencias (Finalizadas y con estado_tra distinto de Enviada/Recibida/No Aplica)
         const transferenciasDelDia = todasLasCapacitaciones.filter(c => {
-            if (!c.fecha_tra) return false;
+            if (c.estado !== "Finalizado") return false;
+
             const estadoTra = (c.estado_tra || "Pendiente").trim();
             if (["Enviada", "Recibida", "No Aplica"].includes(estadoTra)) return false;
 
-            // Caso A: Coincidencia en la fecha exacta límite
-            if (c.fecha_tra === fechaStr) return true;
+            const fechaObjTra = calcularFechaObjTra(c);
+            if (!fechaObjTra) return false;
 
-            // Caso B: Retraso persistente acumulado que se fija en HOY
-            if (c.fecha_tra < hoyStr && fechaStr === hoyStr) return true;
+            // Coincide con la fecha objetivo en el calendario
+            if (fechaObjTra === fechaStr) return true;
+
+            // Retrasos atrasados acumulados que se muestran en el día de HOY
+            if (fechaObjTra < hoyStr && fechaStr === hoyStr) return true;
 
             return false;
         });
@@ -170,7 +194,8 @@ function renderizarGridCalendario(anio, mes) {
         // Renderizar tags de Transferencia
         transferenciasDelDia.forEach(item => {
             const tagTra = document.createElement("div");
-            const esAtrasado = item.fecha_tra < hoyStr;
+            const fechaObjTra = calcularFechaObjTra(item);
+            const esAtrasado = fechaObjTra < hoyStr;
 
             let colorBg = esAtrasado ? "#dc2626" : "#f59e0b";
             let prefijo = esAtrasado ? "🚨 TRA VENCIDA:" : "⚠️ ENVIAR TRA:";
@@ -203,7 +228,7 @@ function abrirModalDetalleDia(fechaStr, listaEventos, listaTransferencias = []) 
     if (listaEventos.length === 0 && listaTransferencias.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">No hay actividades ni entregas pendientes este día.</td></tr>';
     } else {
-        // Eventos de Dictado
+        // Cursadas
         listaEventos.forEach(item => {
             const tr = document.createElement("tr");
             tr.style.borderBottom = "1px solid #eee";
@@ -230,18 +255,19 @@ function abrirModalDetalleDia(fechaStr, listaEventos, listaTransferencias = []) 
             tbody.appendChild(tr);
         });
 
-        // Eventos de Encuestas de Transferencia
+        // Encuestas de Transferencia
         listaTransferencias.forEach(item => {
             const tr = document.createElement("tr");
             tr.style.borderBottom = "1px solid #eee";
             tr.style.backgroundColor = "#fff1f2";
 
+            const fechaObjTra = calcularFechaObjTra(item);
             const btnAccion = `<button onclick="irATransferencias()" style="background:#dc2626; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">Ir a Transferencias</button>`;
 
             tr.innerHTML = `
                 <td style="padding:10px; font-weight:bold; color:#dc2626;">${item.id_cap}</td>
                 <td style="padding:10px; color:#991b1b; font-weight:600;">📋 Encuesta Transferencia (${item.nombre_curso || "-"})</td>
-                <td style="padding:10px;">Límite: ${item.fecha_tra}</td>
+                <td style="padding:10px;">Límite: ${fechaObjTra || "-"}</td>
                 <td style="padding:10px;"><span style="background:#f87171; color:#fff; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold;">TRANSFERENCIA</span></td>
                 <td style="padding:10px; text-align:center;">${btnAccion}</td>
             `;

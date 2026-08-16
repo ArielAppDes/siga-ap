@@ -1,5 +1,5 @@
 // ===================================================
-// 16/08/2026 - V0.6 - SIGA-APP - LÓGICA DE AGENDA CON ALERTAS DE TRANSFERENCIA EXACTAS Y ATRASOS PERSISTENTES
+// 16/08/2026 - V0.6.1 - SIGA-APP - AGENDA CON ALERTAS DE TRANSFERENCIA EXACTAS
 // ===================================================
 
 let fechaActual = new Date();
@@ -61,7 +61,7 @@ function renderizarVistaAgenda() {
     const mesStr = String(mes + 1).padStart(2, "0");
     const prefijoAnioMes = `${anio}-${mesStr}`;
     
-    // Capacitaciones dictadas en el mes
+    // Capacitaciones dictadas en el mes seleccionado
     capacitacionesMes = todasLasCapacitaciones.filter(c => c.fecha && c.fecha.startsWith(prefijoAnioMes));
 
     renderizarBannerResumenAnual(anio, mes, nombresMeses);
@@ -115,7 +115,6 @@ function renderizarGridCalendario(anio, mes) {
     const primerDiaSemana = new Date(anio, mes, 1).getDay();
     const totalDiasMes = new Date(anio, mes + 1, 0).getDate();
     
-    // Obtener fecha de HOY sin hora
     const hoyObj = new Date();
     const hoyStr = `${hoyObj.getFullYear()}-${String(hoyObj.getMonth() + 1).padStart(2, "0")}-${String(hoyObj.getDate()).padStart(2, "0")}`;
 
@@ -133,19 +132,21 @@ function renderizarGridCalendario(anio, mes) {
         const mesPadded = String(mes + 1).padStart(2, "0");
         const fechaStr = `${anio}-${mesPadded}-${diaPadded}`;
 
-        // 1. Cursadas normales del día
+        // 1. Cursadas normales dictadas en este día
         const eventosDelDia = capacitacionesMes.filter(c => c.fecha === fechaStr);
 
-        // 2. Transferencias asociadas a ESTA fecha exacta o Retrasadas fijas en HOY
+        // 2. Transferencias:
+        // A) Vence este día exacto.
+        // B) O está vencida y persistente en el día de HOY.
         const transferenciasDelDia = todasLasCapacitaciones.filter(c => {
             if (!c.fecha_tra) return false;
-            const estadoTra = c.estado_tra || "Pendiente";
+            const estadoTra = (c.estado_tra || "Pendiente").trim();
             if (["Enviada", "Recibida", "No Aplica"].includes(estadoTra)) return false;
 
-            // Coincidencia exacta de fecha de entrega
+            // Caso A: Coincidencia en la fecha exacta límite
             if (c.fecha_tra === fechaStr) return true;
 
-            // Retrasos persistentes: Si ya venció y estamos dibujando la celda de HOY
+            // Caso B: Retraso persistente acumulado que se fija en HOY
             if (c.fecha_tra < hoyStr && fechaStr === hoyStr) return true;
 
             return false;
@@ -171,8 +172,8 @@ function renderizarGridCalendario(anio, mes) {
             const tagTra = document.createElement("div");
             const esAtrasado = item.fecha_tra < hoyStr;
 
-            let colorBg = esAtrasado ? "#dc2626" : "#f59e0b"; // Rojo si atrasado, Naranja si está en término
-            let prefijo = esAtrasado ? "🚨 RETRASO TRA:" : "⚠️ ENVIAR TRA:";
+            let colorBg = esAtrasado ? "#dc2626" : "#f59e0b";
+            let prefijo = esAtrasado ? "🚨 TRA VENCIDA:" : "⚠️ ENVIAR TRA:";
 
             tagTra.className = "evento-tag";
             tagTra.style.cssText = `background-color: ${colorBg}; color: #ffffff; font-weight: 700; border-radius: 4px; padding: 2px 5px; font-size: 10px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;`;
@@ -239,7 +240,7 @@ function abrirModalDetalleDia(fechaStr, listaEventos, listaTransferencias = []) 
 
             tr.innerHTML = `
                 <td style="padding:10px; font-weight:bold; color:#dc2626;">${item.id_cap}</td>
-                <td style="padding:10px; color:#991b1b; font-weight:600;">📋 Entrega Encuesta Transferencia (${item.nombre_curso || "-"})</td>
+                <td style="padding:10px; color:#991b1b; font-weight:600;">📋 Encuesta Transferencia (${item.nombre_curso || "-"})</td>
                 <td style="padding:10px;">Límite: ${item.fecha_tra}</td>
                 <td style="padding:10px;"><span style="background:#f87171; color:#fff; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold;">TRANSFERENCIA</span></td>
                 <td style="padding:10px; text-align:center;">${btnAccion}</td>

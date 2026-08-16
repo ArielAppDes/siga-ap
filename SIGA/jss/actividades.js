@@ -1,6 +1,8 @@
 // ===================================================
-// 15/08/2026 - V0.4 - SIGA_APP - LÓGICA DE ACTIVIDADES CON QR DE SATISFACCIÓN
+// 16/08/2026 - V0.5 - SIGA_APP - LÓGICA DE ACTIVIDADES CON MÓDULO DE TRANSFERENCIA (30 DÍAS PRUEBA)
 // ===================================================
+
+const DIAS_EVALUACION_TRANSFERENCIA = 30; // ⚙️ Parámetro de prueba (cambiar a 90 en producción)
 
 document.addEventListener("DOMContentLoaded", () => {
     inicializarTarjetas();
@@ -13,44 +15,42 @@ function obtenerDB() {
 }
 
 function inicializarTarjetas() {
-    // Tarjeta Nueva Capacitación
+    // Nueva Capacitación
     document.getElementById("cardNueva")?.addEventListener("click", async () => {
         localStorage.removeItem("capacitacion_activa");
-
         const nuevoIdCap = await obtenerSiguienteIdCap();
-
-        const nuevaCap = {
-            id_cap: nuevoIdCap,
-            clase_nro: "1",
-            estado: "Programado"
-        };
-
+        const nuevaCap = { id_cap: nuevoIdCap, clase_nro: "1", estado: "Programado" };
         localStorage.setItem("capacitacion_activa", JSON.stringify(nuevaCap));
         window.location.href = "capacitaciones.html";
     });
 
-    // Tarjeta Programadas
+    // Programadas
     document.getElementById("cardProgramadas")?.addEventListener("click", () => {
         abrirModalPorEstado("Programado", "Capacitaciones Programadas");
     });
 
-    // Tarjeta En curso
+    // En curso
     document.getElementById("cardEnCurso")?.addEventListener("click", () => {
         abrirModalPorEstado("En curso", "Capacitaciones En Curso");
     });
 
-    // Tarjeta Finalizadas
+    // Finalizadas
     document.getElementById("cardFinalizadas")?.addEventListener("click", () => {
         abrirModalPorEstado("Finalizado", "Historial de Capacitaciones Finalizadas");
     });
 
-    // Tarjeta Encuesta de Satisfacción (Generador de QR)
+    // Encuesta de Satisfacción (QR directos)
     document.getElementById("cardSatisfaccion")?.addEventListener("click", () => {
         abrirModalPorEstado("QR", "Encuesta de Satisfacción - Seleccionar Capacitación");
     });
+
+    // Encuesta de Transferencia (Gestión Post-30 Días)
+    document.getElementById("cardTransferencia")?.addEventListener("click", () => {
+        abrirModalTransferencia();
+    });
 }
 
-// Genera correlativo CAP-AAAA-XXX-01 siempre formateado
+// Genera correlativo CAP-AAAA-XXX-01
 async function obtenerSiguienteIdCap() {
     const db = obtenerDB();
     const anioActual = new Date().getFullYear();
@@ -58,31 +58,22 @@ async function obtenerSiguienteIdCap() {
     if (!db) return `CAP-${anioActual}-001-01`;
 
     try {
-        const { data, error } = await db
-            .from("capacitaciones")
-            .select("id_cap");
-
-        if (error || !data || data.length === 0) {
-            return `CAP-${anioActual}-001-01`;
-        }
+        const { data, error } = await db.from("capacitaciones").select("id_cap");
+        if (error || !data || data.length === 0) return `CAP-${anioActual}-001-01`;
 
         let maxNumero = 0;
-
         data.forEach(item => {
             if (item.id_cap) {
                 const partes = item.id_cap.split("-");
                 if (partes.length >= 3) {
                     const num = parseInt(partes[2], 10);
-                    if (!isNaN(num) && num > maxNumero) {
-                        maxNumero = num;
-                    }
+                    if (!isNaN(num) && num > maxNumero) maxNumero = num;
                 }
             }
         });
 
         const siguienteNumero = String(maxNumero + 1).padStart(3, "0");
         return `CAP-${anioActual}-${siguienteNumero}-01`;
-
     } catch (err) {
         console.error("Error al consultar último ID_CAP en Supabase:", err);
         return `CAP-${anioActual}-001-01`;
@@ -103,17 +94,11 @@ async function verificarCampoIdCapLocal() {
 function configurarEventosModal() {
     const modalCap = document.getElementById("modalCapacitaciones");
     const btnCerrarCap = document.getElementById("btnCerrarModal");
-
     const modalQR = document.getElementById("modalQR");
     const btnCerrarQR = document.getElementById("btnCerrarQR");
 
-    btnCerrarCap?.addEventListener("click", () => {
-        if (modalCap) modalCap.style.display = "none";
-    });
-
-    btnCerrarQR?.addEventListener("click", () => {
-        if (modalQR) modalQR.style.display = "none";
-    });
+    btnCerrarCap?.addEventListener("click", () => { if (modalCap) modalCap.style.display = "none"; });
+    btnCerrarQR?.addEventListener("click", () => { if (modalQR) modalQR.style.display = "none"; });
 
     window.addEventListener("click", (e) => {
         if (e.target === modalCap) modalCap.style.display = "none";
@@ -121,6 +106,9 @@ function configurarEventosModal() {
     });
 }
 
+// ----------------------------------------------------
+// MODAL GENERAL (PROGRAMADAS / EN CURSO / FINALIZADAS / QR)
+// ----------------------------------------------------
 async function abrirModalPorEstado(estadoFiltro, titulo) {
     const modal = document.getElementById("modalCapacitaciones");
     const txtTitulo = document.getElementById("tituloModal");
@@ -141,14 +129,11 @@ async function abrirModalPorEstado(estadoFiltro, titulo) {
 
     try {
         let query = db.from("capacitaciones").select("*");
-
-        // Si es consulta de QR muestra todas, sino filtra por estado específico
         if (estadoFiltro !== "QR") {
             query = query.eq("estado", estadoFiltro);
         }
 
         const { data, error } = await query.order("id_cap", { ascending: false });
-
         if (error) throw error;
 
         if (!data || data.length === 0) {
@@ -158,7 +143,6 @@ async function abrirModalPorEstado(estadoFiltro, titulo) {
         }
 
         renderizarFilasModal(data, estadoFiltro);
-
     } catch (err) {
         console.error("Error al obtener capacitaciones:", err);
         if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red; padding:20px;">Error al consultar la base de datos.</td></tr>';
@@ -187,15 +171,8 @@ function renderizarFilasModal(lista, estadoFiltro) {
         } else {
             botonAccion = `
                 <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
-                    <button onclick="imprimirPlanillaHistorica('${item.id_cap}')" 
-                            style="background-color: #1F6FEB; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 13px;" 
-                            title="Imprimir Planilla A4">
-                        🖨️
-                    </button>
-                    <button onclick="verFinalizada('${item.id_cap}')" 
-                            style="background-color: #7f8c8d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
-                        Ver Detalle
-                    </button>
+                    <button onclick="imprimirPlanillaHistorica('${item.id_cap}')" style="background-color: #1F6FEB; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 13px;" title="Imprimir Planilla A4">🖨️</button>
+                    <button onclick="verFinalizada('${item.id_cap}')" style="background-color: #7f8c8d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">Ver Detalle</button>
                 </div>
             `;
         }
@@ -215,7 +192,182 @@ function renderizarFilasModal(lista, estadoFiltro) {
     window.listaCapacitacionesTemp = lista;
 }
 
-// Genera y muestra el modal con el código QR vinculado a encuesta.html
+// ----------------------------------------------------
+// MÓDULO ESPECIAL: ENCUESTA DE TRANSFERENCIA
+// ----------------------------------------------------
+async function abrirModalTransferencia() {
+    const modal = document.getElementById("modalCapacitaciones");
+    const txtTitulo = document.getElementById("tituloModal");
+    const tbody = document.getElementById("tbodyCapacitaciones");
+
+    const inputBuscar = document.getElementById('inputBuscarModal');
+    if (inputBuscar) inputBuscar.value = '';
+
+    if (txtTitulo) txtTitulo.textContent = "Encuesta de Transferencia (Evaluación Post-Capacitación)";
+    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Cargando capacitaciones...</td></tr>';
+    if (modal) modal.style.display = "flex";
+
+    const db = obtenerDB();
+    if (!db) {
+        if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red; padding:20px;">Sin conexión a Supabase.</td></tr>';
+        return;
+    }
+
+    try {
+        // Consultar capacitaciones finalizadas excluyendo las que 'No Aplica'
+        const { data, error } = await db
+            .from("capacitaciones")
+            .select("*")
+            .eq("estado", "Finalizado")
+            .neq("estado_tra", "No Aplica")
+            .order("id_cap", { ascending: false });
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px;">No hay capacitaciones pendientes de evaluación de transferencia.</td></tr>`;
+            return;
+        }
+
+        renderizarFilasTransferencia(data);
+    } catch (err) {
+        console.error("Error al cargar transferencias:", err);
+        if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red; padding:20px;">Error al consultar capacitaciones.</td></tr>';
+    }
+}
+
+function renderizarFilasTransferencia(lista) {
+    const tbody = document.getElementById("tbodyCapacitaciones");
+    if (!tbody) return;
+
+    tbody.innerHTML = "";
+    const hoy = new Date();
+
+    lista.forEach(item => {
+        const tr = document.createElement("tr");
+        tr.style.borderBottom = "1px solid #eee";
+
+        // Fecha objetivo de transferencia (Calculada a 30 días si no existía)
+        let fechaObj;
+        if (item.fecha_tra) {
+            fechaObj = new Date(item.fecha_tra + "T00:00:00");
+        } else if (item.fecha) {
+            fechaObj = new Date(item.fecha + "T00:00:00");
+            fechaObj.setDate(fechaObj.getDate() + DIAS_EVALUACION_TRANSFERENCIA);
+        } else {
+            fechaObj = new Date();
+        }
+
+        // Cálculo de días restantes o atraso
+        const difMs = fechaObj.getTime() - hoy.getTime();
+        const diasDiferencia = Math.ceil(difMs / (1000 * 3600 * 24));
+
+        let contadorHTML = "";
+        const estadoActual = item.estado_tra || "Pendiente";
+
+        if (estadoActual === "Enviada" || estadoActual === "Recibida") {
+            const badgeColor = estadoActual === "Recibida" ? "#10b981" : "#0284c7";
+            contadorHTML = `<span style="background:${badgeColor}; color:#fff; padding:4px 8px; border-radius:12px; font-size:12px; font-weight:600;">${estadoActual}</span>`;
+        } else if (diasDiferencia < 0) {
+            const atraso = Math.abs(diasDiferencia);
+            contadorHTML = `<span style="color:#ef4444; font-weight:700; font-size:13px;">🚨 ${atraso} días de atraso</span>`;
+        } else {
+            contadorHTML = `<span style="color:#16a34a; font-weight:600; font-size:13px;">🟢 Faltan ${diasDiferencia} días</span>`;
+        }
+
+        const nombreCursoEscaped = (item.nombre_curso || '').replace(/'/g, "\\'");
+
+        const accionesHTML = `
+            <div style="display:flex; gap:6px; justify-content:center; align-items:center;">
+                <button onclick="generarQRTransferencia('${item.id_cap}', '${nombreCursoEscaped}')" style="background:#18C48F; color:#fff; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; font-weight:600; font-size:12px;" title="Generar QR para Jefatura">
+                    📱 QR Jefatura
+                </button>
+                <button onclick="omitirTransferencia('${item.id_cap}')" style="background:#dc2626; color:#fff; border:none; padding:6px 8px; border-radius:4px; cursor:pointer; font-size:12px;" title="Omitir / Borrar de pendientes">
+                    🗑️ Omitir
+                </button>
+            </div>
+        `;
+
+        tr.innerHTML = `
+            <td style="padding:10px; font-weight:bold;">${item.id_cap || "-"}</td>
+            <td style="padding:10px;">${item.nombre_curso || "-"}</td>
+            <td style="padding:10px; text-align:center;">${item.fecha || "-"}</td>
+            <td style="padding:10px; text-align:center;">${fechaObj.toISOString().split("T")[0]}</td>
+            <td style="padding:10px; text-align:center;">${contadorHTML}</td>
+            <td style="padding:10px; text-align:center;">${accionesHTML}</td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+
+    window.listaCapacitacionesTemp = lista;
+}
+
+// Omitir transferencia ("No Aplica")
+window.omitirTransferencia = async function(idCap) {
+    if (!confirm(`¿Confirmás omitir la encuesta de transferencia para la capacitación ${idCap}? Ya no figurará como pendiente.`)) return;
+
+    const db = obtenerDB();
+    if (!db) return;
+
+    try {
+        const { error } = await db
+            .from("capacitaciones")
+            .update({ estado_tra: "No Aplica" })
+            .eq("id_cap", idCap);
+
+        if (error) throw error;
+
+        alert("Capacitación omitida correctamente.");
+        abrirModalTransferencia(); // Recargar grilla
+    } catch (err) {
+        console.error("Error al omitir transferencia:", err);
+        alert("Ocurrió un error al actualizar la capacitación.");
+    }
+};
+
+// Generar QR de Transferencia apuntando a encuesta_transferencia.html
+window.generarQRTransferencia = async function(idCap, nombreCurso) {
+    const modalQR = document.getElementById("modalQR");
+    const contenedorQR = document.getElementById("contenedorQR");
+    const qrSubtitulo = document.getElementById("qrSubtitulo");
+    const qrIdCapText = document.getElementById("qrIdCapText");
+
+    if (!contenedorQR || !modalQR) return;
+
+    // Actualizar estado_tra en Supabase a 'Enviada'
+    const db = obtenerDB();
+    if (db) {
+        await db
+            .from("capacitaciones")
+            .update({ 
+                estado_tra: "Enviada",
+                fecha_envio_transferencia: new Date().toISOString()
+            })
+            .eq("id_cap", idCap);
+    }
+
+    contenedorQR.innerHTML = "";
+
+    const rutaBase = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+    const urlTransferencia = `${rutaBase}encuesta_transferencia.html?id_cap=${encodeURIComponent(idCap)}`;
+
+    new QRCode(contenedorQR, {
+        text: urlTransferencia,
+        width: 180,
+        height: 180,
+        colorDark: "#0f172a",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+
+    if (qrSubtitulo) qrSubtitulo.textContent = `Evaluación de Transferencia: ${nombreCurso}`;
+    if (qrIdCapText) qrIdCapText.textContent = `ID: ${idCap}`;
+
+    modalQR.style.display = "flex";
+};
+
+// Generar QR de Satisfacción normal
 window.generarQRModal = function(idCap, nombreCurso) {
     const modalQR = document.getElementById("modalQR");
     const contenedorQR = document.getElementById("contenedorQR");
@@ -244,37 +396,43 @@ window.generarQRModal = function(idCap, nombreCurso) {
     modalQR.style.display = "flex";
 };
 
-// 1. Editar Programada
+// Editar Programada
 window.editarProgramada = function(idCap) {
     const cap = window.listaCapacitacionesTemp?.find(c => c.id_cap === idCap);
     if (!cap) return;
-
     localStorage.setItem("capacitacion_activa", JSON.stringify(cap));
     window.location.href = "capacitaciones.html";
 };
 
-// 2. Continuar Clase "En curso"
+// Continuar Clase (Siguiente Clase)
 window.cargarSiguienteClase = async function(idCap) {
     const cap = window.listaCapacitacionesTemp?.find(c => c.id_cap === idCap);
     if (!cap) return;
 
     const db = obtenerDB();
     if (db) {
+        // Fecha a 30 días calculada automáticamente al finalizar
+        const hoy = new Date();
+        const fecha30Dias = new Date();
+        fecha30Dias.setDate(hoy.getDate() + DIAS_EVALUACION_TRANSFERENCIA);
+        const fechaTraStr = fecha30Dias.toISOString().split("T")[0];
+
         await db
             .from("capacitaciones")
-            .update({ estado: "Finalizado" })
+            .update({ 
+                estado: "Finalizado",
+                fecha_tra: fechaTraStr,
+                estado_tra: "Pendiente"
+            })
             .eq("id_cap", idCap);
     }
 
     let claseActual = parseInt(cap.clase_nro || "1", 10);
     let siguienteClase = claseActual + 1;
-
     const numClaseFormateado = String(siguienteClase).padStart(2, "0");
     const partes = idCap.split("-");
 
-    if (partes.length >= 3) {
-        partes[3] = numClaseFormateado;
-    }
+    if (partes.length >= 3) partes[3] = numClaseFormateado;
     const nuevoIdCap = partes.slice(0, 3).join("-") + "-" + numClaseFormateado;
 
     const nuevaClaseCap = {
@@ -289,22 +447,21 @@ window.cargarSiguienteClase = async function(idCap) {
     window.location.href = "capacitaciones.html";
 };
 
-// 3. Ver Finalizada
+// Ver Finalizada
 window.verFinalizada = function(idCap) {
     const cap = window.listaCapacitacionesTemp?.find(c => c.id_cap === idCap);
     if (!cap) return;
-
     localStorage.setItem("capacitacion_activa", JSON.stringify(cap));
     window.location.href = "capacitaciones.html";
 };
 
-// 4. Imprimir Planilla Histórica
+// Imprimir Planilla Histórica
 window.imprimirPlanillaHistorica = function(idCap) {
     if (!idCap) return;
     window.open(`planilla_asistencia.html?id_cap=${encodeURIComponent(idCap)}`, '_blank');
 };
 
-// Búsqueda en tiempo real
+// Buscador Modal
 function filtrarModal() {
     const input = document.getElementById('inputBuscarModal');
     if (!input) return;
@@ -313,8 +470,7 @@ function filtrarModal() {
     const filas = document.querySelectorAll('#tbodyCapacitaciones tr');
 
     filas.forEach(fila => {
-        if (fila.children.length <= 1) return; 
-
+        if (fila.children.length <= 1) return;
         const textoFila = fila.textContent.toLowerCase();
         fila.style.display = textoFila.includes(termino) ? '' : 'none';
     });

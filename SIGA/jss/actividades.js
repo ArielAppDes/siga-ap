@@ -350,8 +350,7 @@ window.omitirTransferencia = async function(idCap) {
         alert("Ocurrió un error al actualizar la capacitación.");
     }
 };
-
-// Generar QR de Transferencia apuntando a la tabla 'asistentes' y columna 'jefatura'
+// Generar QR de Transferencia agrupando por Jefatura con estructura real de la BD
 window.generarQRTransferencia = async function(idCap, nombreCurso) {
     const modalQR = document.getElementById("modalQR");
     const contenedorJefaturas = document.getElementById("contenedorJefaturas");
@@ -382,10 +381,10 @@ window.generarQRTransferencia = async function(idCap, nombreCurso) {
     try {
         let participantes = [];
         if (db) {
-            // Consulta exacta a la tabla 'asistentes'
+            // Consulta directa trayendo apellido, nombre y jefatura
             const { data, error } = await db
-                .from("asistentes")
-                .select("nombre_participante, jefatura, legajo, apellidoynombre")
+                .from("asistentes") // Asegúrate de que este sea el nombre exacto de la tabla de la foto
+                .select("apellido, nombre, jefatura, legajo")
                 .eq("id_cap", idCap);
             
             if (!error && data) participantes = data;
@@ -397,14 +396,18 @@ window.generarQRTransferencia = async function(idCap, nombreCurso) {
             const j = p.jefatura || "Sin Jefatura Asignada";
             if (!gruposJefatura[j]) gruposJefatura[j] = [];
             
-            const nombreMostrar = p.nombre_participante || p.apellidoynombre || `Legajo: ${p.legajo}`;
-            gruposJefatura[j].push(nombreMostrar);
+            // Une Apellido + Nombre según la foto
+            const nombreCompleto = (p.apellido && p.nombre) 
+                ? `${p.apellido}, ${p.nombre}` 
+                : (p.apellido || p.nombre || `Legajo: ${p.legajo}`);
+
+            gruposJefatura[j].push(nombreCompleto);
         });
 
         const clavesJefatura = Object.keys(gruposJefatura);
 
         if (clavesJefatura.length === 0) {
-            // Fallback genérico si no encuentra filas en 'asistentes'
+            // Fallback genérico si no devuelve registros
             const urlGen = `${rutaBase}transferencia.html?id_cap=${encodeURIComponent(idCap)}`;
             contenedorJefaturas.innerHTML = `
                 <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:15px; text-align:center;">
@@ -426,19 +429,19 @@ window.generarQRTransferencia = async function(idCap, nombreCurso) {
             return;
         }
 
-        // Renderizado desglosado por Jefatura
+        // Renderizado de tarjetas separadas por cada Jefatura
         contenedorJefaturas.innerHTML = "";
         clavesJefatura.forEach((jefatura, index) => {
             const urlJefe = `${rutaBase}transferencia.html?id_cap=${encodeURIComponent(idCap)}&jefatura=${encodeURIComponent(jefatura)}`;
             const qrDivId = `qrJefe_${index}`;
 
             const cardHtml = document.createElement("div");
-            cardHtml.style.cssText = "background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:15px; display:flex; flex-direction:column; gap:10px;";
+            cardHtml.style.cssText = "background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:15px; display:flex; flex-direction:column; gap:10px; margin-bottom:12px;";
 
             cardHtml.innerHTML = `
                 <div style="border-bottom:1px solid #e2e8f0; padding-bottom:8px;">
-                    <h4 style="margin:0; color:#0f172a; font-size:15px;">👔 Jefatura / Área: <span style="color:#0284c7;">${jefatura}</span></h4>
-                    <p style="margin:4px 0 0 0; font-size:12px; color:#64748b;"><strong>Colaboradores evaluados:</strong> ${gruposJefatura[jefatura].join(", ")}</p>
+                    <h4 style="margin:0; color:#0f172a; font-size:15px;">👔 Jefatura: <span style="color:#0284c7;">${jefatura}</span></h4>
+                    <p style="margin:4px 0 0 0; font-size:12px; color:#64748b;"><strong>Colaboradores:</strong> ${gruposJefatura[jefatura].join(" | ")}</p>
                 </div>
                 <div style="display:flex; align-items:center; gap:15px; justify-content:space-around; flex-wrap:wrap;">
                     <div id="${qrDivId}"></div>
@@ -468,6 +471,7 @@ window.generarQRTransferencia = async function(idCap, nombreCurso) {
         contenedorJefaturas.innerHTML = `<p style="color:red; text-align:center;">Ocurrió un error al cargar el desglose por jefatura.</p>`;
     }
 };
+
 
 // Copiar al portapapeles con feedback en el botón
 window.copiarAlPortapapeles = function(texto, elementoBtn) {

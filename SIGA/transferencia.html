@@ -94,7 +94,6 @@
             min-height: 80px;
         }
 
-        /* Bloques dinámicos ocultos por defecto */
         .conditional-block {
             display: none;
             background-color: #fff8f1;
@@ -143,16 +142,14 @@
             <small style="color: #64748b;">A completar por el jefe o superior directo</small>
         </div>
 
-        <!-- Datos de la Actividad (Autocompletados por URL o por defecto) -->
         <div class="meta-box">
             <div><strong>Curso:</strong> <span id="lblCurso">Cargando...</span></div>
             <div><strong>Fecha Curso:</strong> <span id="lblFecha">--/--/----</span></div>
-            <div><strong>Participante:</strong> <span id="lblParticipante">Cargando...</span></div>
-            <div><strong>Legajo:</strong> <span id="lblLegajo">----</span></div>
+            <div><strong>Participante/s:</strong> <span id="lblParticipante">Cargando...</span></div>
+            <div><strong>Legajo/s:</strong> <span id="lblLegajo">----</span></div>
         </div>
 
         <form id="frmTransferencia">
-            <!-- Pregunta 1 -->
             <div class="form-group">
                 <label>1. ¿El participante aplica a su tarea los contenidos impartidos en el curso?</label>
                 <select id="aplicaContenidos" required onchange="evaluarRespuesta()">
@@ -163,7 +160,6 @@
                 </select>
             </div>
 
-            <!-- Preguntas Condicionales (2 y 3) -->
             <div id="bloqueDetalle" class="conditional-block">
                 <div class="form-group">
                     <label>2. ¿Por qué crees que no se aplican los contenidos? (Especifica/Ejemplifica las dificultades)</label>
@@ -176,7 +172,6 @@
                 </div>
             </div>
 
-            <!-- Firma / Responsable -->
             <div class="form-group">
                 <label>Nombre y Apellido del Responsable (Evaluador):</label>
                 <input type="text" id="firmaResponsable" placeholder="Ej: Juan Pérez (Jefe Directo)" required>
@@ -186,31 +181,71 @@
         </form>
     </div>
 
-    <!-- Mensaje de Confirmación -->
     <div id="successMsg" class="success-msg">
         <h3>¡Evaluación Registrada con Éxito!</h3>
         <p>Los datos han sido guardados correctamente en el sistema SIGA.</p>
     </div>
 </div>
 
-<!-- Scripts de Conexión -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="jss/supaBaseClient.js"></script>
 <script>
-    // Obtener parámetros desde la URL
     const urlParams = new URLSearchParams(window.location.search);
-    const cursoParam = urlParams.get('curso') || "Capacitación Operativa Demo";
-    const fechaParam = urlParams.get('fecha') || new Date().toISOString().split('T')[0];
-    const legajoParam = urlParams.get('legajo') || "9999";
-    const nombreParam = urlParams.get('nombre') || "Empleado Ejemplo";
+    const idCapParam = urlParams.get('id_cap');
+    const jefaturaParam = urlParams.get('jefatura');
 
-    // Cargar datos en pantalla
-    document.getElementById('lblCurso').textContent = cursoParam;
-    document.getElementById('lblFecha').textContent = fechaParam;
-    document.getElementById('lblParticipante').textContent = nombreParam;
-    document.getElementById('lblLegajo').textContent = legajoParam;
+    let datosCap = { nombre_curso: '', fecha: '' };
+    let textoNombres = '';
+    let textoLegajos = '';
 
-    // Desplegar preguntas 2 y 3 solo si responde PARCIALMENTE o NO
+    document.addEventListener("DOMContentLoaded", async () => {
+        await cargarDatos();
+    });
+
+    async function cargarDatos() {
+        const db = window.supabaseClient || window.supabase;
+        if (!db || !idCapParam) {
+            console.warn("Falta ID_CAP o cliente de Supabase.");
+            return;
+        }
+
+        try {
+            // 1. Obtener datos de la capacitación
+            const { data: cap, error: errCap } = await db
+                .from('capacitaciones')
+                .select('nombre_curso, fecha')
+                .eq('id_cap', idCapParam)
+                .maybeSingle();
+
+            if (cap) {
+                datosCap = cap;
+                document.getElementById('lblCurso').textContent = cap.nombre_curso || idCapParam;
+                document.getElementById('lblFecha').textContent = cap.fecha || "--/--/----";
+            }
+
+            // 2. Obtener asistentes por id_cap y jefatura
+            let query = db.from('asistentes').select('apellido, nombre, legajo, jefatura').eq('id_cap', idCapParam);
+            if (jefaturaParam) {
+                query = query.eq('jefatura', jefaturaParam);
+            }
+
+            const { data: asistentes, error: errAsis } = await query;
+
+            if (asistentes && asistentes.length > 0) {
+                textoNombres = asistentes.map(a => `${a.apellido || ''}, ${a.nombre || ''}`.trim()).join(" | ");
+                textoLegajos = asistentes.map(a => a.legajo || "-").join(" | ");
+
+                document.getElementById('lblParticipante').textContent = textoNombres;
+                document.getElementById('lblLegajo').textContent = textoLegajos;
+            } else {
+                document.getElementById('lblParticipante').textContent = "Sin participantes encontrados";
+                document.getElementById('lblLegajo').textContent = "-";
+            }
+        } catch (err) {
+            console.error("Error al cargar datos en la encuesta:", err);
+        }
+    }
+
     function evaluarRespuesta() {
         const val = document.getElementById('aplicaContenidos').value;
         const bloque = document.getElementById('bloqueDetalle');
@@ -225,28 +260,35 @@
         }
     }
 
-    // Guardar en la tabla 'transferencias' de Supabase
     document.getElementById('frmTransferencia').addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const db = window.supabaseClient || window.supabase;
+        if (!db) {
+            alert("No hay conexión con la base de datos.");
+            return;
+        }
         
         const payload = {
-            nombre_curso: cursoParam,
-            fecha_curso: fechaParam,
-            legajo: legajoParam,
-            nombre: nombreParam,
+            id_cap: idCapParam,
+            jefatura: jefaturaParam,
+            nombre_curso: datosCap.nombre_curso || idCapParam,
+            fecha_curso: datosCap.fecha,
+            legajo: textoLegajos,
+            nombre: textoNombres,
             aplica_contenidos: document.getElementById('aplicaContenidos').value,
             motivo_dificultad: document.getElementById('motivoDificultad').value || null,
             plan_accion: document.getElementById('planAccion').value || null,
             firma_responsable: document.getElementById('firmaResponsable').value
         };
 
-        const { data, error } = await db.from('transferencias').insert([payload]);
+        const { error } = await db.from('transferencias').insert([payload]);
 
         if (error) {
-            alert("Error al guardar la evaluación de transferencia: " + error.message);
+            alert("Error al guardar la evaluación: " + error.message);
         } else {
+            await db.from('capacitaciones').update({ estado_tra: 'Recibida' }).eq('id_cap', idCapParam);
+
             document.getElementById('formContainer').style.display = 'none';
             document.getElementById('successMsg').style.display = 'block';
         }

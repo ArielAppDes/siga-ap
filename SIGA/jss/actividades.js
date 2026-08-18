@@ -1,5 +1,5 @@
 // ===================================================
-// 18/08/2026 - V0.9 - SIGA_APP - CONSULTA A TABLA 'asistentes' Y 'jefatura'
+// 18/08/2026 - V0.10 - SIGA_APP - CONSULTA A TABLA 'asistentes' Y 'jefatura'
 // ===================================================
 
 const DIAS_EVALUACION_TRANSFERENCIA = 30; // ⚙️ Parámetro de prueba (cambiar a 90 en producción)
@@ -395,7 +395,7 @@ window.omitirTransferencia = async function(idCap) {
     }
 };
 
-// Generar QR de Transferencia agrupando por Jefatura con estructura real de la BD
+// Generar QR de Transferencia agrupando por Jefatura
 window.generarQRTransferencia = async function(idCap, nombreCurso) {
     const modalQR = document.getElementById("modalQR");
     const contenedorJefaturas = document.getElementById("contenedorJefaturas");
@@ -404,16 +404,8 @@ window.generarQRTransferencia = async function(idCap, nombreCurso) {
 
     if (!contenedorJefaturas || !modalQR) return;
 
-    const db = obtenerDB();
-    if (db) {
-        await db
-            .from("capacitaciones")
-            .update({ 
-                estado_tra: "Enviada",
-                fecha_envio_transferencia: new Date().toISOString()
-            })
-            .eq("id_cap", idCap);
-    }
+    // Guardamos el ID actual en la variable global para usarlo al cerrar
+    window.capEspecialTransferenciaId = idCap;
 
     if (qrSubtitulo) qrSubtitulo.textContent = `Evaluación de Transferencia: ${nombreCurso}`;
     if (qrIdCapText) qrIdCapText.textContent = `ID CAP: ${idCap}`;
@@ -422,6 +414,7 @@ window.generarQRTransferencia = async function(idCap, nombreCurso) {
     modalQR.style.display = "flex";
 
     const rutaBase = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+    const db = obtenerDB();
 
     try {
         let participantes = [];

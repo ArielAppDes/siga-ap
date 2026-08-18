@@ -97,15 +97,53 @@ function configurarEventosModal() {
     const modalQR = document.getElementById("modalQR");
     const btnCerrarQR = document.getElementById("btnCerrarQR");
 
-    btnCerrarCap?.addEventListener("click", () => { if (modalCap) modalCap.style.display = "none"; });
-    btnCerrarQR?.addEventListener("click", () => { if (modalQR) modalQR.style.display = "none"; });
+    btnCerrarCap?.addEventListener("click", () => { 
+        if (modalCap) modalCap.style.display = "none"; 
+    });
+
+    // Evento de cierre para el modal del QR / Enlaces
+    const intentarCerrarModalQR = async () => {
+        if (!modalQR) return;
+
+        // Si la ventana abierta era de transferencia, pedimos confirmación
+        if (window.capEspecialTransferenciaId) {
+            const idCap = window.capEspecialTransferenciaId;
+            const confirmado = confirm(`¿Confirmás el envío de la encuesta de transferencia para la capacitación ${idCap}?`);
+            
+            if (confirmado) {
+                const db = obtenerDB();
+                if (db) {
+                    try {
+                        await db
+                            .from("capacitaciones")
+                            .update({ 
+                                estado_tra: "Enviada",
+                                fecha_envio_transferencia: new Date().toISOString()
+                            })
+                            .eq("id_cap", idCap);
+                        
+                        alert("Capacitación marcada como 'Enviada'.");
+                        // Recargamos la lista de transferencias para ver el badge azul
+                        abrirModalTransferencia();
+                    } catch (err) {
+                        console.error("Error al actualizar estado_tra:", err);
+                    }
+                }
+            }
+            // Limpiamos la variable global
+            window.capEspecialTransferenciaId = null;
+        }
+
+        modalQR.style.display = "none";
+    };
+
+    btnCerrarQR?.addEventListener("click", intentarCerrarModalQR);
 
     window.addEventListener("click", (e) => {
         if (e.target === modalCap) modalCap.style.display = "none";
-        if (e.target === modalQR) modalQR.style.display = "none";
+        if (e.target === modalQR) intentarCerrarModalQR();
     });
 }
-
 // ----------------------------------------------------
 // MODAL GENERAL (PROGRAMADAS / EN CURSO / FINALIZADAS / QR)
 // ----------------------------------------------------

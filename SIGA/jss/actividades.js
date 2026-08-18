@@ -1,5 +1,5 @@
 // ===================================================
-// 18/08/2026 - V0.7 - SIGA_APP - LÓGICA DE ACTIVIDADES CON JEFATURAS Y ENLACES COPIABLES
+// 18/08/2026 - V0.8 - SIGA_APP - LÓGICA DE ACTIVIDADES (RUTA CORREGIDA: transferencia.html)
 // ===================================================
 
 const DIAS_EVALUACION_TRANSFERENCIA = 30; // ⚙️ Parámetro de prueba (cambiar a 90 en producción)
@@ -351,7 +351,7 @@ window.omitirTransferencia = async function(idCap) {
     }
 };
 
-// Generar QR de Transferencia con desglose por Jefatura
+// Generar QR de Transferencia apuntando a transferencia.html
 window.generarQRTransferencia = async function(idCap, nombreCurso) {
     const modalQR = document.getElementById("modalQR");
     const contenedorJefaturas = document.getElementById("contenedorJefaturas");
@@ -401,8 +401,8 @@ window.generarQRTransferencia = async function(idCap, nombreCurso) {
         const clavesJefatura = Object.keys(gruposJefatura);
 
         if (clavesJefatura.length === 0) {
-            // Caso fallback: URL genérica sin desglose
-            const urlGen = `${rutaBase}encuesta_transferencia.html?id_cap=${encodeURIComponent(idCap)}`;
+            // Caso fallback: URL genérica hacia transferencia.html
+            const urlGen = `${rutaBase}transferencia.html?id_cap=${encodeURIComponent(idCap)}`;
             contenedorJefaturas.innerHTML = `
                 <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:15px; text-align:center;">
                     <p style="margin:0 0 10px 0; font-size:13px; color:#64748b;">Enlace general de evaluación:</p>
@@ -423,10 +423,10 @@ window.generarQRTransferencia = async function(idCap, nombreCurso) {
             return;
         }
 
-        // Renderizado desglosado por Jefe
+        // Renderizado desglosado por Jefe apuntando a transferencia.html
         contenedorJefaturas.innerHTML = "";
         clavesJefatura.forEach((jefatura, index) => {
-            const urlJefe = `${rutaBase}encuesta_transferencia.html?id_cap=${encodeURIComponent(idCap)}&jefatura=${encodeURIComponent(jefatura)}`;
+            const urlJefe = `${rutaBase}transferencia.html?id_cap=${encodeURIComponent(idCap)}&jefatura=${encodeURIComponent(jefatura)}`;
             const qrDivId = `qrJefe_${index}`;
 
             const cardHtml = document.createElement("div");

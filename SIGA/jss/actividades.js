@@ -1,5 +1,5 @@
 // ===================================================
-// 18/08/2026 - V0.8 - SIGA_APP - LÓGICA DE ACTIVIDADES (RUTA CORREGIDA: transferencia.html)
+// 18/08/2026 - V0.9 - SIGA_APP - CONSULTA A TABLA 'asistentes' Y 'jefatura'
 // ===================================================
 
 const DIAS_EVALUACION_TRANSFERENCIA = 30; // ⚙️ Parámetro de prueba (cambiar a 90 en producción)
@@ -351,7 +351,7 @@ window.omitirTransferencia = async function(idCap) {
     }
 };
 
-// Generar QR de Transferencia apuntando a transferencia.html
+// Generar QR de Transferencia apuntando a la tabla 'asistentes' y columna 'jefatura'
 window.generarQRTransferencia = async function(idCap, nombreCurso) {
     const modalQR = document.getElementById("modalQR");
     const contenedorJefaturas = document.getElementById("contenedorJefaturas");
@@ -382,9 +382,10 @@ window.generarQRTransferencia = async function(idCap, nombreCurso) {
     try {
         let participantes = [];
         if (db) {
+            // Consulta exacta a la tabla 'asistentes'
             const { data, error } = await db
-                .from("asistencias")
-                .select("nombre_participante, jefatura, legajo")
+                .from("asistentes")
+                .select("nombre_participante, jefatura, legajo, apellidoynombre")
                 .eq("id_cap", idCap);
             
             if (!error && data) participantes = data;
@@ -395,13 +396,15 @@ window.generarQRTransferencia = async function(idCap, nombreCurso) {
         participantes.forEach(p => {
             const j = p.jefatura || "Sin Jefatura Asignada";
             if (!gruposJefatura[j]) gruposJefatura[j] = [];
-            gruposJefatura[j].push(p.nombre_participante || `Legajo: ${p.legajo}`);
+            
+            const nombreMostrar = p.nombre_participante || p.apellidoynombre || `Legajo: ${p.legajo}`;
+            gruposJefatura[j].push(nombreMostrar);
         });
 
         const clavesJefatura = Object.keys(gruposJefatura);
 
         if (clavesJefatura.length === 0) {
-            // Caso fallback: URL genérica hacia transferencia.html
+            // Fallback genérico si no encuentra filas en 'asistentes'
             const urlGen = `${rutaBase}transferencia.html?id_cap=${encodeURIComponent(idCap)}`;
             contenedorJefaturas.innerHTML = `
                 <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:15px; text-align:center;">
@@ -423,7 +426,7 @@ window.generarQRTransferencia = async function(idCap, nombreCurso) {
             return;
         }
 
-        // Renderizado desglosado por Jefe apuntando a transferencia.html
+        // Renderizado desglosado por Jefatura
         contenedorJefaturas.innerHTML = "";
         clavesJefatura.forEach((jefatura, index) => {
             const urlJefe = `${rutaBase}transferencia.html?id_cap=${encodeURIComponent(idCap)}&jefatura=${encodeURIComponent(jefatura)}`;

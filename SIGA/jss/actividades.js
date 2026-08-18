@@ -1,5 +1,5 @@
 // ===================================================
-// 16/08/2026 - V0.6 - SIGA_APP - LÓGICA DE ACTIVIDADES CON CABECERA DINÁMICA Y TRANSFERENCIAS (30 DÍAS)
+// 18/08/2026 - V0.7 - SIGA_APP - LÓGICA DE ACTIVIDADES CON JEFATURAS Y ENLACES COPIABLES
 // ===================================================
 
 const DIAS_EVALUACION_TRANSFERENCIA = 30; // ⚙️ Parámetro de prueba (cambiar a 90 en producción)
@@ -115,7 +115,6 @@ async function abrirModalPorEstado(estadoFiltro, titulo) {
     const tbody = document.getElementById("tbodyCapacitaciones");
     const thead = document.querySelector("#modalCapacitaciones table thead");
 
-    // Adaptar cabecera para capacitaciones estándar
     if (thead) {
         thead.innerHTML = `
             <tr>
@@ -216,7 +215,6 @@ async function abrirModalTransferencia() {
     const tbody = document.getElementById("tbodyCapacitaciones");
     const thead = document.querySelector("#modalCapacitaciones table thead");
 
-    // Adaptar cabecera específica para Transferencias
     if (thead) {
         thead.innerHTML = `
             <tr>
@@ -307,7 +305,7 @@ function renderizarFilasTransferencia(lista) {
         const accionesHTML = `
             <div style="display:flex; gap:6px; justify-content:center; align-items:center;">
                 <button onclick="generarQRTransferencia('${item.id_cap}', '${nombreCursoEscaped}')" style="background:#18C48F; color:#fff; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; font-weight:600; font-size:12px;" title="Generar QR para Jefatura">
-                    📱 QR Jefatura
+                    📱 QR Jefaturas
                 </button>
                 <button onclick="omitirTransferencia('${item.id_cap}')" style="background:#dc2626; color:#fff; border:none; padding:6px 8px; border-radius:4px; cursor:pointer; font-size:12px;" title="Omitir / Borrar de pendientes">
                     🗑️ Omitir
@@ -353,14 +351,14 @@ window.omitirTransferencia = async function(idCap) {
     }
 };
 
-// Generar QR de Transferencia apuntando a encuesta_transferencia.html
+// Generar QR de Transferencia con desglose por Jefatura
 window.generarQRTransferencia = async function(idCap, nombreCurso) {
     const modalQR = document.getElementById("modalQR");
-    const contenedorQR = document.getElementById("contenedorQR");
+    const contenedorJefaturas = document.getElementById("contenedorJefaturas");
     const qrSubtitulo = document.getElementById("qrSubtitulo");
     const qrIdCapText = document.getElementById("qrIdCapText");
 
-    if (!contenedorQR || !modalQR) return;
+    if (!contenedorJefaturas || !modalQR) return;
 
     const db = obtenerDB();
     if (db) {
@@ -373,41 +371,139 @@ window.generarQRTransferencia = async function(idCap, nombreCurso) {
             .eq("id_cap", idCap);
     }
 
-    contenedorQR.innerHTML = "";
+    if (qrSubtitulo) qrSubtitulo.textContent = `Evaluación de Transferencia: ${nombreCurso}`;
+    if (qrIdCapText) qrIdCapText.textContent = `ID CAP: ${idCap}`;
+
+    contenedorJefaturas.innerHTML = `<p style="text-align:center; color:#64748b; padding:15px;">Obteniendo información de jefaturas y asistentes...</p>`;
+    modalQR.style.display = "flex";
 
     const rutaBase = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-    const urlTransferencia = `${rutaBase}encuesta_transferencia.html?id_cap=${encodeURIComponent(idCap)}`;
 
-    new QRCode(contenedorQR, {
-        text: urlTransferencia,
-        width: 180,
-        height: 180,
-        colorDark: "#0f172a",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H
+    try {
+        let participantes = [];
+        if (db) {
+            const { data, error } = await db
+                .from("asistencias")
+                .select("nombre_participante, jefatura, legajo")
+                .eq("id_cap", idCap);
+            
+            if (!error && data) participantes = data;
+        }
+
+        // Agrupar por jefatura
+        const gruposJefatura = {};
+        participantes.forEach(p => {
+            const j = p.jefatura || "Sin Jefatura Asignada";
+            if (!gruposJefatura[j]) gruposJefatura[j] = [];
+            gruposJefatura[j].push(p.nombre_participante || `Legajo: ${p.legajo}`);
+        });
+
+        const clavesJefatura = Object.keys(gruposJefatura);
+
+        if (clavesJefatura.length === 0) {
+            // Caso fallback: URL genérica sin desglose
+            const urlGen = `${rutaBase}encuesta_transferencia.html?id_cap=${encodeURIComponent(idCap)}`;
+            contenedorJefaturas.innerHTML = `
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:15px; text-align:center;">
+                    <p style="margin:0 0 10px 0; font-size:13px; color:#64748b;">Enlace general de evaluación:</p>
+                    <div id="qrUnico" style="display:flex; justify-content:center; margin-bottom:12px;"></div>
+                    <button onclick="copiarAlPortapapeles('${urlGen}', this)" style="background:#0284c7; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:600; cursor:pointer;">
+                        📋 Copiar Enlace Directo
+                    </button>
+                </div>
+            `;
+            new QRCode(document.getElementById("qrUnico"), {
+                text: urlGen,
+                width: 150,
+                height: 150,
+                colorDark: "#0f172a",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            return;
+        }
+
+        // Renderizado desglosado por Jefe
+        contenedorJefaturas.innerHTML = "";
+        clavesJefatura.forEach((jefatura, index) => {
+            const urlJefe = `${rutaBase}encuesta_transferencia.html?id_cap=${encodeURIComponent(idCap)}&jefatura=${encodeURIComponent(jefatura)}`;
+            const qrDivId = `qrJefe_${index}`;
+
+            const cardHtml = document.createElement("div");
+            cardHtml.style.cssText = "background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:15px; display:flex; flex-direction:column; gap:10px;";
+
+            cardHtml.innerHTML = `
+                <div style="border-bottom:1px solid #e2e8f0; padding-bottom:8px;">
+                    <h4 style="margin:0; color:#0f172a; font-size:15px;">👔 Jefatura / Área: <span style="color:#0284c7;">${jefatura}</span></h4>
+                    <p style="margin:4px 0 0 0; font-size:12px; color:#64748b;"><strong>Colaboradores evaluados:</strong> ${gruposJefatura[jefatura].join(", ")}</p>
+                </div>
+                <div style="display:flex; align-items:center; gap:15px; justify-content:space-around; flex-wrap:wrap;">
+                    <div id="${qrDivId}"></div>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <button onclick="copiarAlPortapapeles('${urlJefe}', this)" style="background:#18C48F; color:#fff; border:none; padding:8px 14px; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer;">
+                            📋 Copiar Enlace
+                        </button>
+                        <a href="${urlJefe}" target="_blank" style="font-size:12px; color:#0284c7; text-decoration:none; text-align:center;">🔗 Abrir Encuesta</a>
+                    </div>
+                </div>
+            `;
+
+            contenedorJefaturas.appendChild(cardHtml);
+
+            new QRCode(document.getElementById(qrDivId), {
+                text: urlJefe,
+                width: 120,
+                height: 120,
+                colorDark: "#0f172a",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        });
+
+    } catch (err) {
+        console.error("Error al procesar jefaturas para QR:", err);
+        contenedorJefaturas.innerHTML = `<p style="color:red; text-align:center;">Ocurrió un error al cargar el desglose por jefatura.</p>`;
+    }
+};
+
+// Copiar al portapapeles con feedback en el botón
+window.copiarAlPortapapeles = function(texto, elementoBtn) {
+    navigator.clipboard.writeText(texto).then(() => {
+        const textoOriginal = elementoBtn.textContent;
+        elementoBtn.textContent = "✅ ¡Copiado!";
+        elementoBtn.style.background = "#10b981";
+        setTimeout(() => {
+            elementoBtn.textContent = textoOriginal;
+            elementoBtn.style.background = "#18C48F";
+        }, 2000);
+    }).catch(err => {
+        console.error("Error al copiar enlace:", err);
+        alert("No se pudo copiar el enlace al portapapeles.");
     });
-
-    if (qrSubtitulo) qrSubtitulo.textContent = `Evaluación de Transferencia: ${nombreCurso}`;
-    if (qrIdCapText) qrIdCapText.textContent = `ID: ${idCap}`;
-
-    modalQR.style.display = "flex";
 };
 
 // Generar QR de Satisfacción normal
 window.generarQRModal = function(idCap, nombreCurso) {
     const modalQR = document.getElementById("modalQR");
-    const contenedorQR = document.getElementById("contenedorQR");
+    const contenedorJefaturas = document.getElementById("contenedorJefaturas");
     const qrSubtitulo = document.getElementById("qrSubtitulo");
     const qrIdCapText = document.getElementById("qrIdCapText");
 
-    if (!contenedorQR || !modalQR) return;
-
-    contenedorQR.innerHTML = "";
+    if (!contenedorJefaturas || !modalQR) return;
 
     const rutaBase = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
     const urlEncuesta = `${rutaBase}encuesta.html?id_cap=${encodeURIComponent(idCap)}`;
 
-    new QRCode(contenedorQR, {
+    contenedorJefaturas.innerHTML = `
+        <div style="display:flex; flex-direction:column; align-items:center; background:#f8fafc; border-radius:12px; padding:15px;">
+            <div id="qrSatGen"></div>
+            <button onclick="copiarAlPortapapeles('${urlEncuesta}', this)" style="margin-top:12px; background:#18C48F; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:600; cursor:pointer;">
+                📋 Copiar Enlace
+            </button>
+        </div>
+    `;
+
+    new QRCode(document.getElementById("qrSatGen"), {
         text: urlEncuesta,
         width: 180,
         height: 180,
@@ -417,7 +513,7 @@ window.generarQRModal = function(idCap, nombreCurso) {
     });
 
     if (qrSubtitulo) qrSubtitulo.textContent = nombreCurso || "Escaneá para evaluar la capacitación";
-    if (qrIdCapText) qrIdCapText.textContent = `ID: ${idCap}`;
+    if (qrIdCapText) qrIdCapText.textContent = `ID CAP: ${idCap}`;
 
     modalQR.style.display = "flex";
 };

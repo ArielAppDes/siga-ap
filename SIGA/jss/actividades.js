@@ -290,12 +290,18 @@ function renderizarFilasTransferencia(lista) {
         let contadorHTML = "";
         const estadoActual = item.estado_tra || "Pendiente";
 
-        if (estadoActual === "Enviada" || estadoActual === "Recibida") {
-            const badgeColor = estadoActual === "Recibida" ? "#10b981" : "#0284c7";
-            contadorHTML = `<span style="background:${badgeColor}; color:#fff; padding:4px 8px; border-radius:12px; font-size:12px; font-weight:600;">${estadoActual}</span>`;
+        if (estadoActual === "Recibida") {
+            contadorHTML = `<span style="background:#10b981; color:#fff; padding:4px 8px; border-radius:12px; font-size:12px; font-weight:600;">Recibida</span>`;
+        } else if (estadoActual === "Enviada") {
+            if (diasDiferencia < 0) {
+                const atraso = Math.abs(diasDiferencia);
+                contadorHTML = `<span style="background:#0284c7; color:#fff; padding:4px 8px; border-radius:12px; font-size:12px; font-weight:600;">Enviada</span> <br><small style="color:#ef4444; font-weight:700;">🚨 ${atraso} días vencida</small>`;
+            } else {
+                contadorHTML = `<span style="background:#0284c7; color:#fff; padding:4px 8px; border-radius:12px; font-size:12px; font-weight:600;">Enviada</span>`;
+            }
         } else if (diasDiferencia < 0) {
             const atraso = Math.abs(diasDiferencia);
-            contadorHTML = `<span style="color:#ef4444; font-weight:700; font-size:13px;">🚨 ${atraso} días de atraso</span>`;
+            contadorHTML = `<span style="color:#ef4444; font-weight:700; font-size:13px;">🚨 ${atraso} días de atraso (Sin enviar)</span>`;
         } else {
             contadorHTML = `<span style="color:#16a34a; font-weight:600; font-size:13px;">🟢 Faltan ${diasDiferencia} días</span>`;
         }
@@ -350,6 +356,7 @@ window.omitirTransferencia = async function(idCap) {
         alert("Ocurrió un error al actualizar la capacitación.");
     }
 };
+
 // Generar QR de Transferencia agrupando por Jefatura con estructura real de la BD
 window.generarQRTransferencia = async function(idCap, nombreCurso) {
     const modalQR = document.getElementById("modalQR");
@@ -381,9 +388,8 @@ window.generarQRTransferencia = async function(idCap, nombreCurso) {
     try {
         let participantes = [];
         if (db) {
-            // Consulta directa trayendo apellido, nombre y jefatura
             const { data, error } = await db
-                .from("asistentes") // Asegúrate de que este sea el nombre exacto de la tabla de la foto
+                .from("asistentes")
                 .select("apellido, nombre, jefatura, legajo")
                 .eq("id_cap", idCap);
             
@@ -396,7 +402,6 @@ window.generarQRTransferencia = async function(idCap, nombreCurso) {
             const j = p.jefatura || "Sin Jefatura Asignada";
             if (!gruposJefatura[j]) gruposJefatura[j] = [];
             
-            // Une Apellido + Nombre según la foto
             const nombreCompleto = (p.apellido && p.nombre) 
                 ? `${p.apellido}, ${p.nombre}` 
                 : (p.apellido || p.nombre || `Legajo: ${p.legajo}`);
@@ -407,7 +412,6 @@ window.generarQRTransferencia = async function(idCap, nombreCurso) {
         const clavesJefatura = Object.keys(gruposJefatura);
 
         if (clavesJefatura.length === 0) {
-            // Fallback genérico si no devuelve registros
             const urlGen = `${rutaBase}transferencia.html?id_cap=${encodeURIComponent(idCap)}`;
             contenedorJefaturas.innerHTML = `
                 <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:15px; text-align:center;">
@@ -429,7 +433,6 @@ window.generarQRTransferencia = async function(idCap, nombreCurso) {
             return;
         }
 
-        // Renderizado de tarjetas separadas por cada Jefatura
         contenedorJefaturas.innerHTML = "";
         clavesJefatura.forEach((jefatura, index) => {
             const urlJefe = `${rutaBase}transferencia.html?id_cap=${encodeURIComponent(idCap)}&jefatura=${encodeURIComponent(jefatura)}`;
@@ -471,7 +474,6 @@ window.generarQRTransferencia = async function(idCap, nombreCurso) {
         contenedorJefaturas.innerHTML = `<p style="color:red; text-align:center;">Ocurrió un error al cargar el desglose por jefatura.</p>`;
     }
 };
-
 
 // Copiar al portapapeles con feedback en el botón
 window.copiarAlPortapapeles = function(texto, elementoBtn) {
@@ -537,23 +539,6 @@ window.editarProgramada = function(idCap) {
 window.cargarSiguienteClase = async function(idCap) {
     const cap = window.listaCapacitacionesTemp?.find(c => c.id_cap === idCap);
     if (!cap) return;
-
-    const db = obtenerDB();
-    if (db) {
-        const hoy = new Date();
-        const fecha30Dias = new Date();
-        fecha30Dias.setDate(hoy.getDate() + DIAS_EVALUACION_TRANSFERENCIA);
-        const fechaTraStr = fecha30Dias.toISOString().split("T")[0];
-
-        await db
-            .from("capacitaciones")
-            .update({ 
-                estado: "Finalizado",
-                fecha_tra: fechaTraStr,
-                estado_tra: "Pendiente"
-            })
-            .eq("id_cap", idCap);
-    }
 
     let claseActual = parseInt(cap.clase_nro || "1", 10);
     let siguienteClase = claseActual + 1;
